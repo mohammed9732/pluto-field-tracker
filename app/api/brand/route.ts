@@ -1,19 +1,22 @@
 import { getDb } from "@/lib/db";
 import { SEED_DEMO } from "@/lib/config";
 
-// The only endpoint that answers without a session, because the sign-in screen
-// needs the company name before anyone has signed in. It deliberately returns
-// nothing sensitive — no names, no phone numbers.
 // Read fresh on every request. Without this Next treats a GET handler that
 // never touches cookies as static and bakes the build-time answer in forever.
 export const dynamic = "force-dynamic";
 
+// The only endpoint that answers without a session, because the sign-in screen
+// needs the company's identity before anyone has signed in. It deliberately
+// returns nothing sensitive — no names, no phone numbers.
 export async function GET() {
-  const db = getDb();
+  const s = getDb().settings;
   return Response.json({
-    companyName: db.settings.companyName,
-    companySub: db.settings.companySub,
-    cities: db.settings.cities.map((c) => c.name),
+    companyName: s.companyName,
+    companySub: s.companySub,
+    loginFooter: s.loginFooter ?? "",
+    hasLogo: !!s.logoId,
+    brandColor: s.brandColor,
+    terms: s.terms,
     demo: SEED_DEMO,
   });
 }

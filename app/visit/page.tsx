@@ -1,4 +1,5 @@
 "use client";
+import { useTerms, lower } from "@/lib/terms";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Screen, useMe, Spinner, PageHead } from "@/components/Shell";
@@ -9,6 +10,7 @@ import { getPosition, GeoPoint } from "@/lib/geo";
 
 function LogVisitInner() {
   const me = useMe();
+  const t = useTerms();
   const router = useRouter();
   const params = useSearchParams();
   const [doctor, setDoctor] = useState<Doc | null>(null);
@@ -58,7 +60,7 @@ function LogVisitInner() {
 
   async function save() {
     setErr("");
-    if (!doctor) { setErr("Pick a doctor"); return; }
+    if (!doctor) { setErr(`Pick a ${lower(t.doctor)}`); return; }
     if (!outcome) { setErr("Pick an outcome"); return; }
     if (outcome === "follow_up" && !followUpDate) { setErr("Follow-up needs a next-visit date"); return; }
     setBusy(true);

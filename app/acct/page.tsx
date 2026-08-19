@@ -1,4 +1,5 @@
 "use client";
+import { useTerms } from "@/lib/terms";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Screen, useMe, Spinner } from "@/components/Shell";
@@ -10,6 +11,7 @@ import { DoctorLink, CallButton } from "@/components/DoctorLink";
 
 export default function AcctDashboard() {
   const me = useMe();
+  const t = useTerms();
   const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [tab, setTab] = useState<"collections" | "recon" | "people">("collections");
@@ -130,7 +132,7 @@ export default function AcctDashboard() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: "auto" }}>
         <Link href="/acct/payouts" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>Quarterly payouts</Link>
         <Link href="/tasks" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>Tasks</Link>
-        <Link href="/doctors" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>Doctors</Link>
+        <Link href="/doctors" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>{t.doctorPlural}</Link>
         <Link href="/catalog" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>Products</Link>
       </div>
     </Screen>

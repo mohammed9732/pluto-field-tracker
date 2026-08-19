@@ -1,4 +1,5 @@
 "use client";
+import { setTerms, setBrand, useBrand, useTerms } from "@/lib/terms";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -19,8 +20,10 @@ export function useMe(): Me | null | undefined {
   const [me, setMe] = useState<Me | null | undefined>(undefined);
   const router = useRouter();
   useEffect(() => {
-    api<{ user: Me | null }>("/api/auth/me")
+    api<{ user: Me | null; terms?: any; companyName?: string; hasLogo?: boolean }>("/api/auth/me")
       .then((r) => {
+        setTerms(r.terms);
+        setBrand({ companyName: r.companyName, hasLogo: r.hasLogo });
         setMe(r.user);
         if (!r.user) router.replace("/login");
       })
@@ -28,6 +31,9 @@ export function useMe(): Me | null | undefined {
   }, [router]);
   return me;
 }
+
+// Read lazily so a renamed word reaches the nav without a reload.
+const DOCTORS_LABEL = "Doctors";
 
 const NAV: Record<string, { href: string; label: string; icon: keyof typeof paths }[]> = {
   rep: [
@@ -40,7 +46,7 @@ const NAV: Record<string, { href: string; label: string; icon: keyof typeof path
     { href: "/home", label: "Home", icon: "home" },
     { href: "/team", label: "Team", icon: "users" },
     { href: "/approvals", label: "Approvals", icon: "check" },
-    { href: "/doctors", label: "Doctors", icon: "pinDot" },
+    { href: "/doctors", label: DOCTORS_LABEL, icon: "pinDot" },
   ],
   accountant: [
     { href: "/acct", label: "Money", icon: "chart" },
@@ -67,7 +73,7 @@ const SIDEBAR: Record<string, { group: string; items: { href: string; label: str
     ]},
     { group: "Field", items: [
       { href: "/approvals", label: "Approvals", icon: "check" },
-      { href: "/doctors", label: "Doctors", icon: "pinDot" },
+      { href: "/doctors", label: DOCTORS_LABEL, icon: "pinDot" },
       { href: "/competitors", label: "Market intel", icon: "warn" },
       { href: "/tasks", label: "Tasks", icon: "check" },
       { href: "/performance", label: "Performance", icon: "chart" },
@@ -98,7 +104,7 @@ const SIDEBAR: Record<string, { group: string; items: { href: string; label: str
       { href: "/stock", label: "Stock & checks", icon: "warehouse" },
     ]},
     { group: "Reference", items: [
-      { href: "/doctors", label: "Doctors", icon: "pinDot" },
+      { href: "/doctors", label: DOCTORS_LABEL, icon: "pinDot" },
       { href: "/catalog", label: "Products", icon: "bag" },
       { href: "/tasks", label: "Tasks", icon: "check" },
     ]},
@@ -109,10 +115,19 @@ const SIDEBAR: Record<string, { group: string; items: { href: string; label: str
 // Desktop sidebar for the roles that also work from a PC (owner + accountant).
 export function DeskSidebar({ me, company }: { me: Me; company?: string }) {
   const pathname = usePathname();
+  const brand = useBrand();
+  const t = useTerms();
   const groups = SIDEBAR[me.role] ?? [];
   return (
     <aside className="desksidebar no-print">
-      <div className="brand">{company ?? "Pluto Field Tracker"}</div>
+      <div className="brand">
+        {brand.hasLogo ? (
+          <img src="/api/logo" alt={brand.companyName ?? "Logo"}
+            style={{ maxWidth: "100%", maxHeight: 40, objectFit: "contain", display: "block" }} />
+        ) : (
+          company ?? brand.companyName ?? "Field Tracker"
+        )}
+      </div>
       {groups.map((g) => (
         <div key={g.group} className="sidegroup">
           <div className="sidegroup-title">{g.group}</div>
@@ -121,7 +136,7 @@ export function DeskSidebar({ me, company }: { me: Me; company?: string }) {
             return (
               <Link key={it.href} href={it.href} className={active ? "active" : ""}>
                 <Icon d={paths[it.icon]} size={15} />
-                <span>{it.label}</span>
+                <span>{it.label === DOCTORS_LABEL ? t.doctorPlural : it.label}</span>
               </Link>
             );
           })}
@@ -134,6 +149,7 @@ export function DeskSidebar({ me, company }: { me: Me; company?: string }) {
 
 export function BottomNav({ me, unread }: { me: Me; unread?: number }) {
   const pathname = usePathname();
+  const t = useTerms();
   const items = NAV[me.role] ?? NAV.rep;
   const left = items.slice(0, 2);
   const right = items.slice(2);
@@ -142,7 +158,7 @@ export function BottomNav({ me, unread }: { me: Me; unread?: number }) {
     return (
       <Link key={it.href} href={it.href} className={active ? "active" : ""}>
         <Icon d={paths[it.icon]} size={19} />
-        <span>{it.label}</span>
+        <span>{it.label === DOCTORS_LABEL ? t.doctorPlural : it.label}</span>
       </Link>
     );
   };

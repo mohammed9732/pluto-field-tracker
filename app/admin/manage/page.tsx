@@ -1,4 +1,5 @@
 "use client";
+import { useTerms, roleLabel } from "@/lib/terms";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Screen, useMe, Spinner } from "@/components/Shell";
@@ -6,6 +7,7 @@ import { api, money } from "@/lib/fmt";
 
 export default function Manage() {
   const me = useMe();
+  const t = useTerms();
   const [data, setData] = useState<any>(null);
   const [editUser, setEditUser] = useState<any>(null);
   const [editProduct, setEditProduct] = useState<any>(null);
@@ -49,7 +51,7 @@ export default function Manage() {
               {data.users.map((u: any) => (
                 <tr key={u.id}>
                   <td style={{ fontWeight: 500 }}>{u.name}</td>
-                  <td>{u.role === "admin" ? "Admin (owner)" : u.role === "rep" ? "Medical rep" : u.role[0].toUpperCase() + u.role.slice(1)}</td>
+                  <td>{roleLabel(t, u.role)}</td>
                   <td>{u.city === "all" ? "All" : (data.cities ?? []).find((c: any) => c.id === u.city)?.name ?? u.city}</td>
                   <td style={{ textAlign: "right" }}>{u.baseSalary ? money(u.baseSalary) : "—"}</td>
                   <td style={{ textAlign: "right" }}>{u.dailyMin ? `${u.dailyMin} visits` : "—"}</td>

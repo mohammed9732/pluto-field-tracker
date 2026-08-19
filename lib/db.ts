@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { DB } from "./types";
+import { DB, DEFAULT_TERMS } from "./types";
 import { buildSeed, buildEmpty } from "./seed";
 import { DATA_DIR, SEED_DEMO } from "./config";
 
@@ -15,7 +15,13 @@ declare global {
 export function getDb(): DB {
   if (globalThis.__plutoDb) return globalThis.__plutoDb;
   if (fs.existsSync(DB_FILE)) {
-    globalThis.__plutoDb = JSON.parse(fs.readFileSync(DB_FILE, "utf-8")) as DB;
+    const loaded = JSON.parse(fs.readFileSync(DB_FILE, "utf-8")) as DB;
+    // A database written before a feature shipped simply lacks its settings.
+    // Fill the gaps from the defaults rather than letting undefined leak into
+    // the UI as "undefined" text or a crash.
+    loaded.settings = { ...buildSeed().settings, ...loaded.settings };
+    loaded.settings.terms = { ...DEFAULT_TERMS, ...(loaded.settings.terms ?? {}) };
+    globalThis.__plutoDb = loaded;
   } else {
     globalThis.__plutoDb = SEED_DEMO ? buildSeed() : buildEmpty();
     saveDb();

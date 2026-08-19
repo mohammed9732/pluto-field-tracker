@@ -1,4 +1,5 @@
 "use client";
+import { useTerms, lower } from "@/lib/terms";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Screen, useMe, Spinner, PageHead } from "@/components/Shell";
@@ -16,6 +17,7 @@ function tierPrice(l: Line, qty: number): number {
 
 function NewOrderInner() {
   const me = useMe();
+  const t = useTerms();
   const router = useRouter();
   const params = useSearchParams();
   const [doctor, setDoctor] = useState<Doc | null>(null);
@@ -64,7 +66,7 @@ function NewOrderInner() {
 
   async function submit() {
     setErr("");
-    if (!doctor) { setErr("Pick a doctor"); return; }
+    if (!doctor) { setErr(`Pick a ${lower(t.doctor)}`); return; }
     if (lines.every((l) => l.qty === 0)) { setErr("Add at least one product"); return; }
     setBusy(true);
     try {

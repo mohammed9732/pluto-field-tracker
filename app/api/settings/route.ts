@@ -1,5 +1,7 @@
 import { getDb, saveDb } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
+import { DEFAULT_TERMS } from "@/lib/types";
+import { parseHex } from "@/lib/brand";
 
 // GET → settings (everyone; the client uses toggles to show/hide features)
 export async function GET() {
@@ -48,6 +50,34 @@ export async function POST(req: Request) {
           if (usedBy) return Response.json({ error: `${old.name} is still used by a user or doctor — reassign them first` }, { status: 400 });
         }
         db.settings.cities = cleaned;
+        continue;
+      }
+      if (k === "terms") {
+        requireUser(["admin"]);
+        // Blank fields fall back to the default word rather than showing nothing.
+        const incoming = (v ?? {}) as Record<string, unknown>;
+        const next = { ...DEFAULT_TERMS, ...db.settings.terms };
+        for (const key of Object.keys(DEFAULT_TERMS) as (keyof typeof DEFAULT_TERMS)[]) {
+          const word = String(incoming[key] ?? "").trim();
+          next[key] = word || DEFAULT_TERMS[key];
+        }
+        db.settings.terms = next;
+        continue;
+      }
+      if (k === "brandColor") {
+        requireUser(["admin"]);
+        const hex = String(v ?? "").trim();
+        if (parseHex(hex)) db.settings.brandColor = hex.startsWith("#") ? hex : `#${hex}`;
+        continue;
+      }
+      if (k === "logoId") {
+        requireUser(["admin"]);
+        db.settings.logoId = v ? String(v) : null;
+        continue;
+      }
+      if (k === "loginFooter") {
+        requireUser(["admin"]);
+        db.settings.loginFooter = String(v ?? "").slice(0, 200);
         continue;
       }
       if (numeric.includes(k)) (db.settings as any)[k] = Math.max(0, Number(v) || 0);

@@ -1,13 +1,25 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { api } from "@/lib/fmt";
+import { DEFAULT_TERMS } from "@/lib/types";
+import { useTerms, lower } from "@/lib/terms";
 
-const TOGGLES: [string, string, string][] = [
-  ["supervisorCanAddDoctors", "Supervisor can add doctors", "Add-doctor card on the supervisor's app"],
-  ["repsCanAddDoctors", "Reps can add doctors", "Add-doctor card on the reps' apps"],
-  ["supervisorCanToggleRepAdd", "Supervisor may flip the reps switch", "Off = only you control whether reps can add doctors"],
-  ["plannerEnabled", "Weekly planner", "Reps build doctor-by-doctor weekly plans for approval"],
+const TERM_FIELDS: [keyof typeof DEFAULT_TERMS, string, string][] = [
+  ["doctor", "One customer", "Doctor"],
+  ["doctorPlural", "Many customers", "Doctors"],
+  ["clinic", "Where they work", "Clinic"],
+  ["roleAdmin", "You", "Owner"],
+  ["roleSupervisor", "Field manager", "Supervisor"],
+  ["roleRep", "Field staff", "Medical rep"],
+  ["roleAccountant", "Finance", "Accountant"],
+];
+
+const togglesFor = (t: typeof DEFAULT_TERMS): [string, string, string][] => [
+  ["supervisorCanAddDoctors", `${t.roleSupervisor} can add ${lower(t.doctorPlural)}`, `Add-${lower(t.doctor)} card on the ${lower(t.roleSupervisor)}'s app`],
+  ["repsCanAddDoctors", `${t.roleRep}s can add ${lower(t.doctorPlural)}`, `Add-${lower(t.doctor)} card on the ${lower(t.roleRep)} apps`],
+  ["supervisorCanToggleRepAdd", `${t.roleSupervisor} may flip the ${lower(t.roleRep)} switch`, `Off = only you control whether ${lower(t.roleRep)}s can add ${lower(t.doctorPlural)}`],
+  ["plannerEnabled", "Weekly planner", `${t.roleRep}s build weekly plans, ${lower(t.doctor)} by ${lower(t.doctor)}, for approval`],
   ["paymentsEnabled", "Payment collection", "Reps record collected amounts with a signed-receipt photo"],
   ["repPriceEdit", "Reps can edit prices", "Off = order prices always come from your tier table"],
   ["spendingsEnabled", "Spendings", "Field spendings with receipts, paid back monthly"],
@@ -26,16 +38,16 @@ const TOGGLES: [string, string, string][] = [
   ["competitorTracking", "Competitor tracking", "Capture competitor info during visits and on the market intel page"],
 ];
 
-const METRICS: [string, string][] = [
-  ["planVisitTarget", "Rep: visit doctors per day"],
-  ["planBackupTarget", "Rep: backup doctors per day"],
+const metricsFor = (t: typeof DEFAULT_TERMS): [string, string][] => [
+  ["planVisitTarget", `${t.roleRep}: ${lower(t.doctorPlural)} to visit per day`],
+  ["planBackupTarget", `${t.roleRep}: backup ${lower(t.doctorPlural)} per day`],
   ["supervisorPlanVisitTarget", "Supervisor: client meetings per day"],
   ["supervisorPlanBackupTarget", "Supervisor: backups per day"],
   ["salesCommissionPct", "Sales commission % (quarterly)"],
   ["collectionCommissionPct", "Collection commission % (monthly)"],
   ["visitRadiusM", "Visit GPS radius (meters)"],
   ["pingMinutes", "GPS ping interval (minutes)"],
-  ["dwellRadiusM", "Clinic dwell radius (meters)"],
+  ["dwellRadiusM", `${t.clinic} dwell radius (meters)`],
   ["lowStockThreshold", "Low-stock alert at or below"],
   ["expiryWarnMonths", "Expiry warning (months ahead)"],
   ["checkinNudgeHour", "Check-in reminder hour (0–23)"],
@@ -54,6 +66,9 @@ export default function ControlPanel() {
   const [editGroup, setEditGroup] = useState<any>(null);
   const [newCity, setNewCity] = useState("");
   const [cityErr, setCityErr] = useState("");
+  const t = useTerms();
+  const logoRef = useRef<HTMLInputElement>(null);
+  const [logoBusy, setLogoBusy] = useState(false);
 
   const load = useCallback(() => {
     api("/api/settings").then((r: any) => setSettings(r.settings)).catch(() => {});
@@ -107,13 +122,102 @@ export default function ControlPanel() {
           </div>
         </div>
         <div className="field" style={{ margin: 0 }}>
+          <label>Subtitle under the company name</label>
+          <input className="input" defaultValue={settings.companySub ?? ""} placeholder="Leave empty to hide"
+            onBlur={(e) => e.target.value !== settings.companySub && patch({ companySub: e.target.value })} />
+        </div>
+
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Logo &amp; colour</h6>
+        <div className="card" style={{ gap: 12 }}>
+          <div className="row" style={{ gap: 14, alignItems: "center" }}>
+            <div style={{
+              width: 62, height: 62, borderRadius: 14, flex: "none", display: "grid", placeItems: "center",
+              background: "var(--color-neutral-200)", border: "1px solid var(--color-divider)", overflow: "hidden",
+            }}>
+              {settings.logoId ? (
+                <img src={`/api/logo?v=${settings.logoId}`} alt="Logo"
+                  style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              ) : <span className="small muted">None</span>}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="small">
+                Shown on the sign-in screen, at the top of the app, and as the icon on
+                your team&apos;s phones. A square PNG around 512&times;512 works best.
+              </div>
+              <div className="row" style={{ gap: 8, marginTop: 8 }}>
+                <button className="btn btn-primary" style={{ fontSize: 12, padding: "6px 12px" }}
+                  disabled={logoBusy} onClick={() => logoRef.current?.click()}>
+                  {logoBusy ? "Uploading…" : settings.logoId ? "Replace logo" : "Upload logo"}
+                </button>
+                {settings.logoId ? (
+                  <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-coral-deep)" }}
+                    onClick={() => patch({ logoId: "" })}>Remove</button>
+                ) : null}
+              </div>
+              <input ref={logoRef} type="file" accept="image/png,image/jpeg,image/svg+xml" style={{ display: "none" }}
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (!f) return;
+                  setLogoBusy(true);
+                  try {
+                    const fd = new FormData();
+                    fd.append("file", f);
+                    const up = await fetch("/api/files", { method: "POST", body: fd }).then((x) => x.json());
+                    if (up.id) await patch({ logoId: up.id });
+                  } finally { setLogoBusy(false); }
+                }} />
+            </div>
+          </div>
+
+          <div className="row" style={{ gap: 12, alignItems: "center" }}>
+            <input type="color" value={settings.brandColor ?? "#2f6fe0"} aria-label="Brand colour"
+              onChange={(e) => patch({ brandColor: e.target.value })}
+              style={{ width: 46, height: 34, padding: 2, border: "1px solid var(--color-divider)", borderRadius: 8, background: "none", cursor: "pointer", flex: "none" }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 500 }}>Brand colour</div>
+              <div className="small muted">
+                Buttons, links and highlights follow this. The lighter and darker shades
+                are worked out for you. Reload to see it everywhere.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>What you call things</h6>
+        <div className="card" style={{ gap: 10 }}>
+          <div className="small muted">
+            Change these and the whole app follows. Leave one empty to go back to the default.
+          </div>
+          <div className="two-col" style={{ gap: 10 }}>
+            {TERM_FIELDS.map(([key, label, fallback]) => (
+              <div className="field" style={{ margin: 0 }} key={key}>
+                <label>{label}</label>
+                <input className="input" placeholder={fallback}
+                  defaultValue={(settings.terms ?? DEFAULT_TERMS)[key] ?? ""}
+                  onBlur={(e) => {
+                    const next = { ...(settings.terms ?? DEFAULT_TERMS), [key]: e.target.value };
+                    if (e.target.value !== (settings.terms ?? DEFAULT_TERMS)[key]) patch({ terms: next });
+                  }} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="field" style={{ margin: 0 }}>
+          <label>Sign-in screen footer</label>
+          <input className="input" defaultValue={settings.loginFooter ?? ""} placeholder="Leave empty to hide"
+            onBlur={(e) => e.target.value !== settings.loginFooter && patch({ loginFooter: e.target.value })} />
+        </div>
+
+        <div className="field" style={{ margin: 0 }}>
           <label>Supervisor visit label</label>
           <input className="input" defaultValue={settings.supervisorVisitLabel} onBlur={(e) => e.target.value !== settings.supervisorVisitLabel && patch({ supervisorVisitLabel: e.target.value })} />
         </div>
 
         <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Cities</h6>
         <div className="small muted">
-          Every doctor, rep and stock location belongs to a city. Districts like Soran are areas inside their city.
+          {`Every ${lower(t.doctor)}, ${lower(t.roleRep)} and stock location belongs to a city.`} Districts like Soran are areas inside their city.
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {(settings.cities ?? []).map((c: any) => (
@@ -152,7 +256,7 @@ export default function ControlPanel() {
 
         <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Feature switches</h6>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          {TOGGLES.map(([key, label, hint]) => (
+          {togglesFor(t).map(([key, label, hint]) => (
             <label key={key} className="listrow" style={{ cursor: "pointer", padding: "10px 0" }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 500 }}>{label}</div>
@@ -165,7 +269,7 @@ export default function ControlPanel() {
 
         <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Metrics</h6>
         <div className="two-col" style={{ gap: 10 }}>
-          {METRICS.map(([key, label]) => (
+          {metricsFor(t).map(([key, label]) => (
             <div key={key} className="field" style={{ margin: 0 }}>
               <label>{label}</label>
               <input className="input" inputMode="numeric" defaultValue={settings[key]} onBlur={(e) => Number(e.target.value) !== settings[key] && patch({ [key]: Number(e.target.value) })} />

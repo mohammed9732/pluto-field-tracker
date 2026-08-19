@@ -1,4 +1,5 @@
 "use client";
+import { useTerms } from "@/lib/terms";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Screen, useMe, Spinner } from "@/components/Shell";
@@ -13,6 +14,7 @@ const TEMPLATE_HEADERS = ["Doctor Name", "Clinic Name", "City", "Area", "Special
 
 export default function Doctors() {
   const me = useMe();
+  const t = useTerms();
   const [doctors, setDoctors] = useState<any[] | null>(null);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("");
@@ -91,7 +93,7 @@ export default function Doctors() {
   return (
     <Screen me={me}>
       <div className="row">
-        <h4 style={{ margin: 0, flex: 1 }}>Doctors</h4>
+        <h4 style={{ margin: 0, flex: 1 }}>{t.doctorPlural}</h4>
         {canEdit ? (
           <>
             <button className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 10px" }} onClick={() => fileRef.current?.click()}>Import .xlsx</button>

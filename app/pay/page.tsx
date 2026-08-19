@@ -1,4 +1,5 @@
 "use client";
+import { useTerms, lower } from "@/lib/terms";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Screen, useMe, Spinner, PageHead } from "@/components/Shell";
@@ -9,6 +10,7 @@ import { getPosition } from "@/lib/geo";
 
 function CollectPaymentInner() {
   const me = useMe();
+  const t = useTerms();
   const router = useRouter();
   const params = useSearchParams();
   const [doctor, setDoctor] = useState<Doc | null>(null);
@@ -41,7 +43,7 @@ function CollectPaymentInner() {
 
   async function record() {
     setErr("");
-    if (!doctor) { setErr("Pick a doctor"); return; }
+    if (!doctor) { setErr(`Pick a ${lower(t.doctor)}`); return; }
     const amt = Math.round(Number(String(amount).replace(/,/g, "")));
     if (!(amt > 0)) { setErr("Enter the amount collected"); return; }
     if (!photo) { setErr("Take a photo of the signed receipt first"); return; }

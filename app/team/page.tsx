@@ -1,4 +1,5 @@
 "use client";
+import { useTerms } from "@/lib/terms";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Screen, useMe, Spinner, Pips, Meter } from "@/components/Shell";
@@ -8,6 +9,7 @@ import { DoctorLink, CallButton } from "@/components/DoctorLink";
 
 export default function Team() {
   const me = useMe();
+  const t = useTerms();
   const [data, setData] = useState<any>(null);
   useEffect(() => {
     api("/api/team").then(setData).catch(() => {});
@@ -69,13 +71,13 @@ export default function Team() {
         <div className="row" style={{ gap: 10, fontSize: 11, color: "var(--color-neutral-600)" }}>
           <span>Team visits <b style={{ color: "var(--color-text)" }}>{data.week.visits}/{data.week.plan}</b></span>
           <span>Joint visits <b style={{ color: "var(--color-text)" }}>{data.week.joint}</b></span>
-          <span style={{ marginLeft: "auto" }}>Sat–Thu · Fri off</span>
+
         </div>
         <Meter pct={data.week.plan ? (data.week.visits / data.week.plan) * 100 : 0} />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
         <Link href="/targets" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>Set targets</Link>
-        <Link href="/doctors" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>Doctors</Link>
+        <Link href="/doctors" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>{t.doctorPlural}</Link>
         <Link href="/summary" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>Day summary</Link>
         <Link href="/competitors" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>Market intel</Link>
       </div>

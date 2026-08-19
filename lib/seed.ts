@@ -1,4 +1,4 @@
-import { DB, Doctor, Order, OrderItem, User, Settings } from "./types";
+import { DB, Doctor, Order, OrderItem, User, Settings, DEFAULT_TERMS } from "./types";
 import { OWNER } from "./config";
 import { hashPassword } from "./passwords";
 
@@ -75,6 +75,10 @@ export function buildSeed(): DB {
     dailySummaryHour: 18,
     editWindowMinutes: 60,
     weeklyStockCheck: true,
+    logoId: null,
+    brandColor: "#2f6fe0",
+    loginFooter: "",
+    terms: { ...DEFAULT_TERMS },
   };
 
   const users: User[] = [

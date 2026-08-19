@@ -35,16 +35,23 @@ export default function Login() {
       <div className="screen-pad" style={{ paddingBottom: 20 }}>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 24 }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 12 }}>
-            <div className="blueprint" style={{ width: 56, height: 56, display: "grid", placeItems: "center" }}>
-              <Icon d={paths.pinDot} size={26} stroke="var(--color-accent)" />
-            </div>
+            {brand?.hasLogo ? (
+              <img src="/api/logo" alt={brand?.companyName ?? "Logo"}
+                style={{ maxWidth: 150, maxHeight: 76, objectFit: "contain", display: "block" }} />
+            ) : (
+              <div className="blueprint" style={{ width: 56, height: 56, display: "grid", placeItems: "center" }}>
+                <Icon d={paths.pinDot} size={26} stroke="var(--color-accent)" />
+              </div>
+            )}
             <div style={{ textAlign: "center" }}>
               <div className="hnum" style={{ fontSize: 26, lineHeight: 1.05 }}>
                 {(brand?.companyName ?? "Pluto Field Tracker").toUpperCase()}
               </div>
-              <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--color-neutral-600)" }}>
-                {brand?.companySub ?? ""}
-              </div>
+              {brand?.companySub ? (
+                <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--color-neutral-600)" }}>
+                  {brand.companySub}
+                </div>
+              ) : null}
             </div>
           </div>
           <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -67,9 +74,9 @@ export default function Login() {
             </div>
           ) : null}
         </div>
-        <div className="hint" style={{ textAlign: "center" }}>
-          {(brand?.cities ?? []).join(" · ")}{brand?.cities?.length ? " — " : ""}Sat–Thu work week
-        </div>
+        {brand?.loginFooter ? (
+          <div className="hint" style={{ textAlign: "center" }}>{brand.loginFooter}</div>
+        ) : null}
       </div>
     </div>
   );

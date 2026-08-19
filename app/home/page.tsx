@@ -1,4 +1,5 @@
 "use client";
+import { useTerms, roleLabel } from "@/lib/terms";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Screen, useMe, Spinner, Pips } from "@/components/Shell";
@@ -16,6 +17,7 @@ const OUTCOME_TAG: Record<string, [string, string]> = {
 
 export default function Home() {
   const me = useMe();
+  const t = useTerms();
   const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [busy, setBusy] = useState(false);
@@ -70,7 +72,7 @@ export default function Home() {
   // Everything that isn't part of the daily flow lives in the icon grid.
   const tiles: { href: string; label: string; icon: keyof typeof paths; badge?: number }[] = [
     { href: "/map", label: "Map", icon: "pin" },
-    { href: "/doctors", label: "Doctors", icon: "pinDot" },
+    { href: "/doctors", label: t.doctorPlural, icon: "pinDot" },
     ...(data.settings?.tasksEnabled ? [{ href: "/tasks", label: "Tasks", icon: "check" as const, badge: openTasks || undefined }] : []),
     ...(data.settings?.spendingsEnabled ? [{ href: "/spendings", label: "Spendings", icon: "receipt" as const }] : []),
     { href: "/stock", label: "Stock", icon: "warehouse" },
@@ -87,7 +89,7 @@ export default function Home() {
         <div style={{ flex: 1 }}>
           <div className="hnum" style={{ fontSize: 19 }}>{me.name}</div>
           <div className="small muted">
-            {me.role === "supervisor" ? "Field supervisor" : "Medical rep"} · {weekdayShort(data.today)} {dmy(data.today)}
+            {roleLabel(t, me.role)} · {weekdayShort(data.today)} {dmy(data.today)}
           </div>
         </div>
         <Link href="/map" className="tag" style={{ textDecoration: "none", background: checkedIn ? "var(--c-coral-soft)" : "var(--color-neutral-200)", color: checkedIn ? "var(--c-coral-deep)" : "var(--color-neutral-600)", padding: "6px 12px", fontWeight: 600 }}>

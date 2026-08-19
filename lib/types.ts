@@ -356,6 +356,28 @@ export interface StoredFile {
   ts: string;
 }
 
+// Every user-facing word a buyer might want to change. Defaults suit a medical
+// distributor; a company selling to pharmacies or salons overrides them.
+export interface Terms {
+  doctor: string;
+  doctorPlural: string;
+  clinic: string;
+  roleAdmin: string;
+  roleSupervisor: string;
+  roleRep: string;
+  roleAccountant: string;
+}
+
+export const DEFAULT_TERMS: Terms = {
+  doctor: "Doctor",
+  doctorPlural: "Doctors",
+  clinic: "Clinic",
+  roleAdmin: "Owner",
+  roleSupervisor: "Supervisor",
+  roleRep: "Medical rep",
+  roleAccountant: "Accountant",
+};
+
 export interface Settings {
   companyName: string;
   companySub: string;
@@ -400,6 +422,12 @@ export interface Settings {
   editWindowMinutes: number;    // how long a rep may fix his own visit/order
  // supervisor + accountant see every task assigned to reps
   weeklyStockCheck: boolean; // non-Erbil reps must count their stock weekly (due Thursday)
+
+  // --- white-label branding ---
+  logoId: string | null;      // uploaded logo, served publicly at /api/logo
+  brandColor: string;         // one hex; the accent ramp is derived from it
+  loginFooter: string;        // free text under the sign-in form ("" hides it)
+  terms: Terms;               // what this company calls things
 }
 
 export interface DB {
