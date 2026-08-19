@@ -157,7 +157,7 @@ export function BottomNav({ me, unread }: { me: Me; unread?: number }) {
     const active = pathname === it.href || (it.href !== "/home" && it.href !== "/acct" && it.href !== "/admin" && pathname.startsWith(it.href));
     return (
       <Link key={it.href} href={it.href} className={active ? "active" : ""}>
-        <Icon d={paths[it.icon]} size={19} />
+        <Icon d={paths[it.icon]} size={22} />
         <span>{it.label === DOCTORS_LABEL ? t.doctorPlural : it.label}</span>
       </Link>
     );

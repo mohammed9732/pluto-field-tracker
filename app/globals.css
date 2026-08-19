@@ -136,7 +136,7 @@ textarea.input { min-height: 70px; resize: vertical; }
 @media (min-width: 480px) {
   .screen { min-height: calc(100dvh - 32px); margin: 16px auto; border: 1px solid var(--color-divider); border-radius: 22px; }
 }
-.screen-pad { flex: 1; display: flex; flex-direction: column; gap: 14px; padding: 20px 18px; padding-bottom: 96px; }
+.screen-pad { flex: 1; display: flex; flex-direction: column; gap: 14px; padding: 20px 18px; padding-bottom: calc(116px + env(safe-area-inset-bottom)); }
 
 /* — tags — */
 .tag {
@@ -163,17 +163,35 @@ textarea.input { min-height: 70px; resize: vertical; }
 .table tbody tr:hover { background: rgba(27, 28, 34, 0.03); }
 
 /* — bottom nav — */
+/* A dock that floats clear of the screen edge rather than sitting flush on it.
+   Inset from the sides so it reads as a raised object, and lifted above the
+   iPhone home indicator — on iOS a bar pinned to bottom:0 ends up tucked under
+   Safari's own toolbar, which is why it seemed to need scrolling to reach. */
 .bottomnav {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
-  max-width: 412px; margin: 0 auto;
+  position: fixed; z-index: 40;
+  left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom));
+  max-width: 392px; margin: 0 auto;
   display: flex; align-items: flex-end;
-  border-top: 1px solid var(--color-divider);
-  padding: 10px 6px calc(12px + env(safe-area-inset-bottom));
-  background: var(--color-neutral-100);
+  padding: 11px 6px 12px;
+  border: 1px solid var(--color-divider);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--color-neutral-100) 88%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
+  backdrop-filter: saturate(180%) blur(16px);
+  box-shadow: 0 1px 2px rgba(27, 28, 34, .06), 0 10px 28px -8px rgba(27, 28, 34, .28);
 }
-@media (min-width: 480px) { .bottomnav { border-radius: 0 0 22px 22px; bottom: 16px; border: 1px solid var(--color-divider); } }
-.bottomnav a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--color-neutral-500); text-decoration: none; font-size: 10px; }
-.bottomnav a.active { color: var(--color-accent); }
+/* Older engines that cannot mix colours still get a solid, legible bar. */
+@supports not (background: color-mix(in srgb, red 50%, transparent)) {
+  .bottomnav { background: var(--color-neutral-100); }
+}
+@media (min-width: 480px) { .bottomnav { bottom: 26px; } }
+.bottomnav a {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  color: var(--color-neutral-500); text-decoration: none;
+  font-size: 11px; letter-spacing: .005em; padding: 2px 0;
+  min-height: 46px; justify-content: center;
+}
+.bottomnav a.active { color: var(--color-accent); font-weight: 500; }
 .chat-blob {
   position: relative; width: 52px; height: 52px; margin-top: -30px;
   background: var(--c-violet);
