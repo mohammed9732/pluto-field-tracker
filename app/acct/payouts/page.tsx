@@ -1,0 +1,71 @@
+"use client";
+import { useCallback, useEffect, useState } from "react";
+import { Screen, useMe, Spinner } from "@/components/Shell";
+import { api, dmy, money, monthName } from "@/lib/fmt";
+
+export default function Payouts() {
+  const me = useMe();
+  const [data, setData] = useState<any>(null);
+  const load = useCallback(() => {
+    api("/api/money?view=payouts").then(setData).catch(() => {});
+  }, []);
+  useEffect(load, [load]);
+  if (!me || !data) return <Spinner />;
+
+  async function pay(userId: number) {
+    if (!window.confirm("Mark this quarter as paid? This locks it with timestamp and your ID.")) return;
+    await api("/api/money", { json: { action: "payout", userId, quarter: data.quarter } });
+    load();
+  }
+
+  return (
+    <Screen me={me} wide>
+      <div className="row" style={{ alignItems: "baseline" }}>
+        <h4 style={{ margin: 0, flex: 1 }}>Payouts</h4>
+        <span className="tag tag-neutral">{data.quarter.replace("-", " ")}</span>
+      </div>
+      {data.rows.map((r: any) => (
+        <div key={r.userId} className="card" style={{ gap: 8 }}>
+          <div className="row" style={{ gap: 10 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 500 }}>{r.name}</div>
+              <div className="small muted">
+                {r.months.map((m: any) => `${monthName(m.period).slice(0, 3)} ${(m.amount + (m.commission ?? 0)) > 0 ? money(m.amount + (m.commission ?? 0)) : "—"}`).join(" · ")}
+              </div>
+              {r.commission > 0 ? (
+                <div className="small muted">Target incentives {money(r.incentives ?? 0)} + sales commission {money(r.commission)}</div>
+              ) : null}
+            </div>
+            <span className="hnum" style={{ fontSize: 19 }}>{money(r.total)}</span>
+          </div>
+          {r.paid ? (
+            <div className="row" style={{ gap: 8, fontSize: 11, color: "var(--color-neutral-600)" }}>
+              <span className="tag tag-ok">Paid</span>
+              {dmy(r.paid.paidAt)} {r.paid.paidAt.slice(11, 16)} · by {r.paid.paidByName}
+            </div>
+          ) : (
+            <button className="btn btn-primary btn-block" style={{ padding: 10 }} onClick={() => pay(r.userId)} disabled={r.total <= 0}>
+              Mark as paid
+            </button>
+          )}
+        </div>
+      ))}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+        <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Paid</h6>
+        {data.history.length === 0 ? <div className="small muted">No payout history yet.</div> : null}
+        {data.history.map((p: any) => (
+          <div key={p.id} className="listrow" style={{ padding: "8px 0" }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13 }}>{p.quarter.replace("-", " ")} · {p.name}</div>
+              <div className="small muted">paid {dmy(p.paidAt)} by {p.paidByName}</div>
+            </div>
+            <span className="tag tag-ok">Paid · {money(p.amount)}</span>
+          </div>
+        ))}
+      </div>
+      <div className="hint" style={{ marginTop: "auto" }}>
+        Marking as paid locks the quarter with timestamp and accountant ID. Reps see accrued vs paid, read-only.
+      </div>
+    </Screen>
+  );
+}

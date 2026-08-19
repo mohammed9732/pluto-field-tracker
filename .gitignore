@@ -1,0 +1,19 @@
+# Real company data - staff records, doctors, receipts, chat history.
+# This must NEVER be uploaded to GitHub. It lives on the server's disk instead.
+/data
+
+# Secrets
+.env
+.env.local
+.env*.local
+
+# Build output and dependencies
+/node_modules
+/.next
+/out
+*.tsbuildinfo
+next-env.d.ts
+
+# OS noise
+.DS_Store
+Thumbs.db
