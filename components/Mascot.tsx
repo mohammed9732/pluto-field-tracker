@@ -33,7 +33,6 @@ function DrawnWolf({
     <svg
       className={`wolf ${className}`}
       data-mood={mood}
-      width={size}
       height={size * 1.25}
       viewBox="0 0 140 175"
       fill="none"
@@ -193,8 +192,10 @@ export function Mascot({
       alt="Company mascot"
       data-mood={mood}
       className={`mascot-art ${className}`}
-      width={size}
-      style={{ width: size, height: "auto", maxHeight: size * 1.4, flex: "none", display: "block" }}
+      // Height drives the size, not width. Each pose has a different width — a
+      // raised wing is far wider than a standing bird — so sizing by width would
+      // make him visibly grow and shrink between screens.
+      style={{ height: size * 1.25, width: "auto", maxWidth: size * 1.6, flex: "none", display: "block" }}
       onError={() => setArtFailed(true)}
     />
   );

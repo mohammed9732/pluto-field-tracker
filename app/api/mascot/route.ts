@@ -22,7 +22,10 @@ export async function GET(req: Request) {
     const p = path.join(UPLOAD_DIR, pick);
     if (!meta || !fs.existsSync(p)) return new Response(null, { status: 404 });
     return new Response(fs.readFileSync(p), {
-      headers: { "Content-Type": meta.mime, "Cache-Control": "public, max-age=300" },
+      // An hour, not minutes: this is a 200KB image on a rep's mobile data and it
+      // barely ever changes. The cost of it being an hour stale after you upload
+      // new artwork is far lower than re-downloading it all day.
+      headers: { "Content-Type": meta.mime, "Cache-Control": "public, max-age=3600" },
     });
   } catch {
     return new Response(null, { status: 404 });
