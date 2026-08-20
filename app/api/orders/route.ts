@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { logActivity, notify, nowIso, orderTotal, priceForQty, stockCityIds } from "@/lib/compute";
+import { closedError, isClosed, logActivity, notify, nowIso, orderTotal, priceForQty, recordChange, stockCityIds } from "@/lib/compute";
 import { OrderItem } from "@/lib/types";
 
 function enrich(db: ReturnType<typeof getDb>, o: any) {
@@ -54,6 +54,12 @@ export async function POST(req: Request) {
 
     if (b.action === "create") {
       requireUser(["rep", "supervisor"]);
+      // A retry of something that already landed: hand back what we stored
+      // rather than billing the doctor twice.
+      if (b.clientRef) {
+        const already = db.orders.find((o) => o.clientRef === String(b.clientRef));
+        if (already) return Response.json({ ok: true, order: enrich(db, already), duplicate: true });
+      }
       const isSample = !!b.isSample && db.settings.samplesEnabled;
       const items: OrderItem[] = (b.items ?? [])
         .filter((it: any) => Number(it.qty) > 0)
@@ -73,9 +79,13 @@ export async function POST(req: Request) {
       const order = {
         id: nextId(db), doctorId: Number(b.doctorId), createdBy: user.id, createdAt: nowIso(),
         status: "pending" as const, isSample, items,
+        clientRef: b.clientRef ? String(b.clientRef) : null,
         approvedBy: null, approvedAt: null, rejectNote: null,
         invoicePdfName: null, invoicePdfId: null, invoicedBy: null, invoicedAt: null,
       };
+      if (isClosed(db, order.createdAt)) {
+        return Response.json({ error: closedError(db) }, { status: 400 });
+      }
       db.orders.push(order);
       const approvers = db.users.filter((u) => u.active && (u.role === "supervisor" || u.role === "admin") && u.id !== user.id);
       for (const a of approvers) notify(db, () => nextId(db), a.id, `New ${isSample ? "SAMPLE request" : "order"} from ${user.name} awaits approval.`, "/approvals");
@@ -98,6 +108,11 @@ export async function POST(req: Request) {
         );
       }
       if (order.status !== "pending") return Response.json({ error: "Order is not pending" }, { status: 400 });
+      // Approving is what books revenue, so it must respect a closed month even
+      // though the order itself was raised earlier.
+      if (isClosed(db, order.createdAt)) {
+        return Response.json({ error: closedError(db) }, { status: 400 });
+      }
       if (b.action === "reject") {
         if (!b.note) return Response.json({ error: "Rejection needs a note" }, { status: 400 });
         order.status = "rejected";
@@ -112,6 +127,8 @@ export async function POST(req: Request) {
             const it = order.items.find((x) => x.productId === Number(p.productId));
             const next = Number(p.price);
             if (it && next > 0 && next !== it.price) {
+              recordChange(db, () => nextId(db), user.id, "order", order.id, "price changed",
+                `${db.products.find((p) => p.id === it.productId)?.name ?? "item"}: ${it.price.toLocaleString()} → ${next.toLocaleString()}`);
               (order.priceEdits ??= []).push({
                 productId: it.productId, from: it.price, to: next,
                 by: user.id, at: nowIso(),
@@ -124,6 +141,9 @@ export async function POST(req: Request) {
         order.approvedBy = user.id;
         order.approvedAt = nowIso();
       }
+      recordChange(db, () => nextId(db), user.id, "order", order.id,
+        order.status === "approved" ? "approved" : "returned",
+        order.rejectNote ? `Note: ${order.rejectNote}` : null);
       notify(db, () => nextId(db), order.createdBy, `Your order for ${db.doctors.find((d) => d.id === order.doctorId)?.name ?? "?"} was ${order.status} by ${user.name}.`, "/orders");
       logActivity(db, () => nextId(db), user.id, `${order.status} order #${order.id}`);
       saveDb();

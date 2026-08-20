@@ -1,7 +1,7 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { hashPassword } from "@/lib/passwords";
 import { requireUser, errResponse } from "@/lib/auth";
-import { cityName, logActivity, notify } from "@/lib/compute";
+import { cityName, logActivity, notify, recordChange } from "@/lib/compute";
 
 export async function GET() {
   try {
@@ -38,7 +38,10 @@ export async function POST(req: Request) {
           dailyMin: b.dailyMin != null ? Number(b.dailyMin) : u.dailyMin,
           active: b.active != null ? !!b.active : u.active,
         });
-        if (b.password) u.password = hashPassword(String(b.password));
+        if (b.password) {
+          u.password = hashPassword(String(b.password));
+          recordChange(db, () => nextId(db), user.id, "user", u.id, "password reset", null);
+        }
       } else {
         if (!b.name || !b.phone) return Response.json({ error: "Name and phone required" }, { status: 400 });
         db.users.push({

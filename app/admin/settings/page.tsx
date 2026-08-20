@@ -83,6 +83,9 @@ export default function ControlPanel() {
   const [wipeWord, setWipeWord] = useState("");
   const [wipeMsg, setWipeMsg] = useState("");
   const [wipeBusy, setWipeBusy] = useState(false);
+  const [closeMonth, setCloseMonth] = useState("");
+  const [closeMsg, setCloseMsg] = useState("");
+  const [closeBusy, setCloseBusy] = useState(false);
 
   const load = useCallback(() => {
     api("/api/settings").then((r: any) => setSettings(r.settings)).catch(() => {});
@@ -418,6 +421,50 @@ export default function ControlPanel() {
           <a className="btn btn-secondary" href="/api/backup" style={{ padding: 9, textAlign: "center" }}>
             Download a backup
           </a>
+        </div>
+
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Closing the month</h6>
+        <div className="card" style={{ gap: 10 }}>
+          <div className="small muted">
+            Once a month is closed, nothing dated in it can be added or edited — so payroll
+            you have already paid cannot move underneath you. A backup is taken first.
+          </div>
+          <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+            <span className="tag tag-neutral">
+              {settings.closedThrough ? `Closed through ${settings.closedThrough}` : "Nothing closed yet"}
+            </span>
+          </div>
+          <div className="row" style={{ gap: 8 }}>
+            <input className="input" placeholder="2026-07" value={closeMonth}
+              onChange={(e) => setCloseMonth(e.target.value)} style={{ flex: 1 }} />
+            <button className="btn btn-primary" style={{ flex: "none" }} disabled={closeBusy}
+              onClick={async () => {
+                setCloseBusy(true); setCloseMsg("");
+                try {
+                  const r = await api<any>("/api/close", { json: { period: closeMonth } });
+                  setCloseMsg(`Closed through ${r.closedThrough}.`);
+                  setCloseMonth("");
+                  load();
+                } catch (e: any) { setCloseMsg(e.message); }
+                finally { setCloseBusy(false); }
+              }}>
+              {closeBusy ? "Closing…" : "Close month"}
+            </button>
+          </div>
+          {settings.closedThrough ? (
+            <button className="btn btn-ghost" style={{ fontSize: 12, alignSelf: "flex-start" }}
+              onClick={async () => {
+                if (!window.confirm("Reopen everything? Figures you have already paid could change.")) return;
+                try {
+                  await api("/api/close", { json: { action: "reopen", period: "" } });
+                  setCloseMsg("Reopened. Everything is editable again.");
+                  load();
+                } catch (e: any) { setCloseMsg(e.message); }
+              }}>
+              Reopen all months
+            </button>
+          ) : null}
+          {closeMsg ? <div className="small" style={{ fontWeight: 600 }}>{closeMsg}</div> : null}
         </div>
 
         <h6 style={{ margin: "8px 0 0", color: "var(--c-coral-deep)" }}>Danger zone</h6>

@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { doctorsFor, logActivity, notify, nowIso, todayStr } from "@/lib/compute";
+import { closedError, doctorsFor, isClosed, logActivity, notify, nowIso, recordChange, todayStr } from "@/lib/compute";
 
 // Payments are standalone records: doctor + amount + method + photo of the signed
 // physical receipt. Deliberately NOT linked to invoices — the ERP owns balances.
@@ -45,6 +45,15 @@ export async function POST(req: Request) {
       return Response.json({ error: "Photo of the signed receipt is required" }, { status: 400 });
     }
 
+    if (b.clientRef) {
+      const already = db.payments.find((p) => p.clientRef === String(b.clientRef));
+      if (already) {
+        return Response.json({
+          ok: true, duplicate: true,
+          payment: { ...already, doctorName: doctor.name, clinic: doctor.clinic, collectedByName: user.name },
+        });
+      }
+    }
     const year = todayStr().slice(0, 4);
     const seqNo = db.payments.filter((p) => p.ts.startsWith(year)).length + 148;
     const payment = {
@@ -59,8 +68,14 @@ export async function POST(req: Request) {
       lat: b.lat ?? null,
       lng: b.lng ?? null,
       photo: b.photo ?? null,
+      clientRef: b.clientRef ? String(b.clientRef) : null,
     };
+    if (isClosed(db, payment.ts)) {
+      return Response.json({ error: closedError(db) }, { status: 400 });
+    }
     db.payments.push(payment);
+    recordChange(db, () => nextId(db), user.id, "payment", payment.id, "recorded",
+      `${amount.toLocaleString()} IQD from ${doctor.name}`);
     logActivity(db, () => nextId(db), user.id, `recorded ${amount.toLocaleString()} IQD from ${doctor.name}`);
     // Money coming in is the accountant's business, and the owner's.
     for (const a of db.users.filter((u) => u.active && (u.role === "accountant" || u.role === "admin") && u.id !== user.id)) {

@@ -412,6 +412,21 @@ textarea.input { min-height: 78px; resize: vertical; }
   border-top: 1px dashed rgba(255, 159, 10, .45);
 }
 
+/* Work still sitting on the phone. Amber because it is not lost — it is queued.
+   It only turns coral when the office actually refused something. */
+.outbox {
+  border-radius: var(--r-md); overflow: hidden;
+  background: var(--c-amber-soft);
+  border: 1px solid rgba(255, 159, 10, .45);
+}
+.outbox-bad { background: var(--c-coral-soft); border-color: rgba(255, 79, 69, .45); }
+.outbox-head {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 10px 12px; border: none; background: none; cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 700; color: var(--c-amber-deep);
+}
+.outbox-bad .outbox-head { color: var(--c-coral-deep); }
+
 /* Rafi with something to say — empty screens and small victories. */
 .mnote {
   display: flex; align-items: center; gap: 13px;

@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { logActivity, nowIso, todayStr, visitsOn } from "@/lib/compute";
+import { closedError, isClosed, logActivity, nowIso, todayStr, visitsOn } from "@/lib/compute";
 
 export async function GET(req: Request) {
   try {
@@ -37,6 +37,10 @@ export async function PATCH(req: Request) {
     const visit = db.visits.find((v) => v.id === Number(b.id));
     if (!visit) return Response.json({ error: "Visit not found" }, { status: 404 });
     if (visit.userId !== user.id) return Response.json({ error: "Not your visit" }, { status: 403 });
+    // A closed month cannot be corrected any more.
+    if (isClosed(db, visit.date)) {
+      return Response.json({ error: closedError(db) }, { status: 400 });
+    }
     const ageMin = (Date.now() - new Date(`${visit.date}T${visit.time}:00`).getTime()) / 60000;
     const win = db.settings.editWindowMinutes || 60;
     if (ageMin > win) return Response.json({ error: `The ${win}-minute correction window has passed — ask your supervisor` }, { status: 400 });
@@ -99,7 +103,16 @@ export async function POST(req: Request) {
       lng: b.lng ?? null,
       photo: db.settings.visitPhotos ? b.photo ?? null : null,
       outOfLocation,
+      clientRef: b.clientRef ? String(b.clientRef) : null,
     };
+    // A retry of a visit that already landed must not create a second one.
+    if (b.clientRef) {
+      const already = db.visits.find((v) => v.clientRef === String(b.clientRef));
+      if (already) return Response.json({ ok: true, visit: already, duplicate: true });
+    }
+    if (isClosed(db, todayStr())) {
+      return Response.json({ error: closedError(db) }, { status: 400 });
+    }
     db.visits.push(visit);
     // Competitor intel captured while the rep is still with the doctor.
     if (db.settings.competitorTracking && b.competitor?.competitor) {

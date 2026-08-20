@@ -1,4 +1,4 @@
-import { DB, Order, Product, User } from "./types";
+import { ChangeLog, DB, Order, Product, User } from "./types";
 
 // Tier price: base unitPrice, overridden by the best tier the quantity reaches.
 export function priceForQty(product: Product, qty: number): number {
@@ -31,6 +31,34 @@ export function notifyOnce(db: DB, seq: () => number, userId: number, body: stri
     return;
   }
   notify(db, seq, userId, body, href);
+}
+
+// Attach a change to the record it happened to, so the record can tell its own
+// story later. Kept deliberately short and readable — this is meant to be read
+// by the owner, not parsed by a machine.
+export function recordChange(
+  db: DB, seq: () => number, byId: number,
+  entity: ChangeLog["entity"], entityId: number,
+  action: string, detail?: string | null,
+) {
+  // A database written before this feature has no history array at all. The
+  // loader backfills it, but never crash a save just because a log is missing.
+  if (!Array.isArray(db.history)) db.history = [];
+  db.history.push({ id: seq(), entity, entityId, action, detail: detail ?? null, byId, at: nowIso() });
+  // Keep the file from growing without limit; the oldest entries go first.
+  if (db.history.length > 8000) db.history.splice(0, db.history.length - 8000);
+}
+
+// A month is closed once it is at or before settings.closedThrough. Closed
+// months are read-only so payroll that has already been paid cannot shift.
+export function isClosed(db: DB, dateIso: string): boolean {
+  const through = db.settings.closedThrough;
+  if (!through) return false;
+  return dateIso.slice(0, 7) <= through;
+}
+
+export function closedError(db: DB): string {
+  return `${db.settings.closedThrough} and earlier are closed. Ask the owner to reopen the month first.`;
 }
 
 export function logActivity(db: DB, seq: () => number, userId: number, action: string) {

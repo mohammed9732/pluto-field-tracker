@@ -71,6 +71,9 @@ export interface Ping {
 export type VisitOutcome = "order" | "follow_up" | "payment";
 
 export interface Visit {
+  // Set by the phone when a record was queued offline. The server uses it to
+  // recognise a retry of something it already stored.
+  clientRef?: string | null;
   id: number;
   userId: number;
   doctorId: number;
@@ -96,6 +99,9 @@ export interface OrderItem {
 export type OrderStatus = "pending" | "approved" | "rejected" | "invoiced";
 
 export interface Order {
+  // Set by the phone when a record was queued offline. The server uses it to
+  // recognise a retry of something it already stored.
+  clientRef?: string | null;
   id: number;
   doctorId: number;
   createdBy: number;
@@ -115,6 +121,9 @@ export interface Order {
 }
 
 export interface Payment {
+  // Set by the phone when a record was queued offline. The server uses it to
+  // recognise a retry of something it already stored.
+  clientRef?: string | null;
   id: number;
   ref: string; // app reference only — not an accounting document
   doctorId: number;
@@ -322,6 +331,19 @@ export interface Notification {
   read: boolean;
 }
 
+// A readable record of who changed what. The activity feed is a flat stream for
+// the owner; this is attached to a specific record so you can open one doctor or
+// one order and see its whole story.
+export interface ChangeLog {
+  id: number;
+  entity: "doctor" | "order" | "payment" | "user" | "target" | "settings" | "plan" | "visit";
+  entityId: number;
+  action: string;        // short, human: "price changed", "approved", "city moved"
+  detail: string | null; // what actually changed, e.g. "Class B → Class A"
+  byId: number;
+  at: string;
+}
+
 export interface Announcement {
   id: number;
   body: string;
@@ -431,6 +453,10 @@ export interface Settings {
   mascotHelloId: string | null;
   mascotCheerId: string | null;
   mascotSadId: string | null;
+
+  // Months up to and including this one are closed: nothing dated inside them
+  // can be created or edited any more. "YYYY-MM", or null when nothing is closed.
+  closedThrough: string | null;
   brandColor: string;         // one hex; the accent ramp is derived from it
   loginFooter: string;        // free text under the sign-in form ("" hides it)
   terms: Terms;               // what this company calls things
@@ -457,6 +483,7 @@ export interface DB {
   tasks: TaskItem[];
   notifications: Notification[];
   announcements: Announcement[];
+  history: ChangeLog[];
   deductions: Deduction[];
   activity: Activity[];
   files: StoredFile[];

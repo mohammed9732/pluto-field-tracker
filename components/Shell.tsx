@@ -1,4 +1,5 @@
 "use client";
+import { OutboxBar } from "./OutboxBar";
 import { setTerms, setBrand, useBrand, useTerms } from "@/lib/terms";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -297,6 +298,7 @@ export function Screen({ me, children, nav = true, alerts = true, wide = false }
         {wide && me ? <DeskSidebar me={me} /> : null}
         <div className="screen-pad">
           {alerts && me ? <AlertsBar /> : null}
+          {me ? <OutboxBar /> : null}
           {children}
         </div>
       </div>

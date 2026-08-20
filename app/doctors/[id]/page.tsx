@@ -1,4 +1,5 @@
 "use client";
+import { RecordHistory } from "@/components/RecordHistory";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -183,6 +184,7 @@ export default function DoctorProfile() {
           {data.payments.length === 0 ? <div className="small muted">No payments recorded.</div> : null}
         </>
       ) : null}
+      <RecordHistory entity="doctor" id={d.id} />
     </Screen>
   );
 }

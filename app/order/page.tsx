@@ -1,4 +1,5 @@
 "use client";
+import { enqueue, isOffline, newRef } from "@/lib/outbox";
 import { useTerms, lower } from "@/lib/terms";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -70,15 +71,20 @@ function NewOrderInner() {
     if (lines.every((l) => l.qty === 0)) { setErr("Add at least one product"); return; }
     setBusy(true);
     try {
-      await api("/api/orders", {
-        json: {
-          action: "create", doctorId: doctor.id, isSample,
-          items: lines.filter((l) => l.qty > 0).map((l) => ({
-            productId: l.productId, qty: l.qty,
-            price: l.price.trim() !== "" ? parseFloat(l.price.replace(/,/g, "")) : null,
-          })),
-        },
-      });
+      const body = {
+        action: "create", doctorId: doctor.id, isSample, clientRef: newRef(),
+        items: lines.filter((l) => l.qty > 0).map((l) => ({
+          productId: l.productId, qty: l.qty,
+          price: l.price.trim() !== "" ? parseFloat(l.price.replace(/,/g, "")) : null,
+        })),
+      };
+      try {
+        await api("/api/orders", { json: body });
+      } catch (netErr) {
+        if (!isOffline(netErr)) throw netErr;
+        enqueue("/api/orders", body, `Order — ${doctor.name}`);
+        alert("No signal. The order is saved on your phone and will send itself as soon as you are back online.");
+      }
       router.push("/orders");
     } catch (e: any) {
       setErr(e.message);

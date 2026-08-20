@@ -21,6 +21,11 @@ export function getDb(): DB {
     // the UI as "undefined" text or a crash.
     loaded.settings = { ...buildSeed().settings, ...loaded.settings };
     loaded.settings.terms = { ...DEFAULT_TERMS, ...(loaded.settings.terms ?? {}) };
+    // Collections added by later features are simply absent in an older file.
+    for (const key of ["history", "brochures", "competitorNotes", "stockChecks",
+                       "stockTransfers", "pushSubs", "files"] as const) {
+      if (!Array.isArray((loaded as any)[key])) (loaded as any)[key] = [];
+    }
     globalThis.__plutoDb = loaded;
   } else {
     globalThis.__plutoDb = SEED_DEMO ? buildSeed() : buildEmpty();

@@ -1,4 +1,5 @@
 "use client";
+import { enqueue, isOffline, newRef } from "@/lib/outbox";
 import { useTerms, lower } from "@/lib/terms";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -37,8 +38,16 @@ function CollectPaymentInner() {
   async function attachPhoto(file: File) {
     const fd = new FormData();
     fd.append("file", file);
-    const r = await fetch("/api/files", { method: "POST", body: fd }).then((x) => x.json());
-    if (r.id) setPhoto({ id: r.id, name: file.name });
+    try {
+      const r = await fetch("/api/files", { method: "POST", body: fd }).then((x) => x.json());
+      if (r.id) setPhoto({ id: r.id, name: file.name });
+      else setErr("The photo did not upload. Try again.");
+    } catch {
+      // Photos are too big to hold on the phone, so unlike a visit or an order a
+      // payment genuinely cannot be recorded without signal. Say so plainly
+      // rather than letting the rep tap Record and wonder why nothing happens.
+      setErr("No signal, so the receipt photo cannot upload. Step outside and try again — or log a visit now and record the payment once you have signal.");
+    }
   }
 
   async function record() {
@@ -50,10 +59,21 @@ function CollectPaymentInner() {
     setBusy(true);
     try {
       const p = await getPosition();
-      const r = await api("/api/payments", {
-        json: { doctorId: doctor.id, amount: amt, method, note, photo: photo.id, lat: p.lat, lng: p.lng },
-      });
-      setDone(r.payment);
+      const body = {
+        doctorId: doctor.id, amount: amt, method, note,
+        photo: photo.id, lat: p.lat, lng: p.lng, clientRef: newRef(),
+      };
+      // The photo is already on the server by this point, so the payment itself
+      // is small enough to queue if the connection drops between the two.
+      try {
+        const r = await api("/api/payments", { json: body });
+        setDone(r.payment);
+      } catch (netErr) {
+        if (!isOffline(netErr)) throw netErr;
+        enqueue("/api/payments", body, `Payment — ${doctor.name}`);
+        alert("Signal dropped. The receipt photo is already uploaded and the payment will send itself the moment you are back online.");
+        router.push("/orders");
+      }
     } catch (e: any) {
       setErr(e.message);
     } finally {

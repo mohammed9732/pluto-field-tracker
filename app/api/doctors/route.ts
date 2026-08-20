@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { cityIds, currentPeriod, doctorsFor, nowIso } from "@/lib/compute";
+import { cityIds, currentPeriod, doctorsFor, nowIso, recordChange } from "@/lib/compute";
 
 export async function GET(req: Request) {
   try {
@@ -100,12 +100,24 @@ export async function POST(req: Request) {
         requireUser(["supervisor", "admin"]);
         const doc = db.doctors.find((d) => d.id === Number(b.id));
         if (!doc) return Response.json({ error: "Doctor not found" }, { status: 404 });
-        Object.assign(doc, {
+        const next = {
           name: b.name ?? doc.name, clinic: b.clinic ?? doc.clinic, city: b.city ?? doc.city,
           area: b.area ?? doc.area, address: b.address ?? doc.address, class: b.class ?? doc.class,
           specialty: b.specialty ?? doc.specialty, phone: b.phone ?? doc.phone,
           potentialMonthly: b.potentialMonthly != null ? Math.max(0, Math.round(Number(b.potentialMonthly))) : doc.potentialMonthly,
-        });
+        };
+        // Record each field that actually moved, in words the owner can read.
+        const labels: Record<string, string> = {
+          name: "Name", clinic: "Clinic", city: "City", area: "Area", address: "Address",
+          class: "Class", specialty: "Specialty", phone: "Phone", potentialMonthly: "Monthly potential",
+        };
+        for (const [k, v] of Object.entries(next)) {
+          const before = (doc as any)[k];
+          if (String(before ?? "") === String(v ?? "")) continue;
+          recordChange(db, () => nextId(db), user.id, "doctor", doc.id, `${labels[k] ?? k} changed`,
+            `${before || "(empty)"} → ${v || "(empty)"}`);
+        }
+        Object.assign(doc, next);
         saveDb();
         return Response.json({ ok: true, doctor: doc });
       }

@@ -1,4 +1,5 @@
 "use client";
+import { enqueue, isOffline, newRef } from "@/lib/outbox";
 import { useTerms, lower } from "@/lib/terms";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -74,7 +75,20 @@ function LogVisitInner() {
         photo: photo?.id ?? null,
         competitor: compOn && comp.competitor.trim() ? { ...comp, price: Number(String(comp.price).replace(/,/g, "")) || 0 } : null,
       };
-      let r = await api<any>("/api/visits", { json: payload });
+      payload.clientRef = newRef();
+      let r: any;
+      try {
+        r = await api<any>("/api/visits", { json: payload });
+      } catch (netErr) {
+        // No signal. Keep the visit on the phone rather than losing it while the
+        // rep is still standing in the clinic.
+        if (!isOffline(netErr)) throw netErr;
+        enqueue("/api/visits", { ...payload, acceptOutOfLocation: true },
+          `Visit — ${doctor.name}`);
+        alert("No signal. The visit is saved on your phone and will send itself as soon as you are back online.");
+        router.push("/home");
+        return;
+      }
       if (r.needsConfirm) {
         const msg = r.distance != null
           ? `You are ${r.distance >= 1000 ? (r.distance / 1000).toFixed(1) + " km" : r.distance + " m"} from ${doctor.name}'s saved clinic pin (allowed: ${r.radius} m).\n\nSave anyway? It will be flagged "out of location" to the supervisor and owner.`
