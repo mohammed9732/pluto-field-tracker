@@ -192,10 +192,13 @@ export function Mascot({
       alt="Company mascot"
       data-mood={mood}
       className={`mascot-art ${className}`}
-      // Height drives the size, not width. Each pose has a different width — a
-      // raised wing is far wider than a standing bird — so sizing by width would
-      // make him visibly grow and shrink between screens.
-      style={{ height: size * 1.25, width: "auto", maxWidth: size * 1.6, flex: "none", display: "block" }}
+      // A square box with object-fit: contain. Poses differ a lot in shape — arms
+      // spread wide is far wider than standing — and sizing by either dimension
+      // alone made him grow and shrink between screens.
+      style={{
+        width: size * 1.3, height: size * 1.3,
+        objectFit: "contain", flex: "none", display: "block",
+      }}
       onError={() => setArtFailed(true)}
     />
   );
