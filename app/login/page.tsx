@@ -39,10 +39,8 @@ export default function Login() {
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 12 }}>
             {brand?.hasLogo ? (
               <img src="/api/logo" alt={brand?.companyName ?? "Logo"}
-                style={{ maxWidth: 150, maxHeight: 76, objectFit: "contain", display: "block" }} />
-            ) : (
-              <Mascot size={104} mood="wave" />
-            )}
+                style={{ maxWidth: 160, maxHeight: 82, objectFit: "contain", display: "block" }} />
+            ) : null}
             <div style={{ textAlign: "center" }}>
               <div className="hnum" style={{ fontSize: 26, lineHeight: 1.05 }}>
                 {(brand?.companyName ?? "Pluto Field Tracker").toUpperCase()}

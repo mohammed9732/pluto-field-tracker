@@ -406,6 +406,11 @@ textarea.input { min-height: 78px; resize: vertical; }
   font-weight: 800; color: var(--c-amber-deep); margin-bottom: 3px;
 }
 .boost-line { font-size: 13.5px; line-height: 1.42; font-weight: 500; }
+.boost-ar {
+  font-size: 13.5px; line-height: 1.65; font-weight: 500;
+  margin-top: 5px; padding-top: 5px;
+  border-top: 1px dashed rgba(255, 159, 10, .45);
+}
 
 /* — sign-in backdrop —
    A slow drift of brand-tinted light. Two blobs on long, unequal loops so the
