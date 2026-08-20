@@ -86,6 +86,8 @@ export default function ControlPanel() {
   const [closeMonth, setCloseMonth] = useState("");
   const [closeMsg, setCloseMsg] = useState("");
   const [closeBusy, setCloseBusy] = useState(false);
+  const [demoBusy, setDemoBusy] = useState(false);
+  const [demoMsg, setDemoMsg] = useState("");
 
   const load = useCallback(() => {
     api("/api/settings").then((r: any) => setSettings(r.settings)).catch(() => {});
@@ -465,6 +467,30 @@ export default function ControlPanel() {
             </button>
           ) : null}
           {closeMsg ? <div className="small" style={{ fontWeight: 600 }}>{closeMsg}</div> : null}
+        </div>
+
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Sample data</h6>
+        <div className="card" style={{ gap: 10 }}>
+          <div className="small muted">
+            Fills the app with a realistic demo company — staff, doctors, visits, orders
+            and payments — so you can show it in training. Your logo, colours, wording and
+            mascot are kept. Clear it from the danger zone below when you go live.
+          </div>
+          <button className="btn btn-secondary" style={{ alignSelf: "flex-start" }}
+            disabled={demoBusy}
+            onClick={async () => {
+              if (!window.confirm("Load sample data? Anything currently in the app is replaced. A backup is saved first, and you may need to sign in again.")) return;
+              setDemoBusy(true); setDemoMsg("");
+              try {
+                const r = await api<any>("/api/reset", { json: { action: "loadDemo" } });
+                setDemoMsg(`Loaded ${r.counts.doctors} doctors, ${r.counts.orders} orders, ${r.counts.users} people. Reloading…`);
+                setTimeout(() => window.location.assign(r.signOut ? "/login" : "/admin"), 1800);
+              } catch (e: any) { setDemoMsg(e.message); }
+              finally { setDemoBusy(false); }
+            }}>
+            {demoBusy ? "Loading…" : "Load sample data"}
+          </button>
+          {demoMsg ? <div className="small" style={{ fontWeight: 600 }}>{demoMsg}</div> : null}
         </div>
 
         <h6 style={{ margin: "8px 0 0", color: "var(--c-coral-deep)" }}>Danger zone</h6>

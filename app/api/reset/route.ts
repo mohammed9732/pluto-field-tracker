@@ -1,6 +1,7 @@
-import { getDb, saveDb, snapshot, UPLOAD_DIR } from "@/lib/db";
+import { getDb, saveDb, nextId, snapshot, UPLOAD_DIR } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { buildEmpty } from "@/lib/seed";
+import { buildEmpty, buildSeed } from "@/lib/seed";
+import { recordChange } from "@/lib/compute";
 import fs from "fs";
 import path from "path";
 
@@ -13,12 +14,59 @@ export async function POST(req: Request) {
     const user = requireUser(["admin"]);
     const b = await req.json();
 
-    if (String(b.confirm ?? "").trim().toUpperCase() !== "DELETE") {
-      return Response.json({ error: 'Type DELETE to confirm.' }, { status: 400 });
-    }
     const mode = b.mode === "everything" ? "everything" : "records";
 
     const db = getDb();
+
+    // Fill an empty company with the demo world so it can be shown in training.
+    // Branding is kept — the sample data is there to demonstrate YOUR app, not a
+    // generic one — but the cities and people come from the demo, because the
+    // sample doctors and orders refer to them.
+    if (b.action === "loadDemo") {
+      snapshot("before-sample-data");
+      const demo = buildSeed();
+      const keep = db.settings;
+      const owner = db.users.find((u) => u.id === user.id);
+
+      Object.assign(db, demo);
+      db.settings = {
+        ...demo.settings,
+        companyName: keep.companyName,
+        companySub: keep.companySub,
+        loginFooter: keep.loginFooter,
+        logoId: keep.logoId,
+        brandColor: keep.brandColor,
+        terms: keep.terms,
+        mascotIdleId: keep.mascotIdleId,
+        mascotHelloId: keep.mascotHelloId,
+        mascotCheerId: keep.mascotCheerId,
+        mascotSadId: keep.mascotSadId,
+        closedThrough: null,
+      };
+      // The real owner takes over the demo owner's seat, so their phone and
+      // password still work and every sample record still points at someone.
+      const demoAdmin = db.users.find((u) => u.role === "admin");
+      let signOut = false;
+      if (demoAdmin && owner) {
+        demoAdmin.name = owner.name;
+        demoAdmin.phone = owner.phone;
+        demoAdmin.password = owner.password;
+        signOut = demoAdmin.id !== owner.id;
+      }
+      recordChange(db, () => nextId(db), user.id, "settings", 0, "sample data loaded", null);
+      saveDb();
+      return Response.json({
+        ok: true, signOut,
+        counts: {
+          users: db.users.length, doctors: db.doctors.length,
+          orders: db.orders.length, visits: db.visits.length,
+        },
+      });
+    }
+
+    if (String(b.confirm ?? "").trim().toUpperCase() !== "DELETE") {
+      return Response.json({ error: 'Type DELETE to confirm.' }, { status: 400 });
+    }
     const backup = snapshot(mode === "everything" ? "before-full-wipe" : "before-record-wipe");
 
     const cleared = {
@@ -77,7 +125,14 @@ export async function POST(req: Request) {
       if (p.brochureId) keep.add(p.brochureId);
     }
     for (const br of db.brochures) if (br.fileId) keep.add(br.fileId);
-    if (db.settings.logoId) keep.add(db.settings.logoId);
+    // Branding survives a wipe, so its files must too. Missing the mascot slots
+    // here deleted the artwork off disk while leaving the ids in settings —
+    // the mascot silently reverted to the built-in drawing.
+    for (const id of [db.settings.logoId, db.settings.mascotIdleId,
+                      db.settings.mascotHelloId, db.settings.mascotCheerId,
+                      db.settings.mascotSadId]) {
+      if (id) keep.add(id);
+    }
 
     let filesRemoved = 0;
     for (const f of db.files) {
