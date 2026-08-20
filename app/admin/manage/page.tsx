@@ -72,7 +72,7 @@ export default function Manage() {
               <div className="field" style={{ margin: 0 }}><label>Name</label><input className="input" value={editUser.name} onChange={(e) => setEditUser({ ...editUser, name: e.target.value })} /></div>
               <div className="field" style={{ margin: 0 }}><label>Phone</label><input className="input" value={editUser.phone} onChange={(e) => setEditUser({ ...editUser, phone: e.target.value })} /></div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
               <div className="field" style={{ margin: 0 }}><label>Role</label>
                 <select className="input" value={editUser.role} onChange={(e) => setEditUser({ ...editUser, role: e.target.value })}>
                   <option value="rep">Rep</option><option value="supervisor">Supervisor</option><option value="accountant">Accountant</option><option value="admin">Admin</option>
@@ -189,7 +189,7 @@ Continue anyway?`)) return;
         {editProduct ? (
           <div className="card" style={{ gap: 10 }}>
             <h6 style={{ margin: 0 }}>{editProduct.id ? `Edit ${editProduct.name}` : "New product"}</h6>
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
               <div className="field" style={{ margin: 0 }}><label>Name</label><input className="input" value={editProduct.name} onChange={(e) => setEditProduct({ ...editProduct, name: e.target.value })} /></div>
               <div className="field" style={{ margin: 0 }}><label>SKU</label><input className="input" value={editProduct.sku} onChange={(e) => setEditProduct({ ...editProduct, sku: e.target.value })} /></div>
               <div className="field" style={{ margin: 0 }}><label>Price (IQD)</label><input className="input" inputMode="numeric" value={editProduct.unitPrice} onChange={(e) => setEditProduct({ ...editProduct, unitPrice: e.target.value })} /></div>

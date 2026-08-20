@@ -1,6 +1,16 @@
 "use client";
 
-const PALETTE = ["#2f6fe0", "#98bffb", "#12a06a", "#f0a72a", "#7a5cf0", "#ff6a3d", "#9a9488"];
+// Tokens, not literals — the first colour must follow whatever brand colour the
+// company picked, and the rest must match the tags sitting beside the chart.
+const PALETTE = [
+  "var(--color-accent)",
+  "var(--c-teal)",
+  "var(--c-green)",
+  "var(--c-amber)",
+  "var(--c-violet)",
+  "var(--c-coral)",
+  "var(--c-pink)",
+];
 
 export function PieChart({ data, size = 150 }: { data: { label: string; value: number }[]; size?: number }) {
   const total = data.reduce((s, d) => s + d.value, 0);
@@ -21,7 +31,10 @@ export function PieChart({ data, size = 150 }: { data: { label: string; value: n
   return (
     <div className="row" style={{ gap: 16, alignItems: "center", flexWrap: "wrap" }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        {slices.map((s, i) => <path key={i} d={s.path} fill={s.color} stroke="var(--color-neutral-100)" strokeWidth="1.5" />)}
+        {slices.map((s, i) => <path key={i} d={s.path} strokeWidth="1.5"
+            // style rather than the fill attribute: CSS variables are not reliably
+            // resolved inside SVG presentation attributes across browsers.
+            style={{ fill: s.color, stroke: "var(--color-surface)" }} />)}
       </svg>
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {slices.map((s, i) => (

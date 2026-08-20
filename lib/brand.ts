@@ -63,5 +63,6 @@ export function accentRamp(hex: string): Record<string, string> {
 export function brandCss(hex: string): string {
   const ramp = accentRamp(hex);
   const body = Object.entries(ramp).map(([k, v]) => k + ":" + v + ";").join(" ");
-  return ":root { " + body + " }";
+  // :root:root outranks the stylesheet defaults whichever order they load in.
+  return ":root:root { " + body + " }";
 }

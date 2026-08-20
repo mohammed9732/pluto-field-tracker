@@ -97,7 +97,7 @@ export default function Targets() {
       {products.map((p) => (
         <div key={p.id} className="card" style={{ gap: 8 }}>
           <div style={{ fontSize: 13, fontWeight: 500 }}>
-            {p.name} <span style={{ fontWeight: 400, color: "var(--color-neutral-500)" }}>· {money(p.unitPrice)}</span>
+            {p.name} <span style={{ fontWeight: 400, color: "var(--color-neutral-600)" }}>· {money(p.unitPrice)}</span>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
             <div className="field" style={{ margin: 0 }}>

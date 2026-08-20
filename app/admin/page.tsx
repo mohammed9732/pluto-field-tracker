@@ -1,4 +1,5 @@
 "use client";
+import { CountUp } from "@/components/CountUp";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -36,22 +37,22 @@ export default function AdminDashboard() {
         <div className="kpi-grid">
           <div className="card" style={{ gap: 2, padding: 12 }}>
             <span className="card-kicker">Visits today</span>
-            <span className="hnum" style={{ fontSize: 26 }}>{k.visitsToday}<span style={{ fontSize: 15, color: "var(--color-neutral-500)" }}> / {k.minToday} min</span></span>
+            <span className="hnum" style={{ fontSize: 26 }}><CountUp value={k.visitsToday} /><span style={{ fontSize: 15, color: "var(--color-neutral-600)" }}> / {k.minToday} min</span></span>
             <span className="small muted" style={{ fontSize: 10 }}>{[k.onLeaveCount ? `${k.onLeaveCount} on leave` : "", k.outOfLocationToday ? `⚠ ${k.outOfLocationToday} out-of-location` : ""].filter(Boolean).join(" · ") || "full team in"}</span>
           </div>
           <div className="card" style={{ gap: 2, padding: 12 }}>
             <span className="card-kicker">Sales MTD</span>
-            <span className="hnum" style={{ fontSize: 26 }}>{money0(k.salesValue)}</span>
+            <span className="hnum" style={{ fontSize: 26 }}><CountUp value={k.salesValue} format={money0} /></span>
             <span className="small muted" style={{ fontSize: 10 }}>{k.salesBoxes} boxes · 3 cities</span>
           </div>
           <div className="card" style={{ gap: 2, padding: 12 }}>
             <span className="card-kicker">Pending orders</span>
-            <span className="hnum" style={{ fontSize: 26 }}>{k.pendingCount}<span style={{ fontSize: 15, color: "var(--color-neutral-500)" }}> · {money0(k.pendingValue)}</span></span>
+            <span className="hnum" style={{ fontSize: 26 }}><CountUp value={k.pendingCount} /><span style={{ fontSize: 15, color: "var(--color-neutral-600)" }}> · {money0(k.pendingValue)}</span></span>
             <span className="small muted" style={{ fontSize: 10 }}>awaiting approval</span>
           </div>
           <div className="card" style={{ gap: 2, padding: 12 }}>
             <span className="card-kicker">Stock alerts</span>
-            <span className="hnum" style={{ fontSize: 26, color: k.stockAlerts.length ? "var(--c-coral-deep)" : undefined }}>{k.stockAlerts.length}</span>
+            <span className="hnum" style={{ fontSize: 26, color: k.stockAlerts.length ? "var(--c-coral-deep)" : undefined }}><CountUp value={k.stockAlerts.length} /></span>
             <span className="small muted" style={{ fontSize: 10 }}>{k.stockAlerts.slice(0, 2).join(" · ") || "all healthy"}</span>
           </div>
         </div>

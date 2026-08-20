@@ -62,7 +62,7 @@ export default function AdminMap() {
                   Visit {i + 1} · {v.doctor?.name} — {v.outcome === "order" ? "Order" : v.outcome === "payment" ? "Payment" : "Follow-up"}
                   {(() => {
                     const d = data.dwell.find((x: any) => x.doctorId === v.doctorId);
-                    return d ? <span style={{ color: "var(--color-neutral-500)" }}> · {durationHM(d.minutes)} in clinic</span> : null;
+                    return d ? <span style={{ color: "var(--color-neutral-600)" }}> · {durationHM(d.minutes)} in clinic</span> : null;
                   })()}
                 </span>
               </div>
@@ -73,7 +73,7 @@ export default function AdminMap() {
               </div>
             ))}
             {data.fieldTime.checkedIn ? (
-              <div style={{ display: "flex", gap: 10, fontSize: 12, padding: "7px 0", color: "var(--color-neutral-500)" }}>
+              <div style={{ display: "flex", gap: 10, fontSize: 12, padding: "7px 0", color: "var(--color-neutral-600)" }}>
                 <b className="hnum" style={{ width: 38 }}>—</b><span style={{ flex: 1 }}>Check-out pending</span>
               </div>
             ) : null}

@@ -83,7 +83,7 @@ export default function MonthlyReport() {
 
         <S letter="a" title="Visits vs plan (incl. joint visits)">
           <table className="table" style={{ fontSize: 12 }}>
-            <thead><tr><th>Person</th><th style={{ textAlign: "right" }}>Visits</th><th style={{ textAlign: "right" }}>Plan</th><th style={{ textAlign: "right" }}>Joint</th></tr></thead>
+            <thead><tr><th>Person</th><th style={{ textAlign: "right" }}>Visits</th><th style={{ textAlign: "right" }}>Plan</th><th style={{ textAlign: "right" }}>Joint</th><th style={{ textAlign: "right" }}>Samples</th></tr></thead>
             <tbody>
               {data.visitRows.map((r: any) => (
                 <tr key={r.name}><td>{r.name}</td><td style={{ textAlign: "right", fontWeight: 700 }}>{r.visits}</td><td style={{ textAlign: "right" }}>{r.plan}</td><td style={{ textAlign: "right" }}>{r.joint}</td><td style={{ textAlign: "right", color: "var(--c-violet-deep)" }}>{r.samples || "—"}</td></tr>
