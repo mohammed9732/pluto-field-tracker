@@ -282,6 +282,9 @@ textarea.input { min-height: 78px; resize: vertical; }
   }
 }
 
+/* Any table wider than the screen scrolls inside this, never widening the page. */
+.tscroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+
 /* — bottom nav —
    A dock that floats clear of the screen edge rather than sitting flush on it.
    On iOS a bar pinned to bottom:0 ends up tucked under Safari's own toolbar,

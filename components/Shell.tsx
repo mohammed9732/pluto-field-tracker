@@ -53,7 +53,8 @@ const NAV: Record<string, { href: string; label: string; icon: keyof typeof path
     { href: "/acct", label: "Money", icon: "chart" },
     { href: "/acct/queue", label: "Queue", icon: "orders" },
     { href: "/stock", label: "Stock", icon: "warehouse" },
-    { href: "/acct/payroll", label: "Payroll", icon: "users" },
+    { href: "/acct/monthend", label: "Month-end", icon: "cal" },
+        { href: "/acct/payroll", label: "Payroll", icon: "users" },
   ],
   admin: [
     { href: "/admin", label: "Today", icon: "home" },
@@ -84,7 +85,8 @@ const SIDEBAR: Record<string, { group: string; items: { href: string; label: str
       { href: "/acct/queue", label: "Invoice queue", icon: "orders" },
       { href: "/stock", label: "Stock", icon: "warehouse" },
       { href: "/spendings", label: "Spendings", icon: "card" },
-      { href: "/acct/payroll", label: "Payroll", icon: "users" },
+      { href: "/acct/monthend", label: "Month-end", icon: "cal" },
+        { href: "/acct/payroll", label: "Payroll", icon: "users" },
       { href: "/acct/payouts", label: "Payouts", icon: "card" },
     ]},
     { group: "Setup", items: [
@@ -97,7 +99,8 @@ const SIDEBAR: Record<string, { group: string; items: { href: string; label: str
     { group: "Money", items: [
       { href: "/acct", label: "Dashboard", icon: "chart" },
       { href: "/acct/queue", label: "Invoice queue", icon: "orders" },
-      { href: "/acct/payroll", label: "Payroll", icon: "users" },
+      { href: "/acct/monthend", label: "Month-end", icon: "cal" },
+        { href: "/acct/payroll", label: "Payroll", icon: "users" },
       { href: "/acct/payouts", label: "Payouts", icon: "card" },
       { href: "/spendings", label: "Spendings", icon: "receipt" },
     ]},
