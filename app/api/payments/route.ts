@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { doctorsFor, logActivity, nowIso, todayStr } from "@/lib/compute";
+import { doctorsFor, logActivity, notify, nowIso, todayStr } from "@/lib/compute";
 
 // Payments are standalone records: doctor + amount + method + photo of the signed
 // physical receipt. Deliberately NOT linked to invoices — the ERP owns balances.
@@ -62,6 +62,11 @@ export async function POST(req: Request) {
     };
     db.payments.push(payment);
     logActivity(db, () => nextId(db), user.id, `recorded ${amount.toLocaleString()} IQD from ${doctor.name}`);
+    // Money coming in is the accountant's business, and the owner's.
+    for (const a of db.users.filter((u) => u.active && (u.role === "accountant" || u.role === "admin") && u.id !== user.id)) {
+      notify(db, () => nextId(db), a.id,
+        `${user.name} collected ${amount.toLocaleString()} IQD from ${doctor.name}.`, "/acct");
+    }
     saveDb();
     return Response.json({
       ok: true,

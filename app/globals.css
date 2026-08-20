@@ -412,6 +412,26 @@ textarea.input { min-height: 78px; resize: vertical; }
   border-top: 1px dashed rgba(255, 159, 10, .45);
 }
 
+/* Rafi waves from the top-right of the sign-in screen. He sits above the
+   drifting backdrop but below the form, so he never blocks a tap. */
+.login-greeter {
+  position: absolute; top: 8px; right: 18px; z-index: 1;
+  display: flex; align-items: flex-start; gap: 4px;
+  pointer-events: none;
+}
+.login-bubble {
+  margin-top: 16px; padding: 6px 12px; border-radius: 14px 14px 3px 14px;
+  background: var(--color-surface); box-shadow: var(--elev-1);
+  border: 1px solid var(--color-divider);
+  font-size: 12px; font-weight: 700; color: var(--color-neutral-700);
+  animation: bubble-in .5s var(--ease-spring) both .5s;
+}
+@keyframes bubble-in {
+  from { opacity: 0; transform: translateY(6px) scale(.9); }
+  to   { opacity: 1; transform: none; }
+}
+@media (max-width: 380px) { .login-greeter { display: none; } }
+
 /* — sign-in backdrop —
    A slow drift of brand-tinted light. Two blobs on long, unequal loops so the
    pattern never visibly repeats, sitting behind the form at low opacity. */

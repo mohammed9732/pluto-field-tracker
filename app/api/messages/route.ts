@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { nowIso } from "@/lib/compute";
+import { notifyOnce, nowIso } from "@/lib/compute";
 import { User, DB } from "@/lib/types";
 
 // Channels = admin-built groups the user belongs to + DMs allowed by policy.
@@ -65,6 +65,23 @@ export async function POST(req: Request) {
       duration: b.duration != null ? Math.round(Number(b.duration)) : null,
     };
     db.messages.push(msg);
+    // Everyone in the channel except the sender.
+    const label = channelsFor(user, db).find((c) => c.id === channel)?.label ?? "Chat";
+    const recipients = channel.startsWith("dm-")
+      ? channel.split("-").slice(1).map(Number).filter((id) => id !== user.id)
+      : db.chatGroups
+          .filter((g) => `g-${g.id}` === channel)
+          .flatMap((g) => g.memberIds)
+          .filter((id) => id !== user.id);
+    const preview = kind === "text"
+      ? (body.length > 60 ? body.slice(0, 57) + "…" : body)
+      : kind === "image" ? "sent a photo" : kind === "voice" ? "sent a voice note" : "sent a file";
+    for (const id of Array.from(new Set(recipients))) {
+      notifyOnce(db, () => nextId(db), id,
+        channel.startsWith("dm-") ? `${user.name}: ${preview}` : `${label} · ${user.name}: ${preview}`,
+        `/chat?channel=${channel}`);
+    }
+
     saveDb();
     return Response.json({ ok: true, message: { ...msg, senderName: user.name, mine: true } });
   } catch (e) {

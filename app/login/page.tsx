@@ -34,6 +34,10 @@ export default function Login() {
   return (
     <div className="screen" style={{ position: "relative", overflow: "hidden" }}>
       <div className="aurora" aria-hidden="true" />
+      <div className="login-greeter" aria-hidden="true">
+        <span className="login-bubble">Hello</span>
+        <Mascot size={88} mood="hello" />
+      </div>
       <div className="screen-pad" style={{ paddingBottom: 20, position: "relative", zIndex: 1 }}>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 24 }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 12 }}>

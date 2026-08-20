@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { cityIds, cityName, todayStr, weekStartOf } from "@/lib/compute";
+import { cityIds, cityName, notify, todayStr, weekStartOf } from "@/lib/compute";
 
 function nextWeekStart(): string {
   const cur = weekStartOf(todayStr());
@@ -121,6 +121,10 @@ export async function POST(req: Request) {
         };
         db.plans.push(plan);
       }
+      // Whoever decides on this plan should know it is waiting.
+      for (const a of db.users.filter((u) => u.active && (u.role === "supervisor" || u.role === "admin") && u.id !== user.id)) {
+        notify(db, () => nextId(db), a.id, `${user.name} submitted a weekly plan for approval.`, "/approvals");
+      }
       saveDb();
       return Response.json({ ok: true, plan });
     }
@@ -131,6 +135,11 @@ export async function POST(req: Request) {
       plan.status = b.decision === "approve" ? "approved" : "returned";
       plan.note = b.note ? String(b.note) : null;
       plan.decidedBy = user.id;
+      notify(db, () => nextId(db), plan.userId,
+        plan.status === "approved"
+          ? `Your weekly plan was approved by ${user.name}.`
+          : `Your weekly plan was returned by ${user.name}${plan.note ? ` — ${plan.note}` : "."}`,
+        "/plan");
       saveDb();
       return Response.json({ ok: true, plan });
     }

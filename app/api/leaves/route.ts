@@ -1,5 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
+import { notify } from "@/lib/compute";
 
 export async function GET(req: Request) {
   try {
@@ -54,6 +55,10 @@ export async function POST(req: Request) {
         reason: String(b.reason ?? ""), status: "pending" as const, decidedBy: null,
       };
       db.leaves.push(leave);
+      // Leave has to be seen by someone, or it sits unanswered.
+      for (const a of db.users.filter((u) => u.active && (u.role === "supervisor" || u.role === "admin") && u.id !== user.id)) {
+        notify(db, () => nextId(db), a.id, `${user.name} requested leave.`, "/approvals");
+      }
       saveDb();
       return Response.json({ ok: true, leave });
     }
@@ -65,6 +70,9 @@ export async function POST(req: Request) {
       if (user.role === "supervisor" && owner?.role !== "rep") return Response.json({ error: "The owner approves this one" }, { status: 403 });
       leave.status = b.decision === "approve" ? "approved" : "rejected";
       leave.decidedBy = user.id;
+      notify(db, () => nextId(db), leave.userId,
+        `Your ${leave.type} leave (${leave.start} to ${leave.end}) was ${leave.status} by ${user.name}.`,
+        "/leave");
       saveDb();
       return Response.json({ ok: true, leave });
     }

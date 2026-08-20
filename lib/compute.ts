@@ -20,6 +20,19 @@ export function notify(db: DB, seq: () => number, userId: number, body: string, 
   import("./push").then((m) => m.pushToUser(db, userId, db.settings.companyName, body, href)).catch(() => {});
 }
 
+// Same as notify(), but if this person already has an UNREAD notification
+// pointing at the same place, it refreshes that one instead of stacking another.
+// Six people chatting in a group would otherwise bury every approval alert.
+export function notifyOnce(db: DB, seq: () => number, userId: number, body: string, href: string | null) {
+  const existing = db.notifications.find((n) => n.userId === userId && n.href === href && !n.read);
+  if (existing) {
+    existing.body = body;
+    existing.ts = nowIso();
+    return;
+  }
+  notify(db, seq, userId, body, href);
+}
+
 export function logActivity(db: DB, seq: () => number, userId: number, action: string) {
   db.activity.push({ id: seq(), userId, action, ts: nowIso() });
   if (db.activity.length > 2000) db.activity.splice(0, db.activity.length - 2000);
