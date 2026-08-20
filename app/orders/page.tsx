@@ -1,4 +1,5 @@
 "use client";
+import { MascotNote } from "@/components/MascotNote";
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -48,7 +49,16 @@ function OrdersInner() {
 
       {tab === "orders" ? (
         <>
-          {orders.length === 0 ? <div className="card muted">No orders yet — send your first one.</div> : null}
+          {orders.length === 0 ? (
+            <MascotNote title="No orders yet"
+              body="Log a visit first, then turn it into an order. Rafi will let you know the moment it is approved."
+              action={{ href: "/order", label: "Start an order" }} />
+          ) : null}
+          {orders.some((o) => o.status === "approved" || o.status === "invoiced") ? (
+            <MascotNote mood="cheer" tone="win" size={58}
+              title={`${orders.filter((o: any) => o.status === "approved" || o.status === "invoiced").length} approved`}
+              body="Nice work. Approved orders count toward your target and your commission." />
+          ) : null}
           {orders.map((o) => (
             <div key={o.id} className="card" style={{ gap: 6, padding: 12 }}>
               <div className="row" style={{ gap: 10 }}>
@@ -95,7 +105,11 @@ function OrdersInner() {
               <span className="small muted">{today.length} receipt{today.length === 1 ? "" : "s"}</span>
             </div>
           ) : null}
-          {(payments ?? []).length === 0 ? <div className="card muted">No payments collected yet.</div> : null}
+          {(payments ?? []).length === 0 ? (
+            <MascotNote title="Nothing collected yet"
+              body="Record a payment while you are still with the doctor — photograph the signed receipt and it is done."
+              action={{ href: "/pay", label: "Record a payment" }} />
+          ) : null}
           {(payments ?? []).map((p) => (
             <div key={p.id} className="listrow">
               <div style={{ flex: 1, minWidth: 0 }}>

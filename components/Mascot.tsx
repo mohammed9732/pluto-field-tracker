@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 
 /* Rafi — the company wolf.
  *
@@ -19,7 +20,7 @@
 
 export type MascotMood = "idle" | "hello" | "cheer";
 
-export function Mascot({
+function DrawnWolf({
   size = 78,
   mood = "idle",
   className = "",
@@ -134,5 +135,42 @@ export function Mascot({
         @media (prefers-reduced-motion: reduce) { .wolf * { animation: none !important; } }
       `}</style>
     </svg>
+  );
+}
+
+
+/* The character you actually see.
+ *
+ * If artwork has been uploaded in the control panel it is used; otherwise the
+ * drawing above stands in. That means real illustration can be dropped in
+ * without touching any code — and a company this app is sold to can put their
+ * own character in without asking anyone.
+ *
+ * An uploaded PNG cannot have its arms animated, so the whole image moves
+ * instead: a slow breath when idle, a tilt when greeting, a hop when cheering.
+ */
+export function Mascot({
+  size = 78,
+  mood = "idle",
+  className = "",
+}: {
+  size?: number;
+  mood?: MascotMood;
+  className?: string;
+}) {
+  const [artFailed, setArtFailed] = useState(false);
+
+  if (artFailed) return <DrawnWolf size={size} mood={mood} className={className} />;
+
+  return (
+    <img
+      src={`/api/mascot?mood=${mood}`}
+      alt="Company mascot"
+      data-mood={mood}
+      className={`mascot-art ${className}`}
+      width={size}
+      style={{ width: size, height: "auto", maxHeight: size * 1.4, flex: "none", display: "block" }}
+      onError={() => setArtFailed(true)}
+    />
   );
 }

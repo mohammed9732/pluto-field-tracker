@@ -1,4 +1,5 @@
 "use client";
+import { MascotNote } from "@/components/MascotNote";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { Icon, paths } from "@/components/Icons";
@@ -98,7 +99,10 @@ export default function AcctQueue() {
           <Icon d={paths.warn} size={16} stroke="var(--color-accent-700)" /> {w}
         </div>
       ))}
-      {orders.length === 0 ? <div className="card muted">Queue is clear — nothing approved awaiting invoice.</div> : null}
+      {orders.length === 0 ? (
+        <MascotNote mood="cheer" tone="win" size={62} title="Queue is clear"
+          body="Nothing approved is waiting for an invoice." />
+      ) : null}
       {orders.map((o) => {
         const warn = stockWarning(o);
         return (

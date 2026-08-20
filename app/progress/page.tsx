@@ -1,4 +1,5 @@
 "use client";
+import { MascotNote } from "@/components/MascotNote";
 import { useCallback, useEffect, useState } from "react";
 import { Screen, useMe, Spinner, Meter } from "@/components/Shell";
 import { PerformanceView } from "@/components/PerformanceView";
@@ -42,7 +43,10 @@ export default function Progress() {
         <PerformanceView data={perf} />
       ) : (
         <>
-          {data.accrual.length === 0 ? <div className="card muted">No targets set for this month yet.</div> : null}
+          {data.accrual.length === 0 ? (
+            <MascotNote title="No targets this month"
+              body="Your manager has not set targets yet. Keep visiting — the numbers still count once they do." />
+          ) : null}
 
           {data.accrual.map((r: any) => {
             const pct = Math.round(r.achievementPct);

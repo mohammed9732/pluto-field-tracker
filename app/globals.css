@@ -412,6 +412,32 @@ textarea.input { min-height: 78px; resize: vertical; }
   border-top: 1px dashed rgba(255, 159, 10, .45);
 }
 
+/* Rafi with something to say — empty screens and small victories. */
+.mnote {
+  display: flex; align-items: center; gap: 13px;
+  padding: 14px 16px 14px 10px; border-radius: var(--r-lg);
+  background: var(--color-surface);
+  border: 1px solid rgba(233, 225, 214, .8);
+  box-shadow: var(--elev-1);
+}
+.mnote-win {
+  background: linear-gradient(135deg, var(--c-green-soft), var(--color-surface) 64%);
+  border-color: rgba(47, 191, 107, .35);
+}
+.mnote-title { font-family: var(--font-heading); font-weight: 800; font-size: 15px; letter-spacing: -.01em; }
+.mnote-body { font-size: 13px; color: var(--color-neutral-600); margin-top: 2px; line-height: 1.45; }
+
+/* Uploaded mascot artwork. A flat image cannot move its own arms, so the whole
+   picture carries the performance instead. */
+.mascot-art { object-fit: contain; }
+.mascot-art[data-mood="idle"]  { animation: art-bob 3.6s ease-in-out infinite; }
+.mascot-art[data-mood="hello"] { animation: art-tilt 2.4s ease-in-out infinite; transform-origin: 50% 100%; }
+.mascot-art[data-mood="cheer"] { animation: art-hop 1.4s var(--ease-spring) infinite; transform-origin: 50% 100%; }
+@keyframes art-bob  { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes art-tilt { 0%,100% { transform: rotate(0deg); } 30% { transform: rotate(-5deg); } 60% { transform: rotate(4deg); } }
+@keyframes art-hop  { 0%,100% { transform: translateY(0) scale(1); } 45% { transform: translateY(-9px) scale(1.04); } }
+@media (prefers-reduced-motion: reduce) { .mascot-art { animation: none !important; } }
+
 /* Rafi waves from the top-right of the sign-in screen. He sits above the
    drifting backdrop but below the form, so he never blocks a tap. */
 .login-greeter {

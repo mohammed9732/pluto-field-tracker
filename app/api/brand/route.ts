@@ -15,6 +15,7 @@ export async function GET() {
     companySub: s.companySub,
     loginFooter: s.loginFooter ?? "",
     hasLogo: !!s.logoId,
+    mascotArt: { idle: !!s.mascotIdleId, hello: !!(s.mascotHelloId || s.mascotIdleId), cheer: !!(s.mascotCheerId || s.mascotIdleId) },
     brandColor: s.brandColor,
     terms: s.terms,
     demo: SEED_DEMO,

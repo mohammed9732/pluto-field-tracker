@@ -425,6 +425,11 @@ export interface Settings {
 
   // --- white-label branding ---
   logoId: string | null;      // uploaded logo, served publicly at /api/logo
+  // Uploaded mascot artwork, one per mood. When a slot is empty the built-in
+  // drawing is used instead, so the app never has a hole where he should be.
+  mascotIdleId: string | null;
+  mascotHelloId: string | null;
+  mascotCheerId: string | null;
   brandColor: string;         // one hex; the accent ramp is derived from it
   loginFooter: string;        // free text under the sign-in form ("" hides it)
   terms: Terms;               // what this company calls things

@@ -5,6 +5,12 @@ import { api } from "@/lib/fmt";
 import { DEFAULT_TERMS } from "@/lib/types";
 import { useTerms, lower } from "@/lib/terms";
 
+const MASCOT_SLOTS: [string, string, string][] = [
+  ["mascotIdleId", "Standing", "idle"],
+  ["mascotHelloId", "Waving hello", "hello"],
+  ["mascotCheerId", "Celebrating", "cheer"],
+];
+
 const TERM_FIELDS: [keyof typeof DEFAULT_TERMS, string, string][] = [
   ["doctor", "One customer", "Doctor"],
   ["doctorPlural", "Many customers", "Doctors"],
@@ -69,6 +75,9 @@ export default function ControlPanel() {
   const t = useTerms();
   const logoRef = useRef<HTMLInputElement>(null);
   const [logoBusy, setLogoBusy] = useState(false);
+  const mascotRef = useRef<HTMLInputElement>(null);
+  const [mascotSlot, setMascotSlot] = useState<string | null>(null);
+  const [mascotBusy, setMascotBusy] = useState<string | null>(null);
   const [wipe, setWipe] = useState<"records" | "everything" | null>(null);
   const [wipeWord, setWipeWord] = useState("");
   const [wipeMsg, setWipeMsg] = useState("");
@@ -186,6 +195,59 @@ export default function ControlPanel() {
               </div>
             </div>
           </div>
+        </div>
+
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Mascot artwork</h6>
+        <div className="card" style={{ gap: 12 }}>
+          <div className="small muted">
+            Upload your own character and it replaces the drawn one everywhere — sign-in,
+            the daily card, and the celebration screens. PNG with a transparent background
+            works best, roughly 600px tall. Leave a slot empty and it falls back to the
+            standing pose.
+          </div>
+          <div className="two-col" style={{ gap: 10 }}>
+            {MASCOT_SLOTS.map(([key, label, hint]) => (
+              <div key={key} style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <div style={{
+                  width: 62, height: 68, borderRadius: 14, flex: "none", display: "grid",
+                  placeItems: "center", background: "var(--color-neutral-200)",
+                  border: "1px solid var(--color-divider)", overflow: "hidden",
+                }}>
+                  {settings[key] ? (
+                    <img src={`/api/mascot?mood=${hint}&v=${settings[key]}`} alt=""
+                      style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                  ) : <span className="small muted" style={{ fontSize: 10 }}>Drawn</span>}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>{label}</div>
+                  <div className="row" style={{ gap: 6, marginTop: 5 }}>
+                    <button className="btn btn-secondary" style={{ fontSize: 12, padding: "5px 10px" }}
+                      disabled={mascotBusy === key}
+                      onClick={() => { setMascotSlot(key); setTimeout(() => mascotRef.current?.click(), 0); }}>
+                      {mascotBusy === key ? "Uploading…" : settings[key] ? "Replace" : "Upload"}
+                    </button>
+                    {settings[key] ? (
+                      <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-coral-deep)" }}
+                        onClick={() => patch({ [key]: "" })}>Clear</button>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <input ref={mascotRef} type="file" accept="image/png,image/webp,image/jpeg" style={{ display: "none" }}
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              e.target.value = "";
+              if (!f || !mascotSlot) return;
+              setMascotBusy(mascotSlot);
+              try {
+                const fd = new FormData();
+                fd.append("file", f);
+                const up = await fetch("/api/files", { method: "POST", body: fd }).then((x) => x.json());
+                if (up.id) await patch({ [mascotSlot]: up.id });
+              } finally { setMascotBusy(null); setMascotSlot(null); }
+            }} />
         </div>
 
         <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>What you call things</h6>

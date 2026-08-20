@@ -1,4 +1,5 @@
 "use client";
+import { MascotNote } from "@/components/MascotNote";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Screen, useMe, Spinner } from "@/components/Shell";
@@ -94,11 +95,10 @@ function MapInner() {
             </button>
           </div>
         ) : data.hasStarted ? (
-          <div className="card" style={{ gap: 8, padding: 14, borderColor: "var(--c-green)" }}>
-            <div className="row" style={{ gap: 8 }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "var(--c-green-deep)", flex: 1 }}>Day completed ✓</span>
-              <span className="hnum" style={{ fontSize: 18 }}>{durationHM(data.fieldTime.minutes)}</span>
-            </div>
+          <div className="card" style={{ gap: 10, padding: 14, borderColor: "var(--c-green)" }}>
+            <MascotNote mood="cheer" tone="win" size={64}
+              title="That's the day done"
+              body={`${durationHM(data.fieldTime.minutes)} in the field. Everything you logged is already with the office.`} />
             <button className="btn btn-secondary btn-block" style={{ padding: 10, fontSize: 13 }} onClick={toggleCheck} disabled={busy}>
               {busy ? "Getting GPS…" : "Resume day (ended by mistake?)"}
             </button>

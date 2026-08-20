@@ -1,4 +1,5 @@
 "use client";
+import { MascotNote } from "@/components/MascotNote";
 import { useCallback, useEffect, useState } from "react";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { api, dm, dmy, hm, money } from "@/lib/fmt";
@@ -82,7 +83,10 @@ export default function Approvals() {
 
       {tab === "orders" ? (
         <>
-          {orders.length === 0 ? <div className="card muted">No orders waiting.</div> : null}
+          {orders.length === 0 ? (
+            <MascotNote mood="cheer" tone="win" size={62} title="Nothing waiting on you"
+              body="Every order has been dealt with." />
+          ) : null}
           {orders.map((o) => (
             <div key={o.id} className="card" style={{ gap: 10 }}>
               <div className="row" style={{ gap: 10 }}>
