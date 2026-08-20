@@ -15,6 +15,7 @@ export async function GET(req: Request) {
     const pick =
       mood === "hello" ? s.mascotHelloId ?? s.mascotIdleId
       : mood === "cheer" ? s.mascotCheerId ?? s.mascotIdleId
+      : mood === "sad" ? s.mascotSadId ?? s.mascotIdleId
       : s.mascotIdleId;
     if (!pick) return new Response(null, { status: 404 });
     const meta = db.files.find((f) => f.id === pick);

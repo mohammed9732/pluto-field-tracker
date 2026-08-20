@@ -54,6 +54,11 @@ function OrdersInner() {
               body="Log a visit first, then turn it into an order. Rafi will let you know the moment it is approved."
               action={{ href: "/order", label: "Start an order" }} />
           ) : null}
+          {orders.some((o: any) => o.status === "rejected") ? (
+            <MascotNote mood="sad" tone="sorry" size={58}
+              title={`${orders.filter((o: any) => o.status === "rejected").length} order came back`}
+              body="Open it and read the note underneath — fix what was flagged and send it again. It happens to everyone." />
+          ) : null}
           {orders.some((o) => o.status === "approved" || o.status === "invoiced") ? (
             <MascotNote mood="cheer" tone="win" size={58}
               title={`${orders.filter((o: any) => o.status === "approved" || o.status === "invoiced").length} approved`}

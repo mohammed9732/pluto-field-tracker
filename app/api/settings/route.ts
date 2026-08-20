@@ -70,7 +70,7 @@ export async function POST(req: Request) {
         if (parseHex(hex)) db.settings.brandColor = hex.startsWith("#") ? hex : `#${hex}`;
         continue;
       }
-      if (k === "mascotIdleId" || k === "mascotHelloId" || k === "mascotCheerId") {
+      if (k === "mascotIdleId" || k === "mascotHelloId" || k === "mascotCheerId" || k === "mascotSadId") {
         requireUser(["admin"]);
         (db.settings as any)[k] = v ? String(v) : null;
         continue;

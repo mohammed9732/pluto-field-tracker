@@ -9,6 +9,7 @@ const MASCOT_SLOTS: [string, string, string][] = [
   ["mascotIdleId", "Standing", "idle"],
   ["mascotHelloId", "Waving hello", "hello"],
   ["mascotCheerId", "Celebrating", "cheer"],
+  ["mascotSadId", "Disappointed", "sad"],
 ];
 
 const TERM_FIELDS: [keyof typeof DEFAULT_TERMS, string, string][] = [

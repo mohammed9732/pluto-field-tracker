@@ -21,11 +21,11 @@ export function MascotNote({
   title: string;
   body?: string;
   action?: { href: string; label: string };
-  tone?: "calm" | "win";
+  tone?: "calm" | "win" | "sorry";
   size?: number;
 }) {
   return (
-    <div className={`mnote ${tone === "win" ? "mnote-win" : ""}`}>
+    <div className={`mnote ${tone === "win" ? "mnote-win" : tone === "sorry" ? "mnote-sorry" : ""}`}>
       <Mascot size={size} mood={mood} />
       <div style={{ minWidth: 0, flex: 1 }}>
         <div className="mnote-title">{title}</div>

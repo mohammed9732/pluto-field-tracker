@@ -79,6 +79,7 @@ export function buildSeed(): DB {
     mascotIdleId: null,
     mascotHelloId: null,
     mascotCheerId: null,
+    mascotSadId: null,
     brandColor: "#2f6fe0",
     loginFooter: "",
     terms: { ...DEFAULT_TERMS },

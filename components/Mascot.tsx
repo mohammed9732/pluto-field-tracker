@@ -18,7 +18,7 @@ import { useState } from "react";
  *   cheer — both paws up with a hop. A completed day, an approved order.
  */
 
-export type MascotMood = "idle" | "hello" | "cheer";
+export type MascotMood = "idle" | "hello" | "cheer" | "sad";
 
 function DrawnWolf({
   size = 78,
@@ -84,8 +84,17 @@ function DrawnWolf({
           <path d="M70 24c14 0 24 8 29 20-7-4-17-6-29-6s-22 2-29 6c5-12 15-20 29-20z" fill="#8d939f" />
 
           {/* Lowered brows — the whole difference between confident and startled. */}
-          <path d="M47 52c5-4 11-4 15-1" stroke="#2b2f38" strokeWidth="4.4" strokeLinecap="round" />
-          <path d="M93 52c-5-4-11-4-15-1" stroke="#2b2f38" strokeWidth="4.4" strokeLinecap="round" />
+          {mood === "sad" ? (
+            <>
+              <path d="M47 49c5 2 11 3 15 6" stroke="#2b2f38" strokeWidth="4.4" strokeLinecap="round" />
+              <path d="M93 49c-5 2-11 3-15 6" stroke="#2b2f38" strokeWidth="4.4" strokeLinecap="round" />
+            </>
+          ) : (
+            <>
+              <path d="M47 52c5-4 11-4 15-1" stroke="#2b2f38" strokeWidth="4.4" strokeLinecap="round" />
+              <path d="M93 52c-5-4-11-4-15-1" stroke="#2b2f38" strokeWidth="4.4" strokeLinecap="round" />
+            </>
+          )}
 
           <g className="w-eyes">
             <ellipse cx="56" cy="60" rx="7.6" ry="8" fill="#fff" />
@@ -98,8 +107,13 @@ function DrawnWolf({
 
           <path d="M52 76c0-9 8-15 18-15s18 6 18 15c0 10-8 16-18 16s-18-6-18-16z" fill="#dfe3e9" />
           <path d="M63 70c1.9-2.2 4.4-3.3 7-3.3s5.1 1.1 7 3.3c1 1.3-.1 3-1.7 3H64.7c-1.6 0-2.7-1.7-1.7-3z" fill="#1c1712" />
-          <path d="M70 73.5v3.6M70 77.1c-2.2 0-4-1.3-4.9-3.2M70 77.1c2.2 0 4-1.3 4.9-3.2"
-            stroke="#1c1712" strokeWidth="2.1" strokeLinecap="round" fill="none" />
+          {mood === "sad" ? (
+            <path d="M70 73.5v3.4M70 80.6c-2.2 0-4 1.3-4.9 3.1M70 80.6c2.2 0 4 1.3 4.9 3.1"
+              stroke="#1c1712" strokeWidth="2.1" strokeLinecap="round" fill="none" />
+          ) : (
+            <path d="M70 73.5v3.6M70 77.1c-2.2 0-4-1.3-4.9-3.2M70 77.1c2.2 0 4-1.3 4.9-3.2"
+              stroke="#1c1712" strokeWidth="2.1" strokeLinecap="round" fill="none" />
+          )}
         </g>
       </g>
 
@@ -131,6 +145,17 @@ function DrawnWolf({
         @keyframes w-cheer-l { 0%,100% { transform: rotate(0); } 50% { transform: rotate(-152deg); } }
         @keyframes w-cheer-r { 0%,100% { transform: rotate(0); } 50% { transform: rotate(152deg); } }
         @keyframes w-hop { 0%,100% { transform: translateY(0); } 45% { transform: translateY(-8px); } }
+
+        /* Sad: ears fold down and out, shoulders drop, the breath slows right down.
+           Deliberately gentle — he is sorry for you, not cross with you. */
+        .wolf[data-mood="sad"] .w-ear-l { animation: none; transform: rotate(34deg) translateY(6px); }
+        .wolf[data-mood="sad"] .w-ear-r { animation: none; transform: rotate(-34deg) translateY(6px); }
+        .wolf[data-mood="sad"] .w-head { transform: translateY(5px); }
+        .wolf[data-mood="sad"] .w-all { animation: w-sigh 5s ease-in-out infinite; }
+        @keyframes w-sigh {
+          0%,100% { transform: translateY(2px) scale(1); }
+          50%     { transform: translateY(5px) scale(.992); }
+        }
 
         @media (prefers-reduced-motion: reduce) { .wolf * { animation: none !important; } }
       `}</style>

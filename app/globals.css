@@ -424,6 +424,12 @@ textarea.input { min-height: 78px; resize: vertical; }
   background: linear-gradient(135deg, var(--c-green-soft), var(--color-surface) 64%);
   border-color: rgba(47, 191, 107, .35);
 }
+/* Amber, not red. Falling short of a target is a nudge, not an alarm — red here
+   would read as a telling-off every time a rep opened the screen. */
+.mnote-sorry {
+  background: linear-gradient(135deg, var(--c-amber-soft), var(--color-surface) 64%);
+  border-color: rgba(255, 159, 10, .35);
+}
 .mnote-title { font-family: var(--font-heading); font-weight: 800; font-size: 15px; letter-spacing: -.01em; }
 .mnote-body { font-size: 13px; color: var(--color-neutral-600); margin-top: 2px; line-height: 1.45; }
 

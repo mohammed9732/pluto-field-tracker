@@ -430,6 +430,7 @@ export interface Settings {
   mascotIdleId: string | null;
   mascotHelloId: string | null;
   mascotCheerId: string | null;
+  mascotSadId: string | null;
   brandColor: string;         // one hex; the accent ramp is derived from it
   loginFooter: string;        // free text under the sign-in form ("" hides it)
   terms: Terms;               // what this company calls things

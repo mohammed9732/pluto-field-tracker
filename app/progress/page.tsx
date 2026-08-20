@@ -48,6 +48,11 @@ export default function Progress() {
               body="Your manager has not set targets yet. Keep visiting — the numbers still count once they do." />
           ) : null}
 
+          {data.accrual.length > 0 && data.accrual.some((r: any) => !r.qualified) ? (
+            <MascotNote mood="sad" tone="sorry" size={58}
+              title={`${data.accrual.filter((r: any) => !r.qualified).length} still under the minimum`}
+              body="There is time left this month. Look at which doctors you have not reached yet — that is usually where the gap is." />
+          ) : null}
           {data.accrual.map((r: any) => {
             const pct = Math.round(r.achievementPct);
             return (
