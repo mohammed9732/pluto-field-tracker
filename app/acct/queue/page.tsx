@@ -83,8 +83,8 @@ export default function AcctQueue() {
       <div className="row" style={{ alignItems: "baseline" }}>
         <h4 style={{ margin: 0, flex: 1 }}>Invoicing queue</h4>
         <span className="tag tag-accent">{orders.length} approved</span>
-        <button className="btn btn-secondary btn-icon" style={{ width: 30, height: 30 }} onClick={logout} title="Sign out">
-          <Icon d={paths.logout} size={14} />
+        <button className="btn btn-secondary btn-icon" style={{ width: 40, height: 40 }} onClick={logout} title="Sign out">
+          <Icon d={paths.logout} size={17} />
         </button>
       </div>
       <input ref={fileRef} type="file" accept=".pdf,image/*" style={{ display: "none" }} onChange={onFile} />
@@ -95,7 +95,7 @@ export default function AcctQueue() {
       ) : null}
       {warnings.map((w, i) => (
         <div key={i} className="row soft-accent" style={{ gap: 6, padding: "9px 12px", fontSize: 12, color: "var(--color-accent-800)" }}>
-          <Icon d={paths.warn} size={13} stroke="var(--color-accent-700)" /> {w}
+          <Icon d={paths.warn} size={16} stroke="var(--color-accent-700)" /> {w}
         </div>
       ))}
       {orders.length === 0 ? <div className="card muted">Queue is clear — nothing approved awaiting invoice.</div> : null}
@@ -121,12 +121,12 @@ export default function AcctQueue() {
             </div>
             {warn ? (
               <div className="row" style={{ gap: 6, fontSize: 11, color: "var(--color-accent-700)" }}>
-                <Icon d={paths.warn} size={13} stroke="var(--color-accent-700)" /> {warn}
+                <Icon d={paths.warn} size={16} stroke="var(--color-accent-700)" /> {warn}
               </div>
             ) : null}
             <div className="row" style={{ gap: 6, fontSize: 12 }}>
               <button className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 10px" }} onClick={() => attachPdf(o.id)}>
-                <Icon d={paths.upload} size={13} /> {o.invoicePdfName ?? pdfNames[o.id]?.name ?? "Attach invoice document"}
+                <Icon d={paths.upload} size={16} /> {o.invoicePdfName ?? pdfNames[o.id]?.name ?? "Attach invoice document"}
               </button>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 8 }}>

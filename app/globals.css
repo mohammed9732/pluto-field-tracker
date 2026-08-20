@@ -135,7 +135,7 @@ a:hover { color: var(--color-accent-600); }
 .btn-secondary:hover { background: var(--color-neutral-200); }
 .btn-ghost { color: var(--color-accent); border-color: transparent; background: transparent; padding-inline: 8px; box-shadow: none; }
 .btn-ghost:hover { background: var(--color-accent-100); }
-.btn-icon { width: 38px; height: 38px; padding: 0; }
+.btn-icon { width: 42px; height: 42px; padding: 0; }
 .btn-block { width: 100%; }
 .btn-coral {
   background: var(--c-coral); color: #fff; border-color: transparent;
@@ -154,8 +154,8 @@ a:hover { color: var(--color-accent-600); }
   color: var(--color-neutral-600);
 }
 .input {
-  width: 100%; min-height: 42px; padding: 9px 14px; font: inherit;
-  font-size: 15px; color: var(--color-text); caret-color: var(--color-accent);
+  width: 100%; min-height: 44px; padding: 10px 14px; font: inherit;
+  font-size: 16px; color: var(--color-text); caret-color: var(--color-accent);
   background: var(--color-surface);
   border: 1px solid var(--color-divider); border-radius: var(--r-sm);
   transition: border-color .18s ease, box-shadow .18s ease;
@@ -166,6 +166,20 @@ a:hover { color: var(--color-accent-600); }
   box-shadow: 0 0 0 3.5px var(--color-accent-100);
 }
 textarea.input { min-height: 78px; resize: vertical; }
+
+/* iOS Safari zooms the whole page in whenever you focus a field whose text is
+   smaller than 16px, and it does not zoom back out afterwards — you are left
+   pinching to escape. The only reliable cure is to make every field at least
+   16px on touch devices. !important is deliberate: several inputs set a smaller
+   size inline, and inline styles would otherwise win. */
+@media (pointer: coarse) {
+  .input,
+  input[type="text"], input[type="password"], input[type="number"],
+  input[type="search"], input[type="tel"], input[type="email"],
+  input[type="date"], input[type="time"], textarea, select {
+    font-size: 16px !important;
+  }
+}
 .radio { display: inline-flex; align-items: center; gap: 9px; cursor: pointer; font-size: 14px; }
 .radio input, .seg-opt input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
 .radio .dot {
@@ -376,6 +390,57 @@ textarea.input { min-height: 78px; resize: vertical; }
 }
 @keyframes ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
+/* — Rafi's daily line — */
+.boost {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px 12px 10px; border-radius: var(--r-lg);
+  background: linear-gradient(135deg, var(--c-amber-soft), var(--color-surface) 62%);
+  border: 1px solid rgba(255, 159, 10, .28);
+  box-shadow: var(--elev-1);
+  overflow: hidden; position: relative;
+}
+.boost-art { flex: none; }
+.boost-text { min-width: 0; }
+.boost-kicker {
+  font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  font-weight: 800; color: var(--c-amber-deep); margin-bottom: 3px;
+}
+.boost-line { font-size: 13.5px; line-height: 1.42; font-weight: 500; }
+
+/* — sign-in backdrop —
+   A slow drift of brand-tinted light. Two blobs on long, unequal loops so the
+   pattern never visibly repeats, sitting behind the form at low opacity. */
+.aurora { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; }
+.aurora::before, .aurora::after {
+  content: ""; position: absolute; width: 130%; padding-top: 130%;
+  border-radius: 45% 55% 52% 48% / 50% 45% 55% 50%;
+  filter: blur(28px); opacity: .5;
+}
+.aurora::before {
+  left: -45%; top: -55%;
+  background: radial-gradient(circle at 35% 35%, var(--color-accent-300), transparent 62%);
+  animation: drift-a 19s ease-in-out infinite;
+}
+.aurora::after {
+  right: -50%; bottom: -60%;
+  background: radial-gradient(circle at 60% 55%, var(--c-amber), transparent 58%);
+  opacity: .34;
+  animation: drift-b 26s ease-in-out infinite;
+}
+@keyframes drift-a {
+  0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  33%      { transform: translate(9%, 7%) rotate(42deg) scale(1.09); }
+  66%      { transform: translate(-6%, 11%) rotate(-28deg) scale(.95); }
+}
+@keyframes drift-b {
+  0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  40%      { transform: translate(-11%, -8%) rotate(-38deg) scale(1.12); }
+  75%      { transform: translate(7%, -5%) rotate(26deg) scale(.94); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aurora::before, .aurora::after { animation: none; }
+}
+
 /* — icon tiles — */
 .tilegrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
 .tile {
@@ -421,6 +486,12 @@ textarea.input { min-height: 78px; resize: vertical; }
 .screen-pad > *:nth-child(6) { animation-delay: .21s; }
 .screen-pad > *:nth-child(7) { animation-delay: .25s; }
 .screen-pad > *:nth-child(n+8) { animation-delay: .28s; }
+
+/* The entrance animation gives every direct child its own stacking context, so
+   a pop-over inside one of them would otherwise be painted under the cards that
+   follow it — which is why the notification panel opened behind "Start your
+   day". Lifting the alerts row above its siblings restores the expected order. */
+.screen-pad > .alerts-row { position: relative; z-index: 60; }
 .tag { animation: pop .35s var(--ease-spring) both; }
 
 @media (prefers-reduced-motion: reduce) {

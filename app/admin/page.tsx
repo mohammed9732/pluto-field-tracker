@@ -29,8 +29,8 @@ export default function AdminDashboard() {
             <div className="hnum" style={{ fontSize: 19 }}>Company today</div>
             <div className="small muted">{me.name} · Owner · {weekdayShort(data.today)} {dmy(data.today)}</div>
           </div>
-          <button className="btn btn-secondary btn-icon" style={{ width: 30, height: 30 }} onClick={logout} title="Sign out">
-            <Icon d={paths.logout} size={14} />
+          <button className="btn btn-secondary btn-icon" style={{ width: 40, height: 40 }} onClick={logout} title="Sign out">
+            <Icon d={paths.logout} size={17} />
           </button>
         </div>
 

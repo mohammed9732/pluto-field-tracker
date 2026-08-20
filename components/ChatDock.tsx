@@ -111,7 +111,7 @@ export function ChatDock() {
             </span>
             {current?.phone ? <CallButton phone={current.phone} name={current.label} size={26} /> : null}
             <Link href="/chat" title="Open full chat" aria-label="Open full chat"
-              style={{ color: "var(--c-violet-deep)", display: "grid", placeItems: "center", width: 26, height: 26 }}>
+              style={{ color: "var(--c-violet-deep)", display: "grid", placeItems: "center", width: 36, height: 36 }}>
               <Icon d="M15 3h6v6 M10 14 21 3 M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" size={15} />
             </Link>
             <button onClick={() => setOpen(false)} aria-label="Close chat"
@@ -162,13 +162,13 @@ export function ChatDock() {
               onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAndSend(f, "file", f.name); e.target.value = ""; }} />
             {attachOn ? (
               <>
-                <button className="btn btn-secondary btn-icon" style={{ flex: "none", width: 30, height: 30 }}
+                <button className="btn btn-secondary btn-icon" style={{ flex: "none", width: 40, height: 40 }}
                   onClick={() => imgRef.current?.click()} aria-label="Send a picture" title="Picture">
-                  <Icon d="M21 15l-5-5L5 21M3 5h18v14H3Z" size={14} />
+                  <Icon d="M21 15l-5-5L5 21M3 5h18v14H3Z" size={17} />
                 </button>
-                <button className="btn btn-secondary btn-icon" style={{ flex: "none", width: 30, height: 30 }}
+                <button className="btn btn-secondary btn-icon" style={{ flex: "none", width: 40, height: 40 }}
                   onClick={() => fileRef.current?.click()} aria-label="Send a file" title="File">
-                  <Icon d="M21 12.5 12.5 21a4.95 4.95 0 0 1-7-7l8.5-8.5a3.5 3.5 0 0 1 5 5L10 19" size={14} />
+                  <Icon d="M21 12.5 12.5 21a4.95 4.95 0 0 1-7-7l8.5-8.5a3.5 3.5 0 0 1 5 5L10 19" size={17} />
                 </button>
               </>
             ) : null}
@@ -178,13 +178,13 @@ export function ChatDock() {
               style={{ minHeight: 32, fontSize: 12 }} />
             {text.trim() || !attachOn ? (
               <button className="btn btn-icon" onClick={send} aria-label="Send"
-                style={{ flex: "none", width: 32, height: 32, background: "var(--c-violet)", border: "none" }}>
-                <Icon d={paths.send} size={14} stroke="#fff" />
+                style={{ flex: "none", width: 42, height: 42, background: "var(--c-violet)", border: "none" }}>
+                <Icon d={paths.send} size={17} stroke="#fff" />
               </button>
             ) : (
               <button className="btn btn-icon" onClick={toggleRecord} aria-label="Voice message" title="Hold a voice note"
-                style={{ flex: "none", width: 32, height: 32, background: recording ? "var(--c-coral)" : "var(--c-violet)", border: "none" }}>
-                <Icon d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z M19 10v2a7 7 0 0 1-14 0v-2 M12 19v3" size={14} stroke="#fff" />
+                style={{ flex: "none", width: 42, height: 42, background: recording ? "var(--c-coral)" : "var(--c-violet)", border: "none" }}>
+                <Icon d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z M19 10v2a7 7 0 0 1-14 0v-2 M12 19v3" size={17} stroke="#fff" />
               </button>
             )}
           </div>

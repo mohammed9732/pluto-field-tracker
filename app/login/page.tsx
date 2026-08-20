@@ -1,4 +1,5 @@
 "use client";
+import { Mascot } from "@/components/Mascot";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/fmt";
@@ -31,17 +32,16 @@ export default function Login() {
   }
 
   return (
-    <div className="screen">
-      <div className="screen-pad" style={{ paddingBottom: 20 }}>
+    <div className="screen" style={{ position: "relative", overflow: "hidden" }}>
+      <div className="aurora" aria-hidden="true" />
+      <div className="screen-pad" style={{ paddingBottom: 20, position: "relative", zIndex: 1 }}>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 24 }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 12 }}>
             {brand?.hasLogo ? (
               <img src="/api/logo" alt={brand?.companyName ?? "Logo"}
                 style={{ maxWidth: 150, maxHeight: 76, objectFit: "contain", display: "block" }} />
             ) : (
-              <div className="blueprint" style={{ width: 56, height: 56, display: "grid", placeItems: "center" }}>
-                <Icon d={paths.pinDot} size={26} stroke="var(--color-accent)" />
-              </div>
+              <Mascot size={104} mood="wave" />
             )}
             <div style={{ textAlign: "center" }}>
               <div className="hnum" style={{ fontSize: 26, lineHeight: 1.05 }}>

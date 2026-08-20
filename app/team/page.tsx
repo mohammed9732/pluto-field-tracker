@@ -44,7 +44,7 @@ export default function Team() {
             </span>
             <CallButton phone={r.phone} name={r.name} />
             <Link href={`/chat?channel=${r.dmChannel}`} aria-label={`Message ${r.name}`} title={`Message ${r.name}`}
-              style={{ width: 30, height: 30, borderRadius: 999, background: "var(--c-violet-soft)", display: "grid", placeItems: "center", flex: "none" }}>
+              style={{ width: 40, height: 40, borderRadius: 999, background: "var(--c-violet-soft)", display: "grid", placeItems: "center", flex: "none" }}>
               <Icon d={paths.chat} size={15} stroke="var(--c-violet-deep)" />
             </Link>
           </div>

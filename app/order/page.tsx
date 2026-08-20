@@ -132,9 +132,9 @@ function NewOrderInner() {
                     <span>IQD / {l.unit}{l.tiers.length ? ` · ${l.tiers.map((t) => `${t.minQty}+ ${t.price.toLocaleString()}`).join(" · ")}` : ""}</span>
                   </div>
                 </div>
-                <button className="btn btn-secondary btn-icon" style={{ width: 30, height: 30 }} onClick={() => bump(i, -1)}>−</button>
+                <button className="btn btn-secondary btn-icon" style={{ width: 40, height: 40 }} onClick={() => bump(i, -1)}>−</button>
                 <span className="hnum" style={{ width: 28, textAlign: "center", fontSize: 17, color: l.qty > 0 ? "var(--color-accent-700)" : "var(--color-neutral-400)" }}>{l.qty}</span>
-                <button className="btn btn-secondary btn-icon" style={{ width: 30, height: 30 }} onClick={() => bump(i, 1)}>＋</button>
+                <button className="btn btn-secondary btn-icon" style={{ width: 40, height: 40 }} onClick={() => bump(i, 1)}>＋</button>
               </div>
             ))}
           </div>

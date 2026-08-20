@@ -55,6 +55,25 @@ function backupDaily() {
   } catch {}
 }
 
+// Immediate labelled backup, taken before anything destructive. The daily
+// snapshot may already be hours old, so it is not good enough on its own.
+export function snapshot(label: string): string | null {
+  try {
+    if (!fs.existsSync(DB_FILE)) return null;
+    const dir = path.join(DATA_DIR, "backups");
+    fs.mkdirSync(dir, { recursive: true });
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`
+      + `-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    const name = `db-${label}-${stamp}.json`;
+    fs.copyFileSync(DB_FILE, path.join(dir, name));
+    return name;
+  } catch {
+    return null;
+  }
+}
+
 export function nextId(db: DB): number {
   db.seq += 1;
   return db.seq;

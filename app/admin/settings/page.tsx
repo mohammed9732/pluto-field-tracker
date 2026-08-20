@@ -69,6 +69,10 @@ export default function ControlPanel() {
   const t = useTerms();
   const logoRef = useRef<HTMLInputElement>(null);
   const [logoBusy, setLogoBusy] = useState(false);
+  const [wipe, setWipe] = useState<"records" | "everything" | null>(null);
+  const [wipeWord, setWipeWord] = useState("");
+  const [wipeMsg, setWipeMsg] = useState("");
+  const [wipeBusy, setWipeBusy] = useState(false);
 
   const load = useCallback(() => {
     api("/api/settings").then((r: any) => setSettings(r.settings)).catch(() => {});
@@ -352,6 +356,60 @@ export default function ControlPanel() {
             Download a backup
           </a>
         </div>
+
+        <h6 style={{ margin: "8px 0 0", color: "var(--c-coral-deep)" }}>Danger zone</h6>
+        <div className="card" style={{ gap: 10, borderColor: "var(--c-coral)" }}>
+          <div className="small">
+            When the training run is over and you are ready for real work, clear the
+            practice records. A backup is saved on the server first, every time.
+          </div>
+          <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+            <button className="btn btn-secondary" style={{ fontSize: 13 }}
+              onClick={() => setWipe("records")}>Clear practice records</button>
+            <button className="btn btn-secondary" style={{ fontSize: 13, color: "var(--c-coral-deep)" }}
+              onClick={() => setWipe("everything")}>Start completely fresh</button>
+          </div>
+          <div className="hint">
+            <b>Clear practice records</b> deletes doctors, visits, orders, payments, chat and
+            tasks — your staff, products and settings stay.
+            <br />
+            <b>Start completely fresh</b> also removes every other user account and the
+            product list, leaving only you.
+          </div>
+        </div>
+
+        {wipe ? (
+          <div className="card" style={{ gap: 10, borderColor: "var(--c-coral)", background: "var(--c-coral-soft)" }}>
+            <div style={{ fontWeight: 700 }}>
+              {wipe === "everything" ? "Start completely fresh?" : "Clear practice records?"}
+            </div>
+            <div className="small">
+              This cannot be undone from inside the app. Type <b>DELETE</b> to confirm.
+            </div>
+            <input className="input" value={wipeWord} placeholder="DELETE"
+              onChange={(e) => setWipeWord(e.target.value)} />
+            {wipeMsg ? <div className="small" style={{ fontWeight: 600 }}>{wipeMsg}</div> : null}
+            <div className="row" style={{ gap: 8 }}>
+              <button className="btn btn-coral" style={{ flex: 1 }} disabled={wipeBusy}
+                onClick={async () => {
+                  setWipeBusy(true);
+                  setWipeMsg("");
+                  try {
+                    const r = await api<any>("/api/reset", { json: { mode: wipe, confirm: wipeWord } });
+                    setWipeMsg(`Done. Backup saved as ${r.backup ?? "(none)"}. Reloading…`);
+                    setTimeout(() => window.location.reload(), 1600);
+                  } catch (e: any) {
+                    setWipeMsg(e.message);
+                  } finally { setWipeBusy(false); }
+                }}>
+                {wipeBusy ? "Working…" : "Yes, delete"}
+              </button>
+              <button className="btn btn-secondary" onClick={() => { setWipe(null); setWipeWord(""); setWipeMsg(""); }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         <div className="hint" style={{ marginTop: "auto" }}>
           Every change applies immediately for everyone. Metrics affect new calculations, never historical records.

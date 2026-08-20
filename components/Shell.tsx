@@ -228,21 +228,21 @@ export function AlertsBar() {
   }
 
   return (
-    <div style={{ position: "relative" }}>
+    <div className="alerts-row" style={{ position: "relative" }}>
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
       <button
         onClick={openBell}
         aria-label="Notifications"
-        style={{ position: "relative", zIndex: 30, background: "var(--color-neutral-100)", border: "1px solid var(--color-divider)", borderRadius: 999, width: 32, height: 32, display: "grid", placeItems: "center", cursor: "pointer" }}
+        style={{ position: "relative", zIndex: 30, background: "var(--color-surface)", border: "1px solid var(--color-divider)", borderRadius: 999, width: 44, height: 44, display: "grid", placeItems: "center", cursor: "pointer", boxShadow: "var(--elev-1)" }}
       >
-        <Icon d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0" size={15} />
+        <Icon d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0" size={20} />
         {data.unread > 0 ? (
           <span style={{ position: "absolute", top: -3, right: -3, minWidth: 16, height: 16, borderRadius: 999, background: "var(--c-coral)", color: "#fff", fontSize: 9, fontWeight: 700, display: "grid", placeItems: "center", padding: "0 3px" }}>{data.unread}</span>
         ) : null}
       </button>
       </div>
       {open ? (
-        <div style={{ position: "absolute", right: 0, top: 38, zIndex: 40, width: 290, maxHeight: 320, overflowY: "auto", background: "var(--color-neutral-100)", border: "1px solid var(--color-divider)", borderRadius: 16, boxShadow: "var(--shadow-md)", padding: 10, display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ position: "absolute", right: 0, top: 50, zIndex: 40, width: 290, maxHeight: 320, overflowY: "auto", background: "var(--color-neutral-100)", border: "1px solid var(--color-divider)", borderRadius: 16, boxShadow: "var(--shadow-md)", padding: 10, display: "flex", flexDirection: "column", gap: 4 }}>
           <button className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 10px" }}
             onClick={async () => setPushMsg(await enablePush())}>
             🔔 Enable phone notifications
@@ -276,7 +276,7 @@ export function Ticker() {
   const secs = Math.max(12, Math.round(tape.length / 3));
   return (
     <div className="ticker">
-      <Icon d={paths.warn} size={14} stroke="var(--c-amber-deep)" />
+      <Icon d={paths.warn} size={17} stroke="var(--c-amber-deep)" />
       <div className="tape" style={{ ["--tape-secs" as any]: `${secs}s` }}>
         <span>{tape}   •   {tape}</span>
       </div>
@@ -311,8 +311,8 @@ export function PageHead({ title, back, right }: { title: string; back?: string;
   return (
     <div className="row">
       {back ? (
-        <button className="btn btn-secondary btn-icon" style={{ width: 30, height: 30 }} onClick={() => (back === "back" ? router.back() : router.push(back))}>
-          <Icon d={paths.back} size={14} />
+        <button className="btn btn-secondary btn-icon" style={{ width: 40, height: 40 }} onClick={() => (back === "back" ? router.back() : router.push(back))}>
+          <Icon d={paths.back} size={17} />
         </button>
       ) : null}
       <h4 style={{ margin: 0, flex: 1 }}>{title}</h4>

@@ -1,4 +1,5 @@
 "use client";
+import { DailyBoost } from "@/components/DailyBoost";
 import { useTerms, roleLabel } from "@/lib/terms";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -95,8 +96,8 @@ export default function Home() {
         <Link href="/map" className="tag" style={{ textDecoration: "none", background: checkedIn ? "var(--c-coral-soft)" : "var(--color-neutral-200)", color: checkedIn ? "var(--c-coral-deep)" : "var(--color-neutral-600)", padding: "6px 12px", fontWeight: 600 }}>
           {checkedIn ? `● ${durationHM(data.fieldTime.minutes)}` : "Not checked in"}
         </Link>
-        <button className="btn btn-secondary btn-icon" style={{ width: 30, height: 30 }} onClick={logout} title="Sign out">
-          <Icon d={paths.logout} size={14} />
+        <button className="btn btn-secondary btn-icon" style={{ width: 40, height: 40 }} onClick={logout} title="Sign out">
+          <Icon d={paths.logout} size={17} />
         </button>
       </div>
 
@@ -183,7 +184,7 @@ export default function Home() {
           <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Follow-ups due</h6>
           {data.followUps.map((f: any) => (
             <div key={f.id} className="row" style={{ fontSize: 13, padding: "4px 0" }}>
-              <Icon d={paths.clock} size={14} stroke={f.date === data.today ? "var(--color-accent)" : "var(--color-neutral-500)"} />
+              <Icon d={paths.clock} size={17} stroke={f.date === data.today ? "var(--color-accent)" : "var(--color-neutral-500)"} />
               <span style={{ flex: 1 }}>{f.doctor}</span>
               <span className="small" style={{ color: f.date === data.today ? "var(--color-accent-700)" : "var(--color-neutral-500)" }}>
                 {f.date === data.today ? "Today" : `${weekdayShort(f.date)} ${dm(f.date)}`}
@@ -192,6 +193,8 @@ export default function Home() {
           ))}
         </div>
       ) : null}
+
+      <DailyBoost date={data.today} name={me.name} />
 
       <div className="tilegrid" style={{ marginTop: "auto" }}>
         {tiles.map((t) => (

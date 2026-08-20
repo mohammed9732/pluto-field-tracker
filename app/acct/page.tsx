@@ -42,8 +42,8 @@ export default function AcctDashboard() {
     <Screen me={me} wide>
       <div className="row">
         <h4 style={{ margin: 0, flex: 1 }}>Money — {monthName(data.period)}</h4>
-        <button className="btn btn-secondary btn-icon" style={{ width: 30, height: 30 }} onClick={logout} title="Sign out">
-          <Icon d={paths.logout} size={14} />
+        <button className="btn btn-secondary btn-icon" style={{ width: 40, height: 40 }} onClick={logout} title="Sign out">
+          <Icon d={paths.logout} size={17} />
         </button>
       </div>
 
