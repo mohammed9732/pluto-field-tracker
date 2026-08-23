@@ -13,6 +13,7 @@ export async function GET() {
   return Response.json({
     user: publicUser(user),
     terms: s.terms,
+    lang: user.lang ?? s.defaultLang ?? "en",
     companyName: s.companyName,
     hasLogo: !!s.logoId,
   });

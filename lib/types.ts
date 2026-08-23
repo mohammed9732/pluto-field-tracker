@@ -11,6 +11,8 @@ export interface User {
   baseSalary: number;
   dailyMin: number;
   active: boolean;
+  productLine?: string | null; // absent or null = sells everything
+  lang?: "en" | "ar";          // absent = follow the company default
 }
 
 export interface PriceTier {
@@ -29,6 +31,10 @@ export interface Product {
   tiers: PriceTier[];
   unit: string;
   active: boolean;
+  // Two reps can work the same city on different ranges. Products carry the
+  // line, users carry the line they sell, and ordering is filtered by it.
+  // Empty means "everyone", so existing data keeps working untouched.
+  line?: string | null;
 }
 
 export interface Doctor {
@@ -47,6 +53,7 @@ export interface Doctor {
   locationSetAt: string | null;
   createdBy: number;
   potentialMonthly: number; // what this doctor should buy per month (IQD), 0 = not set
+  secretaryPhone?: string | null; // the person who actually books the appointment
 }
 
 export interface Checkin {
@@ -196,6 +203,33 @@ export interface StockTransfer {
   by: number;
   ts: string;
   note: string;
+}
+
+// A note only its author can read. Deliberately not visible to management: a rep
+// writes differently when the owner is reading, and the point of this is the
+// note they would otherwise keep in their own phone.
+export interface PrivateNote {
+  id: number;
+  userId: number;
+  doctorId: number;
+  body: string;
+  ts: string;
+}
+
+// Asking for stock held in another city. Supervisor agrees it is needed, then
+// the accountant — who can see what is actually on the shelf — moves it.
+export interface TransferRequest {
+  id: number;
+  productId: number;
+  qty: number;
+  fromCity: string;
+  toCity: string;
+  requestedBy: number;
+  note: string;
+  status: "pending" | "supervisor_ok" | "done" | "rejected";
+  decidedBy: number | null;
+  decidedNote: string | null;
+  ts: string;
 }
 
 export interface StockCheck {
@@ -457,6 +491,18 @@ export interface Settings {
   // Months up to and including this one are closed: nothing dated inside them
   // can be created or edited any more. "YYYY-MM", or null when nothing is closed.
   closedThrough: string | null;
+
+  // Named product ranges. Empty list = the company sells one range and nobody
+  // needs to think about it.
+  productLines: string[];
+
+  // The language a new person gets before they choose their own.
+  defaultLang: "en" | "ar";
+
+  // Notice required before leave starts, in calendar days.
+  leaveShortNoticeDays: number; // 1–2 day requests
+  leaveLongNoticeDays: number;  // 3 days or more
+  leaveShortMaxDays: number;    // what counts as "short"
   brandColor: string;         // one hex; the accent ramp is derived from it
   loginFooter: string;        // free text under the sign-in form ("" hides it)
   terms: Terms;               // what this company calls things
@@ -484,6 +530,8 @@ export interface DB {
   notifications: Notification[];
   announcements: Announcement[];
   history: ChangeLog[];
+  privateNotes: PrivateNote[];
+  transferRequests: TransferRequest[];
   deductions: Deduction[];
   activity: Activity[];
   files: StoredFile[];

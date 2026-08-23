@@ -1,6 +1,9 @@
 "use client";
+import { LangToggle } from "./LangToggle";
 import { OutboxBar } from "./OutboxBar";
 import { setTerms, setBrand, useBrand, useTerms } from "@/lib/terms";
+import { setLang, useLang, useT, tr } from "@/lib/i18n";
+import { DEFAULT_TERMS } from "@/lib/types";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -21,9 +24,10 @@ export function useMe(): Me | null | undefined {
   const [me, setMe] = useState<Me | null | undefined>(undefined);
   const router = useRouter();
   useEffect(() => {
-    api<{ user: Me | null; terms?: any; companyName?: string; hasLogo?: boolean }>("/api/auth/me")
+    api<{ user: Me | null; terms?: any; companyName?: string; hasLogo?: boolean; lang?: any }>("/api/auth/me")
       .then((r) => {
         setTerms(r.terms);
+        setLang(r.lang);
         setBrand({ companyName: r.companyName, hasLogo: r.hasLogo });
         setMe(r.user);
         if (!r.user) router.replace("/login");
@@ -36,81 +40,92 @@ export function useMe(): Me | null | undefined {
 // Read lazily so a renamed word reaches the nav without a reload.
 const DOCTORS_LABEL = "Doctors";
 
-const NAV: Record<string, { href: string; label: string; icon: keyof typeof paths }[]> = {
+/* The word for "Doctors" comes from two places that can disagree: the company's
+   own vocabulary (terms) and the person's language. The company wins when it has
+   actually chosen a word — a pharmacy chain that renamed them "Pharmacies" means
+   it in any language. Only when the term is still the default do we translate. */
+function customerWord(t: { doctorPlural: string }): string {
+  return t.doctorPlural === DEFAULT_TERMS.doctorPlural
+    ? tr("nav.doctors", t.doctorPlural)
+    : t.doctorPlural;
+}
+
+
+const NAV: Record<string, { href: string; label: string; tkey?: string; icon: keyof typeof paths }[]> = {
   rep: [
-    { href: "/home", label: "Home", icon: "home" },
-    { href: "/plan", label: "Plan", icon: "cal" },
-    { href: "/orders", label: "Orders", icon: "orders" },
-    { href: "/progress", label: "Progress", icon: "chart" },
+    { href: "/home", label: "Home", tkey: "nav.home", icon: "home" },
+    { href: "/plan", label: "Plan", tkey: "nav.plan", icon: "cal" },
+    { href: "/orders", label: "Orders", tkey: "nav.orders", icon: "orders" },
+    { href: "/progress", label: "Progress", tkey: "nav.progress", icon: "chart" },
   ],
   supervisor: [
-    { href: "/home", label: "Home", icon: "home" },
-    { href: "/team", label: "Team", icon: "users" },
-    { href: "/approvals", label: "Approvals", icon: "check" },
+    { href: "/home", label: "Home", tkey: "nav.home", icon: "home" },
+    { href: "/team", label: "Team", tkey: "nav.team", icon: "users" },
+    { href: "/approvals", label: "Approvals", tkey: "nav.approvals", icon: "check" },
     { href: "/doctors", label: DOCTORS_LABEL, icon: "pinDot" },
   ],
   accountant: [
-    { href: "/acct", label: "Money", icon: "chart" },
-    { href: "/acct/queue", label: "Queue", icon: "orders" },
-    { href: "/stock", label: "Stock", icon: "warehouse" },
-    { href: "/acct/monthend", label: "Month-end", icon: "cal" },
-        { href: "/acct/payroll", label: "Payroll", icon: "users" },
+    { href: "/acct", label: "Money", tkey: "nav.money", icon: "chart" },
+    { href: "/acct/queue", label: "Queue", tkey: "nav.queue", icon: "orders" },
+    { href: "/stock", label: "Stock", tkey: "nav.stock", icon: "warehouse" },
+    { href: "/acct/monthend", label: "Month-end", tkey: "nav.monthEnd", icon: "cal" },
+        { href: "/acct/payroll", label: "Payroll", tkey: "nav.payroll", icon: "users" },
   ],
   admin: [
-    { href: "/admin", label: "Today", icon: "home" },
-    { href: "/admin/map", label: "Map", icon: "pin" },
-    { href: "/admin/report", label: "Report", icon: "chart" },
-    { href: "/admin/manage", label: "Manage", icon: "users" },
+    { href: "/admin", label: "Today", tkey: "nav.today", icon: "home" },
+    { href: "/admin/map", label: "Map", tkey: "nav.map", icon: "pin" },
+    { href: "/admin/report", label: "Report", tkey: "nav.report", icon: "chart" },
+    { href: "/admin/manage", label: "Manage", tkey: "nav.manage", icon: "users" },
   ],
 };
 
 // Everything the desktop sidebar lists, grouped. Bottom-bar items are a subset.
-const SIDEBAR: Record<string, { group: string; items: { href: string; label: string; icon: keyof typeof paths }[] }[]> = {
+const SIDEBAR: Record<string, { group: string; gkey?: string; items: { href: string; label: string; tkey?: string; icon: keyof typeof paths }[] }[]> = {
   admin: [
-    { group: "Overview", items: [
-      { href: "/admin", label: "Today", icon: "home" },
-      { href: "/summary", label: "Day summary", icon: "cal" },
-      { href: "/admin/report", label: "Monthly report", icon: "chart" },
-      { href: "/admin/map", label: "Live map", icon: "pin" },
+    { group: "Overview", gkey: "group.overview", items: [
+      { href: "/admin", label: "Today", tkey: "nav.today", icon: "home" },
+      { href: "/summary", label: "Day summary", tkey: "nav.daySummary", icon: "cal" },
+      { href: "/admin/report", label: "Monthly report", tkey: "nav.monthlyReport", icon: "chart" },
+      { href: "/admin/map", label: "Live map", tkey: "nav.liveMap", icon: "pin" },
     ]},
-    { group: "Field", items: [
-      { href: "/approvals", label: "Approvals", icon: "check" },
+    { group: "Field", gkey: "group.field", items: [
+      { href: "/approvals", label: "Approvals", tkey: "nav.approvals", icon: "check" },
       { href: "/doctors", label: DOCTORS_LABEL, icon: "pinDot" },
-      { href: "/competitors", label: "Market intel", icon: "warn" },
-      { href: "/tasks", label: "Tasks", icon: "check" },
-      { href: "/performance", label: "Performance", icon: "chart" },
+      { href: "/competitors", label: "Market intel", tkey: "nav.marketIntel", icon: "warn" },
+      { href: "/tasks", label: "Tasks", tkey: "nav.tasks", icon: "check" },
+      { href: "/performance", label: "Performance", tkey: "nav.performance", icon: "chart" },
     ]},
-    { group: "Money & stock", items: [
-      { href: "/acct", label: "Money", icon: "receipt" },
-      { href: "/acct/queue", label: "Invoice queue", icon: "orders" },
-      { href: "/stock", label: "Stock", icon: "warehouse" },
-      { href: "/spendings", label: "Spendings", icon: "card" },
-      { href: "/acct/monthend", label: "Month-end", icon: "cal" },
-        { href: "/acct/payroll", label: "Payroll", icon: "users" },
-      { href: "/acct/payouts", label: "Payouts", icon: "card" },
+    { group: "Money & stock", gkey: "group.moneyStock", items: [
+      { href: "/acct", label: "Money", tkey: "nav.money", icon: "receipt" },
+      { href: "/acct/queue", label: "Invoice queue", tkey: "nav.invoiceQueue", icon: "orders" },
+      { href: "/stock", label: "Stock", tkey: "nav.stock", icon: "warehouse" },
+      { href: "/spendings", label: "Spendings", tkey: "nav.spendings", icon: "card" },
+      { href: "/acct/monthend", label: "Month-end", tkey: "nav.monthEnd", icon: "cal" },
+        { href: "/acct/payroll", label: "Payroll", tkey: "nav.payroll", icon: "users" },
+      { href: "/acct/payouts", label: "Payouts", tkey: "nav.payouts", icon: "card" },
     ]},
-    { group: "Setup", items: [
-      { href: "/catalog", label: "Products", icon: "bag" },
-      { href: "/admin/manage", label: "Users & products", icon: "users" },
-      { href: "/admin/settings", label: "Control panel", icon: "target" },
+    { group: "Setup", gkey: "group.setup", items: [
+      { href: "/catalog", label: "Products", tkey: "nav.products", icon: "bag" },
+      { href: "/admin/manage", label: "Users & products", tkey: "nav.usersProducts", icon: "users" },
+      { href: "/admin/settings", label: "Control panel", tkey: "nav.controlPanel", icon: "target" },
     ]},
   ],
   accountant: [
-    { group: "Money", items: [
-      { href: "/acct", label: "Dashboard", icon: "chart" },
-      { href: "/acct/queue", label: "Invoice queue", icon: "orders" },
-      { href: "/acct/monthend", label: "Month-end", icon: "cal" },
-        { href: "/acct/payroll", label: "Payroll", icon: "users" },
-      { href: "/acct/payouts", label: "Payouts", icon: "card" },
-      { href: "/spendings", label: "Spendings", icon: "receipt" },
+    { group: "Money", gkey: "group.money", items: [
+      { href: "/acct", label: "Dashboard", tkey: "nav.dashboard", icon: "chart" },
+      { href: "/acct/queue", label: "Invoice queue", tkey: "nav.invoiceQueue", icon: "orders" },
+      { href: "/acct/monthend", label: "Month-end", tkey: "nav.monthEnd", icon: "cal" },
+        { href: "/acct/payroll", label: "Payroll", tkey: "nav.payroll", icon: "users" },
+      { href: "/acct/payouts", label: "Payouts", tkey: "nav.payouts", icon: "card" },
+      { href: "/spendings", label: "Spendings", tkey: "nav.spendings", icon: "receipt" },
     ]},
-    { group: "Stock", items: [
-      { href: "/stock", label: "Stock & checks", icon: "warehouse" },
+    { group: "Stock", gkey: "group.stock", items: [
+      { href: "/stock", label: "Stock & checks", tkey: "nav.stockChecks", icon: "warehouse" },
     ]},
-    { group: "Reference", items: [
+    { group: "Reference", gkey: "group.reference", items: [
       { href: "/doctors", label: DOCTORS_LABEL, icon: "pinDot" },
-      { href: "/catalog", label: "Products", icon: "bag" },
-      { href: "/tasks", label: "Tasks", icon: "check" },
+      { href: "/catalog", label: "Products", tkey: "nav.products", icon: "bag" },
+      { href: "/tasks", label: "Tasks", tkey: "nav.tasks", icon: "check" },
     ]},
   ],
 };
@@ -134,13 +149,13 @@ export function DeskSidebar({ me, company }: { me: Me; company?: string }) {
       </div>
       {groups.map((g) => (
         <div key={g.group} className="sidegroup">
-          <div className="sidegroup-title">{g.group}</div>
+          <div className="sidegroup-title">{(g as any).gkey ? tr((g as any).gkey, g.group) : g.group}</div>
           {g.items.map((it) => {
             const active = pathname === it.href;
             return (
               <Link key={it.href} href={it.href} className={active ? "active" : ""}>
                 <Icon d={paths[it.icon]} size={15} />
-                <span>{it.label === DOCTORS_LABEL ? t.doctorPlural : it.label}</span>
+                <span>{it.label === DOCTORS_LABEL ? customerWord(t) : (it as any).tkey ? tr((it as any).tkey, it.label) : it.label}</span>
               </Link>
             );
           })}
@@ -157,12 +172,12 @@ export function BottomNav({ me, unread }: { me: Me; unread?: number }) {
   const items = NAV[me.role] ?? NAV.rep;
   const left = items.slice(0, 2);
   const right = items.slice(2);
-  const link = (it: { href: string; label: string; icon: keyof typeof paths }) => {
+  const link = (it: { href: string; label: string; tkey?: string; icon: keyof typeof paths }) => {
     const active = pathname === it.href || (it.href !== "/home" && it.href !== "/acct" && it.href !== "/admin" && pathname.startsWith(it.href));
     return (
       <Link key={it.href} href={it.href} className={active ? "active" : ""}>
         <Icon d={paths[it.icon]} size={22} />
-        <span>{it.label === DOCTORS_LABEL ? t.doctorPlural : it.label}</span>
+        <span>{it.label === DOCTORS_LABEL ? customerWord(t) : it.tkey ? tr(it.tkey, it.label) : it.label}</span>
       </Link>
     );
   };
@@ -174,7 +189,7 @@ export function BottomNav({ me, unread }: { me: Me; unread?: number }) {
           <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5Z" /></svg>
           {unread ? <span className="chat-badge">{unread}</span> : null}
         </span>
-        <span style={{ fontSize: 10, color: "var(--c-violet-deep)", fontWeight: 600 }}>Chat</span>
+        <span style={{ fontSize: 10, color: "var(--c-violet-deep)", fontWeight: 600 }}>{tr("nav.chat", "Chat")}</span>
       </Link>
       {right.map(link)}
     </nav>
@@ -247,6 +262,10 @@ export function AlertsBar() {
       </div>
       {open ? (
         <div style={{ position: "absolute", right: 0, top: 50, zIndex: 40, width: 290, maxHeight: 320, overflowY: "auto", background: "var(--color-neutral-100)", border: "1px solid var(--color-divider)", borderRadius: 16, boxShadow: "var(--shadow-md)", padding: 10, display: "flex", flexDirection: "column", gap: 4 }}>
+          <div className="row" style={{ justifyContent: "space-between", gap: 8, paddingBottom: 4 }}>
+            <span className="small muted">{tr("common.language", "Language")}</span>
+            <LangToggle compact />
+          </div>
           <button className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 10px" }}
             onClick={async () => setPushMsg(await enablePush())}>
             🔔 Enable phone notifications

@@ -23,7 +23,8 @@ export function getDb(): DB {
     loaded.settings.terms = { ...DEFAULT_TERMS, ...(loaded.settings.terms ?? {}) };
     // Collections added by later features are simply absent in an older file.
     for (const key of ["history", "brochures", "competitorNotes", "stockChecks",
-                       "stockTransfers", "pushSubs", "files"] as const) {
+                       "stockTransfers", "pushSubs", "files", "privateNotes",
+                       "transferRequests"] as const) {
       if (!Array.isArray((loaded as any)[key])) (loaded as any)[key] = [];
     }
     globalThis.__plutoDb = loaded;
