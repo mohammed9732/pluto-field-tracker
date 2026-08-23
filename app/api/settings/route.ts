@@ -52,6 +52,26 @@ export async function POST(req: Request) {
         db.settings.cities = cleaned;
         continue;
       }
+      if (k === "productLines") {
+        requireUser(["admin"]);
+        const cleaned = (Array.isArray(v) ? v : [])
+          .map((x: any) => String(x ?? "").trim())
+          .filter(Boolean)
+          .filter((x: string, i: number, arr: string[]) => arr.indexOf(x) === i)
+          .slice(0, 20);
+        // Same rule as cities: a line still assigned to somebody cannot just
+        // disappear, or that rep silently loses their whole catalogue.
+        for (const old of db.settings.productLines ?? []) {
+          if (cleaned.includes(old)) continue;
+          const usedBy = db.users.some((u) => u.active && u.productLine === old)
+            || db.products.some((p) => p.active && p.line === old);
+          if (usedBy) {
+            return Response.json({ error: `"${old}" is still assigned to a user or product — move them first` }, { status: 400 });
+          }
+        }
+        db.settings.productLines = cleaned;
+        continue;
+      }
       if (k === "terms") {
         requireUser(["admin"]);
         // Blank fields fall back to the default word rather than showing nothing.

@@ -44,3 +44,18 @@ export async function api<T = any>(path: string, opts?: RequestInit & { json?: a
   }
   return res.json();
 }
+
+/* Money typed into a form.
+ *
+ * Amounts here run to eight digits — 12,500,000 IQD is an ordinary order — and
+ * an unbroken run of digits is genuinely hard to check. These two keep the
+ * separators in place as the person types.
+ */
+export function groupDigits(raw: string): string {
+  const digits = String(raw).replace(/[^\d]/g, "").replace(/^0+(?=\d)/, "");
+  return digits ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "";
+}
+
+export function ungroup(formatted: string): number {
+  return Math.round(Number(String(formatted).replace(/,/g, "")) || 0);
+}

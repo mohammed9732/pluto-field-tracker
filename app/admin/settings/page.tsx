@@ -73,6 +73,8 @@ export default function ControlPanel() {
   const [editGroup, setEditGroup] = useState<any>(null);
   const [newCity, setNewCity] = useState("");
   const [cityErr, setCityErr] = useState("");
+  const [newLine, setNewLine] = useState("");
+  const [lineErr, setLineErr] = useState("");
   const t = useTerms();
   const logoRef = useRef<HTMLInputElement>(null);
   const [logoBusy, setLogoBusy] = useState(false);
@@ -103,6 +105,15 @@ export default function ControlPanel() {
     setSettings(r.settings);
     setSavedFlash(true);
     setTimeout(() => setSavedFlash(false), 1200);
+  }
+
+  async function patchLines(productLines: string[]) {
+    setLineErr("");
+    try {
+      await patch({ productLines });
+    } catch (e: any) {
+      setLineErr(e?.message || "Could not save the product lines");
+    }
   }
 
   async function patchCities(cities: any[]) {
@@ -324,6 +335,37 @@ export default function ControlPanel() {
             </button>
           </div>
           {cityErr ? <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>{cityErr}</div> : null}
+        </div>
+
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Product lines</h6>
+        <div className="small muted">
+          {`Only needed if two ${lower(t.roleRep)}s work the same city on different ranges. They share the
+          same ${lower(t.doctorPlural)}, but each only sells — and is paid commission on — their own line.
+          Leave this empty and everybody sells everything.`}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {(settings.productLines ?? []).map((l: string) => (
+            <div key={l} className="listrow" style={{ padding: "8px 0" }}>
+              <span style={{ flex: 1, fontSize: 13 }}>{l}</span>
+              <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-coral-deep)" }}
+                onClick={() => patchLines((settings.productLines ?? []).filter((x: string) => x !== l))}>
+                Remove
+              </button>
+            </div>
+          ))}
+          <div className="row" style={{ gap: 8 }}>
+            <input className="input" placeholder="Add a line (e.g. Aesthetics)" value={newLine} onChange={(e) => setNewLine(e.target.value)} />
+            <button className="btn btn-primary" style={{ padding: "8px 16px", flex: "none" }}
+              onClick={() => {
+                const name = newLine.trim();
+                if (!name) return;
+                patchLines([...(settings.productLines ?? []), name]);
+                setNewLine("");
+              }}>
+              Add
+            </button>
+          </div>
+          {lineErr ? <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>{lineErr}</div> : null}
         </div>
 
         <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Feature switches</h6>

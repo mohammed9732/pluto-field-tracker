@@ -59,8 +59,19 @@ export default function Team() {
                 ))}
                 <Link href={`/map?userId=${r.userId}`} className="small" style={{ marginLeft: "auto" }}>Map view</Link>
               </div>
-              {r.outOfLocationWeek > 0 ? (
-                <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>⚠ {r.outOfLocationWeek} out-of-location visit{r.outOfLocationWeek === 1 ? "" : "s"} this week</div>
+              {r.outOfLocationVisits?.length ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 4, alignSelf: "stretch" }}>
+                  <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>
+                    ⚠ {r.outOfLocationVisits.length} out-of-location visit{r.outOfLocationVisits.length === 1 ? "" : "s"} this week
+                  </div>
+                  {r.outOfLocationVisits.map((v: any) => (
+                    <Link key={v.id} href={`/doctors/${v.doctorId}`} className="small"
+                      style={{ color: "var(--c-coral-deep)", textDecoration: "none" }}>
+                      {dm(v.date)} {v.time} · {v.doctorName}
+                      {v.noGps ? " · no GPS signal" : ""}
+                    </Link>
+                  ))}
+                </div>
               ) : null}
             </>
           )}

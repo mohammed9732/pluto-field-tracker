@@ -123,6 +123,25 @@ export function stockCityIds(db: DB): string[] {
   return cityIds(db).filter((id) => id !== hqCityId(db));
 }
 // Doctors a user may work with: reps are scoped to their own city.
+/* Which products a person sells.
+ *
+ * Two reps can now work the same city on different ranges — one on the
+ * aesthetics line, one on dermatology — calling on the SAME doctors. So the
+ * split is by product, never by customer: doctorsFor stays city-based and both
+ * reps see Dr Ahmed, but each only sells, is targeted on, and is paid
+ * commission for their own range.
+ *
+ * A product with no line set is visible to everybody. That matters because the
+ * owner will create lines long after the products exist, and anything not yet
+ * tagged must keep working rather than silently vanish from the order screen.
+ */
+export function productsFor(db: DB, user: { role: string; productLine?: string | null }) {
+  const active = db.products.filter((p) => p.active);
+  const line = (user.productLine ?? "").trim();
+  if (!line) return active;
+  return active.filter((p) => !p.line || p.line === line);
+}
+
 export function doctorsFor(db: DB, user: { role: string; city: string }) {
   if (user.role === "rep" && user.city && user.city !== "all") {
     return db.doctors.filter((d) => d.city === user.city);

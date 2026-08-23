@@ -110,7 +110,7 @@ function MapInner() {
         )
       ) : null}
 
-      <GeoMap checkins={data.checkins} visits={data.visits} pings={data.pings} height={self ? 380 : 320} />
+      <GeoMap checkins={data.checkins} visits={data.visits} pings={data.pings} doctorPins={data.doctorPins ?? []} height={self ? 380 : 320} />
       <div className="hint">Tap a numbered visit pin for Google Maps / Waze navigation. Today&apos;s visits are highlighted.</div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

@@ -24,7 +24,19 @@ export async function GET() {
         checkedIn: ft.checkedIn, inSince: ft.inSince, fieldMinutes: ft.minutes,
         lastInAt: lastIn?.ts ?? null,
         todayVisits: visitsOn(db, u.id, today).length,
-        outOfLocationWeek: week.filter((d) => d <= today).reduce((s, d) => s + visitsOn(db, u.id, d).filter((v) => v.outOfLocation).length, 0),
+        // A bare count ("2 out-of-location visits") tells a supervisor nothing
+        // they can act on. Naming the doctor and the day turns it into a
+        // question they can actually ask: "why were you logging Dr Ahmed from
+        // three kilometres away on Tuesday?"
+        outOfLocationVisits: week.filter((d) => d <= today).flatMap((d) =>
+          visitsOn(db, u.id, d).filter((v) => v.outOfLocation).map((v) => ({
+            id: v.id,
+            date: v.date,
+            time: v.time,
+            doctorId: v.doctorId,
+            doctorName: db.doctors.find((x) => x.id === v.doctorId)?.name ?? "?",
+            noGps: v.lat == null,
+          }))),
         weekVisits,
         onLeave, leaveUntil: leave?.end ?? null,
         products: accrual.map((r) => ({ name: r.productName, pct: Math.round(r.achievementPct) })),

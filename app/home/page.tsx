@@ -1,4 +1,5 @@
 "use client";
+import { tr } from "@/lib/i18n";
 import { DailyBoost } from "@/components/DailyBoost";
 import { useTerms, roleLabel } from "@/lib/terms";
 import Link from "next/link";
@@ -144,10 +145,13 @@ export default function Home() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: isNext ? "var(--color-accent-800)" : undefined }}>{d.name}</div>
                   <div className="small" style={{ color: isNext ? "var(--color-accent-700)" : "var(--color-neutral-600)" }}>
-                    {d.clinic}{isNext ? " · tap to log" : ""}
+                    {/* Every stop is tappable — the route is a suggestion, not an
+                        order, and a rep often takes them out of sequence. */}
+                    {d.clinic} · {tr("day.tapToLog", "tap to log")}
                   </div>
                 </div>
-                {isNext ? <Icon d="M5 12h14m-7-7 7 7-7 7" size={15} stroke="var(--color-accent-700)" /> : null}
+                <Icon d="M5 12h14m-7-7 7 7-7 7" size={15}
+                  stroke={isNext ? "var(--color-accent-700)" : "var(--color-neutral-400)"} />
               </Link>
             );
           })}

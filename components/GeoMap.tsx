@@ -2,8 +2,17 @@
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
 
+/* Leaflet popups take an HTML string, not React, so anything from the database
+ * has to be escaped on the way in. A clinic called "Smith & Sons <Clinic>" is
+ * the innocent version of this problem; a doctor name typed by a rep is the
+ * other one. */
+function escapeHtml(v: unknown): string {
+  return String(v ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+}
+
 // Real street map (OpenStreetMap tiles via Leaflet).
-export function GeoMap({ checkins, visits, pings, height = 280 }: { checkins: any[]; visits: any[]; pings: any[]; height?: number }) {
+export function GeoMap({ checkins, visits, pings, doctorPins = [], height = 280 }: { checkins: any[]; visits: any[]; pings: any[]; doctorPins?: any[]; height?: number }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
 
@@ -34,6 +43,27 @@ export function GeoMap({ checkins, visits, pings, height = 280 }: { checkins: an
         map.fitBounds(L.latLngBounds(pts).pad(0.2));
       }
 
+      // Every known clinic, drawn first so it sits under today's activity and
+      // deliberately small and grey: this is background, not the story. It is
+      // also left out of the bounds calculation above, or one far-flung clinic
+      // would zoom the whole map out and today's route would vanish.
+      const visitedToday = new Set(visits.map((v: any) => v.doctorId));
+      for (const doc of doctorPins) {
+        if (doc.lat == null || doc.lng == null || visitedToday.has(doc.id)) continue;
+        L.circleMarker([doc.lat, doc.lng], {
+          radius: 5, color: "#8a7c6a", fillColor: "#fff", fillOpacity: 0.95, weight: 2,
+        }).addTo(map).bindPopup(
+          `<div style="font:13px Barlow,system-ui;min-width:150px">
+            <b>${escapeHtml(doc.name)}</b>${doc.class ? ` <span style="opacity:.6">· ${escapeHtml(doc.class)}</span>` : ""}<br>
+            ${escapeHtml(doc.clinic ?? "")}
+            <div style="margin-top:6px;display:flex;gap:10px">
+              <a href="https://www.google.com/maps/dir/?api=1&destination=${doc.lat},${doc.lng}" target="_blank" rel="noopener">Google Maps</a>
+              <a href="https://waze.com/ul?ll=${doc.lat},${doc.lng}&navigate=yes" target="_blank" rel="noopener">Waze</a>
+            </div>
+          </div>`
+        );
+      }
+
       // Ping trail
       const trail = pings.map((p: any) => [p.lat, p.lng] as [number, number]);
       if (trail.length > 1) L.polyline(trail, { color: "#2f6fe0", weight: 2.5, dashArray: "6 5", opacity: 0.8 }).addTo(map);
@@ -61,7 +91,7 @@ export function GeoMap({ checkins, visits, pings, height = 280 }: { checkins: an
           }),
         }).addTo(map).bindPopup(
           `<div style="font:13px Barlow,system-ui;min-width:150px">
-            <b>${v.doctor?.name ?? "Visit"}</b><br>${v.doctor?.clinic ?? ""} · ${v.time ?? ""}<br>
+            <b>${escapeHtml(v.doctor?.name ?? "Visit")}</b><br>${escapeHtml(v.doctor?.clinic ?? "")} · ${escapeHtml(v.time ?? "")}<br>
             <div style="margin-top:6px;display:flex;gap:10px">
               <a href="https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lng}" target="_blank" rel="noopener">Google Maps</a>
               <a href="https://waze.com/ul?ll=${v.lat},${v.lng}&navigate=yes" target="_blank" rel="noopener">Waze</a>
@@ -80,7 +110,7 @@ export function GeoMap({ checkins, visits, pings, height = 280 }: { checkins: an
       cancelled = true;
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
     };
-  }, [checkins, visits, pings]);
+  }, [checkins, visits, pings, doctorPins]);
 
   return <div ref={boxRef} style={{ height, borderRadius: 16, border: "1px solid var(--color-divider)", overflow: "hidden", zIndex: 0 }} />;
 }

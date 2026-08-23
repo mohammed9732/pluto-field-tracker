@@ -110,6 +110,33 @@ const SIDEBAR: Record<string, { group: string; gkey?: string; items: { href: str
       { href: "/admin/settings", label: "Control panel", tkey: "nav.controlPanel", icon: "target" },
     ]},
   ],
+  // A supervisor spends the morning in the field on their phone and the
+  // afternoon at a desk planning the week, so they get both layouts.
+  supervisor: [
+    { group: "Team", gkey: "group.team", items: [
+      { href: "/home", label: "Today", tkey: "nav.today", icon: "home" },
+      { href: "/team", label: "Team", tkey: "nav.team", icon: "users" },
+      { href: "/summary", label: "Day summary", tkey: "nav.daySummary", icon: "cal" },
+      { href: "/map", label: "Live map", tkey: "nav.liveMap", icon: "pin" },
+      { href: "/performance", label: "Performance", tkey: "nav.performance", icon: "chart" },
+    ]},
+    { group: "Field", gkey: "group.field", items: [
+      { href: "/approvals", label: "Approvals", tkey: "nav.approvals", icon: "check" },
+      { href: "/doctors", label: DOCTORS_LABEL, icon: "pinDot" },
+      { href: "/plan", label: "Weekly plan", tkey: "nav.plan", icon: "cal" },
+      { href: "/tasks", label: "Tasks", tkey: "nav.tasks", icon: "check" },
+      { href: "/competitors", label: "Market intel", tkey: "nav.marketIntel", icon: "warn" },
+      { href: "/leave", label: "Leave", tkey: "nav.leave", icon: "cal" },
+    ]},
+    { group: "Money & stock", gkey: "group.moneyStock", items: [
+      { href: "/stock", label: "Stock", tkey: "nav.stock", icon: "warehouse" },
+      { href: "/spendings", label: "Spendings", tkey: "nav.spendings", icon: "card" },
+      { href: "/targets", label: "Targets", tkey: "nav.targets", icon: "target" },
+    ]},
+    { group: "Reference", gkey: "group.reference", items: [
+      { href: "/catalog", label: "Products", tkey: "nav.products", icon: "bag" },
+    ]},
+  ],
   accountant: [
     { group: "Money", gkey: "group.money", items: [
       { href: "/acct", label: "Dashboard", tkey: "nav.dashboard", icon: "chart" },
@@ -131,7 +158,8 @@ const SIDEBAR: Record<string, { group: string; gkey?: string; items: { href: str
 };
 
 
-// Desktop sidebar for the roles that also work from a PC (owner + accountant).
+// Desktop sidebar for the roles that also work from a PC (owner, supervisor,
+// accountant). Reps are phone-only by design — they are never at a desk.
 export function DeskSidebar({ me, company }: { me: Me; company?: string }) {
   const pathname = usePathname();
   const brand = useBrand();
@@ -270,6 +298,13 @@ export function AlertsBar() {
             onClick={async () => setPushMsg(await enablePush())}>
             🔔 Enable phone notifications
           </button>
+          {/* The manual lives behind the same button as the language switch and
+              notifications — the three things people go looking for and cannot
+              otherwise find. */}
+          <Link href="/help" onClick={() => setOpen(false)}
+            className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 10px", textDecoration: "none", justifyContent: "center" }}>
+            {tr("help.open", "How to use the app")}
+          </Link>
           {pushMsg ? <div className="small" style={{ padding: "2px 4px", color: "var(--color-neutral-600)" }}>{pushMsg}</div> : null}
           {data.notifications.length === 0 ? <div className="small muted" style={{ padding: 8 }}>Nothing yet.</div> : null}
           {data.notifications.map((n: any) => (

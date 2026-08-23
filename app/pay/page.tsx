@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Screen, useMe, Spinner, PageHead } from "@/components/Shell";
 import { DoctorPicker, DoctorCard, Doc } from "@/components/DoctorPicker";
 import { Icon, paths } from "@/components/Icons";
-import { api, dmy, money } from "@/lib/fmt";
+import { api, dmy, groupDigits, money, ungroup } from "@/lib/fmt";
 import { getPosition } from "@/lib/geo";
 
 function CollectPaymentInner() {
@@ -53,7 +53,7 @@ function CollectPaymentInner() {
   async function record() {
     setErr("");
     if (!doctor) { setErr(`Pick a ${lower(t.doctor)}`); return; }
-    const amt = Math.round(Number(String(amount).replace(/,/g, "")));
+    const amt = ungroup(amount);
     if (!(amt > 0)) { setErr("Enter the amount collected"); return; }
     if (!photo) { setErr("Take a photo of the signed receipt first"); return; }
     setBusy(true);
@@ -124,7 +124,7 @@ function CollectPaymentInner() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <div className="field" style={{ margin: 0 }}>
               <label>Amount collected (IQD)</label>
-              <input className="input hnum" value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="numeric" placeholder="1,000,000" style={{ fontSize: 17 }} />
+              <input className="input hnum" value={amount} onChange={(e) => setAmount(groupDigits(e.target.value))} inputMode="numeric" placeholder="1,000,000" style={{ fontSize: 17 }} />
             </div>
             <div className="field" style={{ margin: 0 }}>
               <label>Method</label>
@@ -147,7 +147,9 @@ function CollectPaymentInner() {
             <span style={{ flex: 1, color: photo ? "var(--c-green-deep)" : "var(--color-neutral-600)" }}>
               {photo ? `Signed receipt attached — ${photo.name}` : "Photo of the signed receipt (required)"}
             </span>
-            <input type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={(e) => e.target.files?.[0] && attachPhoto(e.target.files[0])} />
+            {/* No capture attribute: with it the phone jumps straight to the camera and
+                the gallery is unreachable. Without it the person chooses. */}
+            <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => e.target.files?.[0] && attachPhoto(e.target.files[0])} />
           </label>
           {err ? <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>{err}</div> : null}
           <button className="btn btn-primary btn-block" style={{ padding: 13, marginTop: "auto" }} onClick={record} disabled={busy}>

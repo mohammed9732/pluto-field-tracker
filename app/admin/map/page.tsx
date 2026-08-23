@@ -46,7 +46,7 @@ export default function AdminMap() {
             </label>
           ))}
         </div>
-        <GeoMap checkins={data.checkins} visits={data.visits} pings={data.pings} height={380} />
+        <GeoMap checkins={data.checkins} visits={data.visits} pings={data.pings} doctorPins={data.doctorPins ?? []} height={380} />
         <div className="two-col">
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <h6 style={{ margin: "0 0 8px", color: "var(--color-neutral-600)" }}>Timeline — {data.userName}</h6>

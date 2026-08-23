@@ -189,8 +189,34 @@ const AR: Record<string, string> = {
   "money.deductions": "الاستقطاعات",
 
   // — help —
-  "help.title": "دليل الاستخدام",
-  "help.open": "دليل الاستخدام",
+  "help.title": "كيف تستخدم التطبيق",
+  "help.open": "كيف تستخدم التطبيق",
+  "help.intro": "مكتوب لما تقوم به أنت. اضغط على أي عنوان لفتحه.",
+  "help.footer": "هل هناك شيء قديم أو ناقص هنا؟ أخبر المالك — الدليل جزء من التطبيق، فيمكن إصلاحه.",
+
+  // — added with the twelve updates —
+  "nav.targets": "الأهداف",
+  "common.saved": "تم الحفظ",
+  "doctor.privateNotePlaceholder": "يفضّل الصباح الباكر · يسأل دائماً عن الخصم · السكرتير هو حارس الباب",
+  "stock.transferRequests": "طلبات نقل المخزون",
+  "stock.askForStock": "طلب مخزون",
+  "stock.sendRequest": "إرسال الطلب",
+  "stock.takeFrom": "خذه من",
+  "stock.sendTo": "أرسله إلى",
+  "stock.waitingSupervisor": "بانتظار المشرف",
+  "stock.waitingAccountant": "بانتظار المحاسب",
+  "stock.moved": "تم النقل",
+  "stock.markMoved": "تعليم كمنقول",
+  "stock.expires": "ينتهي في",
+  "common.declined": "مرفوض",
+  "common.name": "الاسم",
+  "doctor.editDetails": "تعديل البيانات",
+  "doctor.specialty": "التخصص",
+  "doctor.area": "المنطقة",
+  "doctor.address": "العنوان",
+  "doctor.class": "التصنيف",
+  "doctor.potential": "الإمكانية الشهرية",
+  "common.decline": "رفض",
 };
 
 const DICTS: Record<Lang, Record<string, string>> = { en: {}, ar: AR };

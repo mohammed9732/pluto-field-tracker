@@ -43,10 +43,20 @@ export async function POST(req: Request) {
       if (!b.start || !b.end || b.end < b.start) return Response.json({ error: "Pick valid dates" }, { status: 400 });
       const type = b.type === "sick" ? "sick" : "annual";
       if (type === "annual") {
+        // Notice scales with the length of the trip: a day off needs little
+        // warning, a fortnight needs the territory covered.
+        const days = Math.max(1, Math.round(
+          (new Date(String(b.end)).getTime() - new Date(String(b.start)).getTime()) / 86400000) + 1);
+        const short = db.settings.leaveShortMaxDays ?? 2;
+        const needed = days <= short
+          ? (db.settings.leaveShortNoticeDays ?? 2)
+          : (db.settings.leaveLongNoticeDays ?? 10);
         const minStart = new Date();
-        minStart.setDate(minStart.getDate() + 7);
+        minStart.setDate(minStart.getDate() + needed);
         if (String(b.start) < minStart.toISOString().slice(0, 10)) {
-          return Response.json({ error: "Annual leave must be requested at least 1 week ahead" }, { status: 400 });
+          return Response.json({
+            error: `${days} day${days === 1 ? "" : "s"} of leave needs ${needed} days' notice. The earliest you can start is ${minStart.toISOString().slice(0, 10)}.`,
+          }, { status: 400 });
         }
       }
       const leave = {

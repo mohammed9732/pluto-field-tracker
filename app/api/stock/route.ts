@@ -20,6 +20,7 @@ function stockView(db: ReturnType<typeof getDb>) {
       byLocation,
       total: locs.reduce((s, l) => s + at(l), 0),
       expiry: row?.expiry ?? null,
+      batch: row?.batch ?? null,
     };
   });
 }
@@ -61,6 +62,22 @@ export async function GET() {
       })),
       myCity,
       lowThreshold: db.settings.lowStockThreshold,
+      // Everyone sees the requests that concern them: your own if you asked,
+      // all of them if you are the one who approves or fulfils.
+      transferRequests: db.transferRequests
+        .filter((r) => user.role !== "rep" || r.requestedBy === user.id || r.toCity === user.city)
+        .slice().sort((a, b2) => b2.ts.localeCompare(a.ts)).slice(0, 30)
+        .map((r) => ({
+          ...r,
+          productName: db.products.find((p) => p.id === r.productId)?.name ?? "?",
+          fromName: cityName(db, r.fromCity), toName: cityName(db, r.toCity),
+          requestedByName: db.users.find((u) => u.id === r.requestedBy)?.name ?? "?",
+          decidedByName: r.decidedBy ? db.users.find((u) => u.id === r.decidedBy)?.name ?? null : null,
+        })),
+      canApproveTransfer: user.role === "supervisor" || user.role === "admin",
+      canFulfilTransfer: user.role === "accountant" || user.role === "admin",
+      expiryWarnMonths: db.settings.expiryWarnMonths ?? 6,
+      canSetExpiry: user.role === "accountant" || user.role === "admin",
       weeklyStockCheck: db.settings.weeklyStockCheck,
       mustCheck: db.settings.weeklyStockCheck && user.role === "rep" && myCity !== "main" && !myCheckDone,
       myCityLabel: cityName(db, myCity),
@@ -114,6 +131,145 @@ export async function POST(req: Request) {
       db.stockUploads.push({ id: nextId(db), filename: String(b.filename ?? "upload.xlsx"), uploadedBy: user.id, at: nowIso(), rowsProcessed: processed, errors });
       saveDb();
       return Response.json({ ok: true, processed, errors });
+    }
+
+    if (b.action === "setBatch") {
+      // Expiry arrives with the Excel upload when the accountant has it there,
+      // but most of the time it is read off the carton by hand. Without this the
+      // date could only ever be corrected by re-uploading the whole sheet.
+      requireUser(["accountant", "admin"]);
+      const product = db.products.find((p) => p.id === Number(b.productId));
+      if (!product) return Response.json({ error: "Product not found" }, { status: 404 });
+      const loc = String(b.location ?? "main") as StockLocation;
+      if (!locations(db).includes(loc)) return Response.json({ error: "Unknown location" }, { status: 400 });
+      const expiry = b.expiry ? String(b.expiry).slice(0, 10) : null;
+      if (expiry && !/^\d{4}-\d{2}-\d{2}$/.test(expiry)) {
+        return Response.json({ error: "Expiry must be a date" }, { status: 400 });
+      }
+      let s = db.stock.find((x) => x.productId === product.id && x.location === loc);
+      if (!s) {
+        s = { productId: product.id, location: loc, qty: 0, batch: null, expiry: null, updatedAt: nowIso(), updatedBy: user.id };
+        db.stock.push(s);
+      }
+      s.batch = b.batch != null ? (String(b.batch).trim() || null) : s.batch;
+      s.expiry = expiry;
+      s.updatedAt = nowIso(); s.updatedBy = user.id;
+      logActivity(db, () => nextId(db), user.id,
+        `set ${product.name} batch/expiry at ${cityName(db, loc)}: ${s.batch ?? "no batch"} · ${s.expiry ?? "no expiry"}`);
+      saveDb();
+      return Response.json({ ok: true });
+    }
+
+    /* ---- Asking for stock held somewhere else -------------------------------
+     *
+     * A rep in Sulaymaniyah runs out mid-week. The stock exists, but it is in
+     * Erbil, and only the accountant may actually move it. Three steps, so that
+     * nobody is both the asker and the approver:
+     *
+     *   rep or supervisor asks -> supervisor agrees it is needed -> accountant
+     *   moves it and the quantities change.
+     *
+     * Nothing moves until that last step: until then this is a conversation,
+     * not a stock movement.
+     */
+    if (b.action === "requestTransfer") {
+      requireUser(["rep", "supervisor", "admin"]);
+      const product = db.products.find((p) => p.id === Number(b.productId));
+      const qty = Math.round(Number(b.qty));
+      const locs = locations(db);
+      // A rep can only ask for stock to come to their own city.
+      const toCity = user.role === "rep"
+        ? (stockCityIds(db).includes(user.city) ? user.city : null)
+        : (locs.includes(String(b.toCity)) ? String(b.toCity) : null);
+      const fromCity = locs.includes(String(b.fromCity)) ? String(b.fromCity) : "main";
+      if (!product || !(qty > 0)) return Response.json({ error: "Pick a product and a quantity" }, { status: 400 });
+      if (!toCity) return Response.json({ error: "You do not hold stock in a city of your own" }, { status: 400 });
+      if (toCity === fromCity) return Response.json({ error: "Pick where it should come from" }, { status: 400 });
+
+      const req = {
+        id: nextId(db), productId: product.id, qty,
+        fromCity, toCity, requestedBy: user.id,
+        note: String(b.note ?? "").slice(0, 500),
+        status: "pending" as const,
+        decidedBy: null, decidedNote: null, ts: nowIso(),
+      };
+      db.transferRequests.push(req);
+      for (const sup of db.users.filter((u) => u.active && (u.role === "supervisor" || u.role === "admin"))) {
+        notify(db, () => nextId(db), sup.id,
+          `${user.name} needs ${qty} x ${product.name} moved from ${cityName(db, fromCity)} to ${cityName(db, toCity)}.`, "/stock");
+      }
+      logActivity(db, () => nextId(db), user.id, `requested ${qty} x ${product.name} ${fromCity} -> ${toCity}`);
+      saveDb();
+      return Response.json({ ok: true, request: req });
+    }
+
+    if (b.action === "decideTransferRequest") {
+      const req = db.transferRequests.find((r) => r.id === Number(b.id));
+      if (!req) return Response.json({ error: "Request not found" }, { status: 404 });
+      if (req.status === "done") return Response.json({ error: "That stock has already been moved" }, { status: 400 });
+      const product = db.products.find((p) => p.id === req.productId);
+      const note = String(b.note ?? "").slice(0, 500);
+
+      if (b.decision === "reject") {
+        // Either approver can stop it, at either stage.
+        requireUser(["supervisor", "accountant", "admin"]);
+        req.status = "rejected"; req.decidedBy = user.id; req.decidedNote = note || null;
+        notify(db, () => nextId(db), req.requestedBy,
+          `Your request for ${req.qty} x ${product?.name ?? "stock"} was declined${note ? `: ${note}` : "."}`, "/stock");
+        saveDb();
+        return Response.json({ ok: true });
+      }
+
+      if (b.decision === "approve") {
+        requireUser(["supervisor", "admin"]);
+        if (req.status !== "pending") return Response.json({ error: "Already dealt with" }, { status: 400 });
+        // The person who asked cannot also be the one who agrees it is needed —
+        // that is the whole point of the middle step. An owner is exempt:
+        // there is nobody above them to ask.
+        if (req.requestedBy === user.id && user.role !== "admin") {
+          return Response.json({ error: "Someone else has to approve your own request" }, { status: 403 });
+        }
+        req.status = "supervisor_ok"; req.decidedBy = user.id; req.decidedNote = note || null;
+        for (const acct of db.users.filter((u) => u.active && (u.role === "accountant" || u.role === "admin"))) {
+          notify(db, () => nextId(db), acct.id,
+            `Approved: move ${req.qty} x ${product?.name ?? "stock"} from ${cityName(db, req.fromCity)} to ${cityName(db, req.toCity)}.`, "/stock");
+        }
+        saveDb();
+        return Response.json({ ok: true });
+      }
+
+      if (b.decision === "fulfil") {
+        // Only now does anything actually move.
+        requireUser(["accountant", "admin"]);
+        if (req.status !== "supervisor_ok") return Response.json({ error: "A supervisor has to approve it first" }, { status: 400 });
+        if (!product) return Response.json({ error: "That product no longer exists" }, { status: 400 });
+        const src = db.stock.find((x) => x.productId === product.id && x.location === (req.fromCity as StockLocation));
+        if (!src || src.qty < req.qty) {
+          return Response.json({ error: `Only ${src?.qty ?? 0} left in ${cityName(db, req.fromCity)}` }, { status: 400 });
+        }
+        let dst = db.stock.find((x) => x.productId === product.id && x.location === (req.toCity as StockLocation));
+        if (!dst) {
+          dst = { productId: product.id, location: req.toCity as StockLocation, qty: 0, batch: src.batch, expiry: src.expiry, updatedAt: nowIso(), updatedBy: user.id };
+          db.stock.push(dst);
+        }
+        src.qty -= req.qty;
+        dst.qty += req.qty;
+        src.updatedAt = dst.updatedAt = nowIso();
+        src.updatedBy = dst.updatedBy = user.id;
+        db.stockTransfers.push({
+          id: nextId(db), productId: product.id, qty: req.qty,
+          from: req.fromCity as StockLocation, to: req.toCity as StockLocation,
+          by: user.id, ts: nowIso(), note: `Request #${req.id}${note ? ` - ${note}` : ""}`,
+        });
+        req.status = "done"; req.decidedBy = user.id; req.decidedNote = note || req.decidedNote;
+        notify(db, () => nextId(db), req.requestedBy,
+          `${req.qty} x ${product.name} is on its way to ${cityName(db, req.toCity)}.`, "/stock");
+        logActivity(db, () => nextId(db), user.id, `fulfilled transfer request #${req.id}`);
+        saveDb();
+        return Response.json({ ok: true });
+      }
+
+      return Response.json({ error: "Unknown decision" }, { status: 400 });
     }
 
     if (b.action === "transfer") {

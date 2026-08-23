@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { Icon, paths } from "@/components/Icons";
-import { api, dmy, money } from "@/lib/fmt";
+import { api, dmy, groupDigits, money, ungroup } from "@/lib/fmt";
 
 const TYPES: [string, string][] = [["gas", "Gas / transport"], ["food", "Food"], ["gifts", "Gifts / samples"], ["accommodation", "Accommodation"], ["other", "Other"]];
 const STATUS_TAG: Record<string, [string, string]> = {
@@ -74,7 +74,7 @@ export default function Spendings() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <div className="field" style={{ margin: 0 }}>
             <label>Amount (IQD)</label>
-            <input className="input hnum" inputMode="numeric" placeholder="25,000" value={amount} onChange={(e) => setAmount(e.target.value)} style={{ fontSize: 16 }} />
+            <input className="input hnum" inputMode="numeric" placeholder="25,000" value={amount} onChange={(e) => setAmount(groupDigits(e.target.value))} style={{ fontSize: 16 }} />
           </div>
           <div className="field" style={{ margin: 0 }}>
             <label>Type</label>

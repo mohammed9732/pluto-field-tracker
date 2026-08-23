@@ -11,6 +11,7 @@ export async function GET() {
       users: db.users.map(({ password, ...u }) => u),
       products: db.products,
       cities: db.settings.cities,
+      productLines: db.settings.productLines ?? [],
       chatGroups: db.chatGroups,
       canEdit: user.role === "admin",
     });
@@ -36,6 +37,7 @@ export async function POST(req: Request) {
           phone: b.phone ?? u.phone,
           baseSalary: b.baseSalary != null ? Number(b.baseSalary) : u.baseSalary,
           dailyMin: b.dailyMin != null ? Number(b.dailyMin) : u.dailyMin,
+          productLine: b.productLine !== undefined ? (String(b.productLine).trim() || null) : u.productLine,
           active: b.active != null ? !!b.active : u.active,
         });
         if (b.password) {
@@ -47,7 +49,8 @@ export async function POST(req: Request) {
         db.users.push({
           id: nextId(db), name: String(b.name), role: b.role ?? "rep", city: b.city ?? "erbil",
           phone: String(b.phone), password: hashPassword(String(b.password || "password")),
-          baseSalary: Number(b.baseSalary) || 0, dailyMin: Number(b.dailyMin) || 5, active: true,
+          baseSalary: Number(b.baseSalary) || 0, dailyMin: Number(b.dailyMin) || 5,
+          productLine: String(b.productLine ?? "").trim() || null, active: true,
         });
       }
       saveDb();
@@ -61,6 +64,7 @@ export async function POST(req: Request) {
           name: b.name ?? p.name, sku: b.sku ?? p.sku,
           unitPrice: b.unitPrice != null ? Number(b.unitPrice) : p.unitPrice,
           unit: b.unit ?? p.unit,
+          line: b.line !== undefined ? (String(b.line).trim() || null) : p.line,
           active: b.active != null ? !!b.active : p.active,
           imageId: b.imageId !== undefined ? b.imageId : p.imageId,
           brochureId: b.brochureId !== undefined ? b.brochureId : p.brochureId,
@@ -76,7 +80,8 @@ export async function POST(req: Request) {
         if (!b.name || !b.sku) return Response.json({ error: "Name and SKU required" }, { status: 400 });
         db.products.push({
           id: nextId(db), name: String(b.name), sku: String(b.sku),
-          unitPrice: Number(b.unitPrice) || 0, unit: String(b.unit ?? "box"), active: true,
+          unitPrice: Number(b.unitPrice) || 0, unit: String(b.unit ?? "box"),
+          line: String(b.line ?? "").trim() || null, active: true,
           imageId: b.imageId ?? null, brochureId: b.brochureId ?? null, brochureName: b.brochureName ?? null,
           tiers: Array.isArray(b.tiers)
             ? b.tiers.map((t: any) => ({ minQty: Math.round(Number(t.minQty)), price: Math.round(Number(t.price)) })).filter((t: any) => t.minQty > 1 && t.price > 0)

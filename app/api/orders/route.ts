@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { closedError, isClosed, logActivity, notify, nowIso, orderTotal, priceForQty, recordChange, stockCityIds } from "@/lib/compute";
+import { closedError, isClosed, logActivity, notify, nowIso, orderTotal, priceForQty, productsFor, recordChange, stockCityIds } from "@/lib/compute";
 import { OrderItem } from "@/lib/types";
 
 function enrich(db: ReturnType<typeof getDb>, o: any) {
@@ -61,6 +61,26 @@ export async function POST(req: Request) {
         if (already) return Response.json({ ok: true, order: enrich(db, already), duplicate: true });
       }
       const isSample = !!b.isSample && db.settings.samplesEnabled;
+
+      /* The order screen already filters by product line, so an item from
+       * another line means either a stale screen or a hand-made request. The
+       * line is a commercial boundary — commission is paid on it — so it is
+       * checked here rather than trusted to the client.
+       *
+       * Checked before the items are built, not inside the loop: a throw in
+       * there is caught as a generic 500 and the rep is told "Server error"
+       * instead of which product is the problem.
+       */
+      const allowed = new Set(productsFor(db, user).map((p) => p.id));
+      const offLine = (b.items ?? [])
+        .filter((it: any) => Number(it.qty) > 0 && !allowed.has(Number(it.productId)))
+        .map((it: any) => db.products.find((p) => p.id === Number(it.productId))?.name ?? `#${it.productId}`);
+      if (offLine.length) {
+        return Response.json(
+          { error: `${offLine.join(", ")} ${offLine.length === 1 ? "is" : "are"} not on your product line` },
+          { status: 400 },
+        );
+      }
       const items: OrderItem[] = (b.items ?? [])
         .filter((it: any) => Number(it.qty) > 0)
         .map((it: any) => {

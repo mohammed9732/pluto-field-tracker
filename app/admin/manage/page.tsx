@@ -3,7 +3,7 @@ import { useTerms, roleLabel } from "@/lib/terms";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Screen, useMe, Spinner } from "@/components/Shell";
-import { api, money } from "@/lib/fmt";
+import { api, groupDigits, money, ungroup } from "@/lib/fmt";
 
 export default function Manage() {
   const me = useMe();
@@ -23,12 +23,12 @@ export default function Manage() {
   const canEdit = data.canEdit;
 
   async function saveUser() {
-    await api("/api/admin", { json: { action: "saveUser", ...editUser } });
+    await api("/api/admin", { json: { action: "saveUser", ...editUser, baseSalary: ungroup(String(editUser.baseSalary ?? "")) } });
     setEditUser(null);
     load();
   }
   async function saveProduct() {
-    await api("/api/admin", { json: { action: "saveProduct", ...editProduct } });
+    await api("/api/admin", { json: { action: "saveProduct", ...editProduct, unitPrice: ungroup(String(editProduct.unitPrice ?? "")) } });
     setEditProduct(null);
     load();
   }
@@ -42,11 +42,11 @@ export default function Manage() {
 
         <div className="row">
           <h6 style={{ margin: 0, color: "var(--color-neutral-600)", flex: 1 }}>Users · base salaries visible to you and the accountant only</h6>
-          {canEdit ? <button className="btn btn-primary" style={{ fontSize: 12, padding: "6px 12px" }} onClick={() => setEditUser({ name: "", phone: "", role: "rep", city: (data.cities ?? [])[0]?.id ?? "", baseSalary: 1200000, dailyMin: 5, password: "password" })}>＋ Add user</button> : null}
+          {canEdit ? <button className="btn btn-primary" style={{ fontSize: 12, padding: "6px 12px" }} onClick={() => setEditUser({ name: "", phone: "", role: "rep", city: (data.cities ?? [])[0]?.id ?? "", baseSalary: "1,200,000", dailyMin: 5, password: "password" })}>＋ Add user</button> : null}
         </div>
         <div style={{ overflowX: "auto" }}>
           <table className="table" style={{ fontSize: 13, minWidth: 560 }}>
-            <thead><tr><th>Name</th><th>Role</th><th>City</th><th style={{ textAlign: "right" }}>Base salary</th><th style={{ textAlign: "right" }}>Daily min</th><th></th></tr></thead>
+            <thead><tr><th>Name</th><th>Role</th><th>City</th><th style={{ textAlign: "right" }}>Base salary</th><th style={{ textAlign: "right" }}>Daily min</th><th>Line</th><th></th></tr></thead>
             <tbody>
               {data.users.map((u: any) => (
                 <tr key={u.id}>
@@ -55,9 +55,10 @@ export default function Manage() {
                   <td>{u.city === "all" ? "All" : (data.cities ?? []).find((c: any) => c.id === u.city)?.name ?? u.city}</td>
                   <td style={{ textAlign: "right" }}>{u.baseSalary ? money(u.baseSalary) : "—"}</td>
                   <td style={{ textAlign: "right" }}>{u.dailyMin ? `${u.dailyMin} visits` : "—"}</td>
+                  <td className="small muted">{u.productLine || "all"}</td>
                   <td style={{ textAlign: "right" }}>
                     <span className={`tag ${u.active ? "tag-accent" : "tag-neutral"}`}>{u.active ? "Active" : "Off"}</span>
-                    {canEdit ? <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => setEditUser({ ...u })}>Edit</button> : null}
+                    {canEdit ? <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => setEditUser({ ...u, baseSalary: groupDigits(String(u.baseSalary ?? "")) })}>Edit</button> : null}
                   </td>
                 </tr>
               ))}
@@ -84,8 +85,18 @@ export default function Manage() {
                   <option value="all">All cities</option>
                 </select>
               </div>
-              <div className="field" style={{ margin: 0 }}><label>Base salary</label><input className="input" inputMode="numeric" value={editUser.baseSalary} onChange={(e) => setEditUser({ ...editUser, baseSalary: e.target.value })} /></div>
-              <div className="field" style={{ margin: 0 }}><label>Daily min</label><input className="input" inputMode="numeric" value={editUser.dailyMin} onChange={(e) => setEditUser({ ...editUser, dailyMin: e.target.value })} /></div>
+              <div className="field" style={{ margin: 0 }}><label>Base salary</label><input className="input" inputMode="numeric" value={editUser.baseSalary} onChange={(e) => setEditUser({ ...editUser, baseSalary: groupDigits(e.target.value) })} /></div>
+              <div className="field" style={{ margin: 0 }}><label>Daily min</label><input className="input" inputMode="numeric" value={editUser.dailyMin} onChange={(e) => setEditUser({ ...editUser, dailyMin: groupDigits(e.target.value) })} /></div>
+              <div className="field" style={{ margin: 0 }}>
+                <label>Product line</label>
+                {/* Left blank the person sells everything, which is how every
+                    existing user is set up and must stay. */}
+                <select className="input" value={editUser.productLine ?? ""}
+                  onChange={(e) => setEditUser({ ...editUser, productLine: e.target.value })}>
+                  <option value="">All products</option>
+                  {(data.productLines ?? []).map((l: string) => <option key={l} value={l}>{l}</option>)}
+                </select>
+              </div>
             </div>
             <div className="two-col" style={{ gap: 10 }}>
               <div className="field" style={{ margin: 0 }}><label>Password {editUser.id ? "(leave blank to keep)" : ""}</label><input className="input" value={editUser.password ?? ""} onChange={(e) => setEditUser({ ...editUser, password: e.target.value })} /></div>
@@ -164,7 +175,7 @@ Continue anyway?`)) return;
 
         <div className="row" style={{ marginTop: 8 }}>
           <h6 style={{ margin: 0, color: "var(--color-neutral-600)", flex: 1 }}>Products &amp; prices</h6>
-          {canEdit ? <button className="btn btn-primary" style={{ fontSize: 12, padding: "6px 12px" }} onClick={() => setEditProduct({ name: "", sku: "", unitPrice: 0, unit: "box" })}>＋ Add product</button> : null}
+          {canEdit ? <button className="btn btn-primary" style={{ fontSize: 12, padding: "6px 12px" }} onClick={() => setEditProduct({ name: "", sku: "", unitPrice: "", unit: "box" })}>＋ Add product</button> : null}
         </div>
         <table className="table" style={{ fontSize: 13 }}>
           <thead><tr><th>Product</th><th>SKU</th><th style={{ textAlign: "right" }}>Unit price</th><th></th></tr></thead>
@@ -175,11 +186,12 @@ Continue anyway?`)) return;
                 <td className="muted">{p.sku}</td>
                 <td style={{ textAlign: "right" }}>
                   {money(p.unitPrice)} / {p.unit}
+                  {p.line ? <div className="small muted">{p.line}</div> : null}
                   {p.tiers?.length ? <div className="small muted">{p.tiers.map((t: any) => `${t.minQty}+ → ${t.price.toLocaleString()}`).join(" · ")}</div> : null}
                 </td>
                 <td style={{ textAlign: "right" }}>
                   <span className={`tag ${p.active ? "tag-accent" : "tag-neutral"}`}>{p.active ? "Active" : "Off"}</span>
-                  {canEdit ? <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => setEditProduct({ ...p })}>Edit</button> : null}
+                  {canEdit ? <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => setEditProduct({ ...p, unitPrice: groupDigits(String(p.unitPrice ?? "")) })}>Edit</button> : null}
                 </td>
               </tr>
             ))}
@@ -192,8 +204,16 @@ Continue anyway?`)) return;
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
               <div className="field" style={{ margin: 0 }}><label>Name</label><input className="input" value={editProduct.name} onChange={(e) => setEditProduct({ ...editProduct, name: e.target.value })} /></div>
               <div className="field" style={{ margin: 0 }}><label>SKU</label><input className="input" value={editProduct.sku} onChange={(e) => setEditProduct({ ...editProduct, sku: e.target.value })} /></div>
-              <div className="field" style={{ margin: 0 }}><label>Price (IQD)</label><input className="input" inputMode="numeric" value={editProduct.unitPrice} onChange={(e) => setEditProduct({ ...editProduct, unitPrice: e.target.value })} /></div>
+              <div className="field" style={{ margin: 0 }}><label>Price (IQD)</label><input className="input" inputMode="numeric" value={editProduct.unitPrice} onChange={(e) => setEditProduct({ ...editProduct, unitPrice: groupDigits(e.target.value) })} /></div>
               <div className="field" style={{ margin: 0 }}><label>Unit</label><input className="input" value={editProduct.unit} onChange={(e) => setEditProduct({ ...editProduct, unit: e.target.value })} /></div>
+              <div className="field" style={{ margin: 0 }}>
+                <label>Line</label>
+                <select className="input" value={editProduct.line ?? ""}
+                  onChange={(e) => setEditProduct({ ...editProduct, line: e.target.value })}>
+                  <option value="">Everyone sells it</option>
+                  {(data.productLines ?? []).map((l: string) => <option key={l} value={l}>{l}</option>)}
+                </select>
+              </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <div className="small muted">Quantity price tiers — buy more, pay less per {editProduct.unit || "box"}:</div>

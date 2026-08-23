@@ -7,11 +7,34 @@ import * as XLSX from "xlsx";
 
 const TEMPLATE_HEADERS = ["SKU", "Product Name", "Quantity", "Batch (optional)", "Expiry (optional, YYYY-MM-DD)"];
 
+/* Red once it is past, amber inside the warning window the owner set, and
+ * otherwise the ordinary text colour. Months are added properly rather than by
+ * multiplying days, so a six-month window from 31 August lands in February. */
+function expiryTone(expiry: string | null, warnMonths: number): string | undefined {
+  if (!expiry) return undefined;
+  const today = new Date();
+  const when = new Date(expiry + "T00:00:00");
+  if (Number.isNaN(when.getTime())) return undefined;
+  if (when <= today) return "var(--c-coral-deep)";
+  const limit = new Date(today);
+  limit.setMonth(limit.getMonth() + (warnMonths || 6));
+  return when <= limit ? "var(--c-amber-deep)" : undefined;
+}
+
+const TRANSFER_TAG: Record<string, [string, string]> = {
+  pending: ["Waiting for supervisor", "tag-warn"],
+  supervisor_ok: ["Waiting for accountant", "tag-chat"],
+  done: ["Moved", "tag-ok"],
+  rejected: ["Declined", "tag-hot"],
+};
+
 export default function StockPage() {
   const me = useMe();
   const [data, setData] = useState<any>(null);
   const [counts, setCounts] = useState<Record<number, string>>({});
   const [checkNote, setCheckNote] = useState("");
+  const [ask, setAsk] = useState<{ productId: string; qty: string; fromCity: string; note: string } | null>(null);
+  const [askErr, setAskErr] = useState("");
   const [checkMsg, setCheckMsg] = useState("");
   const [transfer, setTransfer] = useState({ productId: "", qty: "", to: "", note: "" });
   const [preview, setPreview] = useState<{ filename: string; rows: any[] } | null>(null);
@@ -33,6 +56,18 @@ export default function StockPage() {
   const low = data.lowThreshold ?? 10;
   const locations: { id: string; name: string }[] = data.locations ?? [];
   const label = (id: string) => locations.find((l) => l.id === id)?.name ?? id;
+
+  async function decideTransfer(id: number, decision: "approve" | "reject" | "fulfil") {
+    setAskErr("");
+    try {
+      await api("/api/stock", { json: { action: "decideTransferRequest", id, decision } });
+      load();
+    } catch (e: any) {
+      // The commonest failure here is real and worth reading: the source city
+      // ran out between the approval and the accountant getting to it.
+      setAskErr(e?.message || "Could not update that request");
+    }
+  }
 
   async function submitCheck() {
     setCheckMsg("");
@@ -123,6 +158,7 @@ export default function StockPage() {
                 <th key={l.id} style={{ textAlign: "right", background: myCity === l.id ? "var(--color-accent-100)" : undefined }}>{l.name}</th>
               ))}
               <th style={{ textAlign: "right" }}>Total</th>
+              <th style={{ whiteSpace: "nowrap" }}>Expires</th>
             </tr>
           </thead>
           <tbody>
@@ -141,10 +177,143 @@ export default function StockPage() {
                   );
                 })}
                 <td style={{ textAlign: "right", fontWeight: 700 }}>{s.total}</td>
+                {/* Expiry of the batch in the main warehouse. Stock here is
+                    dermatology product with real shelf lives, and a carton found
+                    expired is a write-off — so it is worth a column of its own. */}
+                <td style={{ whiteSpace: "nowrap" }}>
+                  {data.canSetExpiry ? (
+                    <input
+                      type="date"
+                      className="input"
+                      style={{ minHeight: 30, fontSize: 12, padding: "3px 6px", width: 140,
+                               color: expiryTone(s.expiry, data.expiryWarnMonths) }}
+                      value={s.expiry ?? ""}
+                      onChange={async (e) => {
+                        await api("/api/stock", { json: { action: "setBatch", productId: s.productId, location: "main", expiry: e.target.value || null } });
+                        load();
+                      }}
+                    />
+                  ) : (
+                    <span style={{ color: expiryTone(s.expiry, data.expiryWarnMonths) }}>
+                      {s.expiry ? dmy(s.expiry) : "—"}
+                    </span>
+                  )}
+                  {s.batch ? <div className="small muted">batch {s.batch}</div> : null}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* ---- Asking for stock from another city ----------------------------
+          Reps and supervisors ask; a supervisor agrees; the accountant is the
+          only one who can actually move the quantities. Each person below sees
+          only the step that is theirs to take. */}
+      <div className="card" style={{ gap: 10 }}>
+        <div className="row" style={{ alignItems: "baseline", gap: 8 }}>
+          <h6 style={{ margin: 0, flex: 1 }}>Stock transfer requests</h6>
+          {me.role === "rep" || me.role === "supervisor" || me.role === "admin" ? (
+            <button className="btn btn-secondary" style={{ fontSize: 12, padding: "5px 12px" }}
+              onClick={() => { setAskErr(""); setAsk(ask ? null : { productId: "", qty: "", fromCity: "main", note: "" }); }}>
+              {ask ? "Cancel" : "Ask for stock"}
+            </button>
+          ) : null}
+        </div>
+
+        {ask ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="two-col" style={{ gap: 8 }}>
+              <div className="field" style={{ margin: 0 }}>
+                <label>Product</label>
+                <select className="input" value={ask.productId} onChange={(e) => setAsk({ ...ask, productId: e.target.value })}>
+                  <option value="">Choose…</option>
+                  {data.stock.map((x: any) => <option key={x.productId} value={x.productId}>{x.name}</option>)}
+                </select>
+              </div>
+              <div className="field" style={{ margin: 0 }}>
+                <label>Quantity</label>
+                <input className="input" inputMode="numeric" value={ask.qty}
+                  onChange={(e) => setAsk({ ...ask, qty: e.target.value.replace(/[^0-9]/g, "") })} />
+              </div>
+            </div>
+            <div className="field" style={{ margin: 0 }}>
+              <label>Take it from</label>
+              <select className="input" value={ask.fromCity} onChange={(e) => setAsk({ ...ask, fromCity: e.target.value })}>
+                {locations.filter((l: any) => l.id !== myCity).map((l: any) => <option key={l.id} value={l.id}>{l.name}</option>)}
+              </select>
+            </div>
+            {me.role !== "rep" ? (
+              <div className="field" style={{ margin: 0 }}>
+                <label>Send it to</label>
+                <select className="input" value={(ask as any).toCity ?? myCity}
+                  onChange={(e) => setAsk({ ...ask, ...{ toCity: e.target.value } } as any)}>
+                  {locations.filter((l: any) => l.id !== ask.fromCity).map((l: any) => <option key={l.id} value={l.id}>{l.name}</option>)}
+                </select>
+              </div>
+            ) : null}
+            <input className="input" placeholder="Why do you need it? (optional)" value={ask.note}
+              onChange={(e) => setAsk({ ...ask, note: e.target.value })} />
+            {askErr ? <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>{askErr}</div> : null}
+            <button className="btn btn-primary btn-block" style={{ padding: 10 }}
+              onClick={async () => {
+                setAskErr("");
+                try {
+                  await api("/api/stock", { json: {
+                    action: "requestTransfer",
+                    productId: Number(ask.productId), qty: Number(ask.qty),
+                    fromCity: ask.fromCity, toCity: (ask as any).toCity ?? myCity, note: ask.note,
+                  } });
+                  setAsk(null);
+                  load();
+                } catch (e: any) { setAskErr(e?.message || "Could not send the request"); }
+              }}>
+              Send request
+            </button>
+          </div>
+        ) : null}
+
+        {(data.transferRequests ?? []).length === 0 ? (
+          <div className="small muted">Nothing requested.</div>
+        ) : (
+          (data.transferRequests ?? []).map((r: any) => (
+            <div key={r.id} className="listrow" style={{ alignItems: "flex-start", gap: 8 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13 }}>
+                  <span className="hnum">{r.qty}</span> × {r.productName}
+                  <span className="muted"> · {r.fromName} → {r.toName}</span>
+                </div>
+                <div className="small muted">
+                  {r.requestedByName} · {dmy(r.ts)}
+                  {r.note ? ` — ${r.note}` : ""}
+                  {r.decidedByName ? ` · ${r.decidedByName}` : ""}
+                  {r.decidedNote ? `: ${r.decidedNote}` : ""}
+                </div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                <span className={`tag ${TRANSFER_TAG[r.status]?.[1] ?? "tag-neutral"}`}>
+                  {TRANSFER_TAG[r.status]?.[0] ?? r.status}
+                </span>
+                {r.status === "pending" && data.canApproveTransfer ? (
+                  <div className="row" style={{ gap: 6 }}>
+                    <button className="btn btn-ghost" style={{ fontSize: 12 }}
+                      onClick={() => decideTransfer(r.id, "approve")}>Approve</button>
+                    <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-coral-deep)" }}
+                      onClick={() => decideTransfer(r.id, "reject")}>Decline</button>
+                  </div>
+                ) : null}
+                {r.status === "supervisor_ok" && data.canFulfilTransfer ? (
+                  <div className="row" style={{ gap: 6 }}>
+                    <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-green-deep)" }}
+                      onClick={() => decideTransfer(r.id, "fulfil")}>Mark moved</button>
+                    <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-coral-deep)" }}
+                      onClick={() => decideTransfer(r.id, "reject")}>Decline</button>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {me.role === "rep" && myCity !== "main" && data.weeklyStockCheck ? (

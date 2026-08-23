@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { fieldTimeMinutes, todayStr, visitsOn } from "@/lib/compute";
+import { doctorsFor, fieldTimeMinutes, todayStr, visitsOn } from "@/lib/compute";
 
 function distM(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371000;
@@ -56,6 +56,13 @@ export async function GET(req: Request) {
       fieldTime: ft,
       hasStarted,
       checkins, pings, visits,
+      // Every clinic pin the viewer is entitled to, so a rep can see which
+      // doctors are near them rather than only the ones already visited today.
+      // Scoped through doctorsFor for the same reason the profile bundle is:
+      // this is the customer book, and a rep should not see another city's.
+      doctorPins: doctorsFor(db, user)
+        .filter((d) => d.lat != null && d.lng != null)
+        .map((d) => ({ id: d.id, name: d.name, clinic: d.clinic, lat: d.lat, lng: d.lng, class: d.class })),
       dwell: dwellRows,
       atClinicsMinutes: atClinics,
       travelMinutes: travelPings * PING_MINUTES,

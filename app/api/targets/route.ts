@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { currentPeriod, monthlyAccrual, quarterAccrual, currentQuarter } from "@/lib/compute";
+import { currentPeriod, monthlyAccrual, productsFor, quarterAccrual, currentQuarter } from "@/lib/compute";
 
 export async function GET(req: Request) {
   try {
@@ -11,9 +11,13 @@ export async function GET(req: Request) {
     let userId = Number(url.searchParams.get("userId") ?? user.id);
     if (user.role === "rep") userId = user.id;
     const targets = db.targets.filter((t) => t.userId === userId && t.period === period);
+    // The list is scoped to the person being LOOKED AT, not the viewer — a
+    // supervisor setting targets for an aesthetics rep should see that rep's
+    // range, not their own.
+    const subject = db.users.find((u) => u.id === userId) ?? user;
     const accrual = monthlyAccrual(db, userId, period);
     const quarter = quarterAccrual(db, userId, currentQuarter());
-    return Response.json({ targets, accrual, quarter: { name: currentQuarter(), ...quarter }, products: db.products.filter((p) => p.active) });
+    return Response.json({ targets, accrual, quarter: { name: currentQuarter(), ...quarter }, products: productsFor(db, subject) });
   } catch (e) {
     return errResponse(e);
   }

@@ -8,7 +8,7 @@ import { api } from "@/lib/fmt";
 import { getPosition } from "@/lib/geo";
 import * as XLSX from "xlsx";
 
-const EMPTY_DOC = { name: "", clinic: "", city: "", area: "", address: "", specialty: "Dermatologist", class: "B", phone: "", potentialMonthly: "" };
+const EMPTY_DOC = { name: "", clinic: "", city: "", area: "", address: "", specialty: "Dermatologist", class: "B", phone: "", secretaryPhone: "", potentialMonthly: "" };
 
 const TEMPLATE_HEADERS = ["Doctor Name", "Clinic Name", "City", "Area", "Specialty", "Class (A/B/C)", "Phone"];
 
@@ -133,6 +133,11 @@ export default function Doctors() {
             <label>Monthly potential (IQD, optional)</label>
             <input className="input" inputMode="numeric" placeholder="What this doctor should buy per month"
               value={newDoc.potentialMonthly} onChange={(e) => setNewDoc({ ...newDoc, potentialMonthly: e.target.value })} />
+            <div className="field">
+              <label>Secretary phone (optional)</label>
+              <input className="input hnum" inputMode="tel" placeholder="0750 000 0000"
+                value={newDoc.secretaryPhone} onChange={(e) => setNewDoc({ ...newDoc, secretaryPhone: e.target.value })} />
+            </div>
           </div>
           <label className="row" style={{ gap: 8, fontSize: 13, cursor: "pointer" }}>
             <input type="checkbox" checked={useGps} onChange={(e) => setUseGps(e.target.checked)} />

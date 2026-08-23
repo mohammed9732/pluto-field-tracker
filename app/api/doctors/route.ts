@@ -28,7 +28,6 @@ export async function GET(req: Request) {
     const visits = db.visits
       .filter((v) => v.doctorId === doctor.id)
       .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time))
-      .slice(0, 50)
       .map((v) => ({ ...v, byName: db.users.find((u) => u.id === v.userId)?.name ?? "?" }));
     const orders = db.orders
       .filter((o) => o.doctorId === doctor.id)
@@ -58,8 +57,13 @@ export async function GET(req: Request) {
       .filter((c) => c.doctorId === doctor.id)
       .sort((a, b2) => b2.ts.localeCompare(a.ts))
       .map((c) => ({ ...c, byName: db.users.find((u) => u.id === c.userId)?.name ?? "?" }));
+    const privateNote = db.privateNotes.find(
+      (n) => n.doctorId === doctor.id && n.userId === user.id) ?? null;
     return Response.json({
       doctor, visits, orders, payments, competitors,
+      // Only ever this person's own note. It is deliberately not keyed by role:
+      // a supervisor reading their rep's private notes would defeat the point.
+      privateNote: privateNote ? { body: privateNote.body, ts: privateNote.ts } : null,
       monthValue, potentialMonthly: doctor.potentialMonthly ?? 0,
       totalCollected: payments.reduce((s, p) => s + p.amount, 0),
       lifetimeValue: orders.filter((o) => o.status === "approved" || o.status === "invoiced").reduce((s, o) => s + o.total, 0),
@@ -104,12 +108,14 @@ export async function POST(req: Request) {
           name: b.name ?? doc.name, clinic: b.clinic ?? doc.clinic, city: b.city ?? doc.city,
           area: b.area ?? doc.area, address: b.address ?? doc.address, class: b.class ?? doc.class,
           specialty: b.specialty ?? doc.specialty, phone: b.phone ?? doc.phone,
+          secretaryPhone: b.secretaryPhone ?? doc.secretaryPhone ?? "",
           potentialMonthly: b.potentialMonthly != null ? Math.max(0, Math.round(Number(b.potentialMonthly))) : doc.potentialMonthly,
         };
         // Record each field that actually moved, in words the owner can read.
         const labels: Record<string, string> = {
           name: "Name", clinic: "Clinic", city: "City", area: "Area", address: "Address",
-          class: "Class", specialty: "Specialty", phone: "Phone", potentialMonthly: "Monthly potential",
+          class: "Class", specialty: "Specialty", phone: "Phone",
+          secretaryPhone: "Secretary phone", potentialMonthly: "Monthly potential",
         };
         for (const [k, v] of Object.entries(next)) {
           const before = (doc as any)[k];
@@ -131,13 +137,33 @@ export async function POST(req: Request) {
       const doc = {
         id: nextId(db), name: b.name, clinic: b.clinic ?? "", city: wantCity,
         area: b.area ?? "", address: b.address ?? "", class: (b.class ?? "B") as "A" | "B" | "C", specialty: b.specialty ?? "Dermatologist",
-        phone: b.phone ?? "", potentialMonthly: Math.max(0, Math.round(Number(b.potentialMonthly) || 0)),
+        phone: b.phone ?? "", secretaryPhone: b.secretaryPhone ?? "",
+        potentialMonthly: Math.max(0, Math.round(Number(b.potentialMonthly) || 0)),
         lat: b.lat ?? null, lng: b.lng ?? null,
         locationSetBy: b.lat != null ? user.id : null, locationSetAt: b.lat != null ? new Date().toISOString().slice(0, 19) : null, createdBy: user.id,
       };
       db.doctors.push(doc);
       saveDb();
       return Response.json({ ok: true, doctor: doc });
+    }
+
+    if (b.action === "privateNote") {
+      // One note per person per doctor, overwritten in place. Reps asked for a
+      // scratchpad ("prefers mornings", "haggles on price"), not a thread.
+      const doc = doctorsFor(db, user).find((d) => d.id === Number(b.doctorId));
+      if (!doc) return Response.json({ error: "Doctor not found" }, { status: 404 });
+      const body = String(b.body ?? "").slice(0, 2000);
+      const existing = db.privateNotes.find((n) => n.doctorId === doc.id && n.userId === user.id);
+      if (!body.trim()) {
+        // Clearing the box deletes the note rather than storing an empty one.
+        db.privateNotes = db.privateNotes.filter((n) => !(n.doctorId === doc.id && n.userId === user.id));
+      } else if (existing) {
+        existing.body = body; existing.ts = nowIso();
+      } else {
+        db.privateNotes.push({ id: nextId(db), userId: user.id, doctorId: doc.id, body, ts: nowIso() });
+      }
+      saveDb();
+      return Response.json({ ok: true });
     }
 
     if (b.action === "import") {
@@ -155,7 +181,8 @@ export async function POST(req: Request) {
           city: String(r.city ?? "erbil").trim().toLowerCase(), area: String(r.area ?? "").trim(),
           address: String(r.address ?? "").trim(), potentialMonthly: Math.max(0, Math.round(Number(r.potential) || 0)),
           class: cls as "A" | "B" | "C", specialty: String(r.specialty ?? "").trim() || "Dermatologist",
-          phone: String(r.phone ?? "").trim(), lat: null, lng: null,
+          phone: String(r.phone ?? "").trim(), secretaryPhone: String(r.secretaryPhone ?? r.secretary ?? "").trim(),
+          lat: null, lng: null,
           locationSetBy: null, locationSetAt: null, createdBy: user.id,
         });
         added++;

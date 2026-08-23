@@ -187,7 +187,9 @@ function LogVisitInner() {
             <span style={{ flex: 1, color: photo ? "var(--c-green-deep)" : "var(--color-neutral-600)" }}>
               {photo ? `Photo attached — ${photo.name}` : "Add a photo (optional — kept in the doctor's history)"}
             </span>
-            <input type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={(e) => e.target.files?.[0] && attachPhoto(e.target.files[0])} />
+            {/* No capture attribute: with it the phone jumps straight to the camera and
+                the gallery is unreachable. Without it the person chooses. */}
+            <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => e.target.files?.[0] && attachPhoto(e.target.files[0])} />
           </label>
           {me.role === "rep" ? (
             <label className="radio" style={{ fontSize: 13 }}>
