@@ -48,7 +48,7 @@ export function OutboxBar() {
               ) : null}
             </div>
           ))}
-          <button className="btn btn-secondary" style={{ fontSize: 12.5, alignSelf: "flex-start" }}
+          <button className="btn btn-secondary" style={{ fontSize: 12, alignSelf: "flex-start" }}
             disabled={busy}
             onClick={async () => { setBusy(true); await flush(); setBusy(false); }}>
             {busy ? "Trying…" : "Try sending now"}

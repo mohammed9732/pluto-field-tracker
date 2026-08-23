@@ -96,7 +96,7 @@ export default function Approvals() {
                 </div>
                 {o.isSample
                   ? <span className="tag" style={{ background: "var(--c-violet-soft)", color: "var(--c-violet-deep)" }}>FREE SAMPLE</span>
-                  : <span className="hnum" style={{ fontSize: 17 }}>{money(o.total)}</span>}
+                  : <span className="hnum" style={{ fontSize: 18 }}>{money(o.total)}</span>}
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12 }}>
                 {o.items.map((it: any) => (
@@ -142,7 +142,7 @@ export default function Approvals() {
                   <div style={{ fontSize: 13, fontWeight: 500 }}>{p.userName}</div>
                   <div className="small muted">week of Sat {dm(p.weekStart)} · {p.totalVisits} visits planned</div>
                 </div>
-                <span className="hnum" style={{ fontSize: 17, color: "var(--color-accent-700)" }}>{p.totalVisits}</span>
+                <span className="hnum" style={{ fontSize: 18, color: "var(--color-accent-700)" }}>{p.totalVisits}</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 3, fontSize: 12, color: "var(--color-neutral-700)" }}>
                 {p.days.map((d: any) => (

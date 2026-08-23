@@ -105,8 +105,8 @@ function OrdersInner() {
         <>
           {today.length ? (
             <div className="blueprint" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 2 }}>
-              <div style={{ fontSize: 10, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--c-green-deep)" }}>Collected today</div>
-              <span className="hnum" style={{ fontSize: 30 }}>{money(todayTotal)}</span>
+              <div style={{ fontSize: 12, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--c-green-deep)" }}>Collected today</div>
+              <span className="hnum" style={{ fontSize: 34 }}>{money(todayTotal)}</span>
               <span className="small muted">{today.length} receipt{today.length === 1 ? "" : "s"}</span>
             </div>
           ) : null}

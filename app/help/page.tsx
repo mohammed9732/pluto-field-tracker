@@ -41,7 +41,7 @@ export default function HelpPage() {
                   color: "var(--color-text)",
                 }}
               >
-                <span style={{ flex: 1, fontSize: 14, fontWeight: 500 }}>{s.title[lang]}</span>
+                <span style={{ flex: 1, fontSize: 15, fontWeight: 500 }}>{s.title[lang]}</span>
                 {/* Rotates rather than swapping glyphs, so it reads the same
                     way round in Arabic as in English. */}
                 <span

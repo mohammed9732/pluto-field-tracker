@@ -133,7 +133,7 @@ function CollectPaymentInner() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <div className="field" style={{ margin: 0 }}>
               <label>Amount collected (IQD)</label>
-              <input className="input hnum" value={amount} onChange={(e) => setAmount(groupDigits(e.target.value))} inputMode="numeric" placeholder="1,000,000" style={{ fontSize: 17 }} />
+              <input className="input hnum" value={amount} onChange={(e) => setAmount(groupDigits(e.target.value))} inputMode="numeric" placeholder="1,000,000" style={{ fontSize: 18 }} />
             </div>
             <div className="field" style={{ margin: 0 }}>
               <label>Method</label>

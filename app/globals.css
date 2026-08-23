@@ -75,6 +75,35 @@
 
   --ease-out: cubic-bezier(.22, 1, .36, 1);
   --ease-spring: cubic-bezier(.34, 1.32, .52, 1);
+
+  /* — type scale —
+     Eight steps, replacing the nineteen ad-hoc sizes the app had grown. The
+     bottom of the scale is 12px and nothing goes below it: 9, 10 and 11px were
+     in use for exactly the small grey annotations people most need to read. */
+  --fs-caption: 12px;  /* timestamps, units, the line under a heading */
+  --fs-small:   13px;  /* secondary text */
+  --fs-body:    15px;  /* default reading size */
+  --fs-input:   16px;  /* form fields — never lower, or iOS zooms the page */
+  --fs-lead:    18px;  /* card titles */
+  --fs-h3:      22px;
+  --fs-h2:      28px;
+  --fs-figure:  34px;  /* the one big number on a screen */
+
+  /* — spacing —
+     One 4px rhythm. Before this there were seventeen gap values and sixteen
+     padding values, which is why two cards that should match never quite did. */
+  --sp-1: 4px;   /* icon to its label */
+  --sp-2: 8px;   /* inside a row */
+  --sp-3: 12px;  /* card padding */
+  --sp-4: 16px;  /* between cards */
+  --sp-5: 24px;  /* between sections */
+  --sp-6: 32px;  /* screen top and bottom */
+
+  /* — touch —
+     Apple and Material both put the floor at 44px, for a still, seated user.
+     A rep is tapping one-handed in a clinic corridor, so it is a floor here,
+     not a target. */
+  --tap-min: 44px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -97,12 +126,15 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0 0 6px;
   text-wrap: balance;
 }
-h1 { font-size: 40px; }
-h2 { font-size: 31px; }
-h3 { font-size: 25px; }
-h4 { font-size: 20px; }
+h1 { font-size: 34px; }
+h2 { font-size: var(--fs-h2); }
+h3 { font-size: var(--fs-h3); }
+h4 { font-size: var(--fs-lead); }
 h5 { font-size: 16px; letter-spacing: -0.012em; }
-h6 { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; }
+/* h6 is the small uppercase label above a group. It was 11px, which is below
+   the readable floor — at 12px with the same tracking it reads the same and
+   can actually be read. */
+h6 { font-size: var(--fs-caption); letter-spacing: 0.09em; text-transform: uppercase; font-weight: 700; }
 p { margin: 0 0 10px; }
 a { color: var(--color-accent); text-underline-offset: 3px; }
 a:hover { color: var(--color-accent-600); }
@@ -153,7 +185,10 @@ a:hover { color: var(--color-accent-600); }
   font-size: 14px; line-height: 1.2; color: var(--color-text);
   background: var(--color-surface);
   border: 1px solid var(--color-divider);
-  padding: 9px 15px;
+  /* 11px padding + 14px text at 1.2 = 46px, clear of the 44px floor. It was
+     9px, which computed to 40.8px — short of the standard on every screen. */
+  padding: 11px 16px;
+  min-height: var(--tap-min);
   border-radius: 999px;
   transition: transform .2s var(--ease-spring), background .18s ease,
               box-shadow .2s ease, border-color .18s ease, color .18s ease;
@@ -168,9 +203,15 @@ a:hover { color: var(--color-accent-600); }
 .btn-primary:hover { background: var(--color-accent-600); color: #fff; }
 .btn-secondary { background: var(--color-surface); box-shadow: var(--elev-1); }
 .btn-secondary:hover { background: var(--color-neutral-200); }
-.btn-ghost { color: var(--color-accent); border-color: transparent; background: transparent; padding-inline: 8px; box-shadow: none; }
+/* The ghost button carries Approve, Decline, Edit, Remove — the actions most
+   often tapped in a hurry, and previously the smallest at ~33px. */
+.btn-ghost {
+  color: var(--color-accent); border-color: transparent; background: transparent;
+  padding-inline: 10px; box-shadow: none;
+  min-height: var(--tap-min);
+}
 .btn-ghost:hover { background: var(--color-accent-100); }
-.btn-icon { width: 42px; height: 42px; padding: 0; }
+.btn-icon { width: var(--tap-min); height: var(--tap-min); min-height: var(--tap-min); padding: 0; flex: none; }
 .btn-block { width: 100%; }
 .btn-coral {
   background: var(--c-coral); color: #fff; border-color: transparent;
@@ -253,7 +294,7 @@ textarea.input { min-height: 78px; resize: vertical; }
   transition: box-shadow .25s var(--ease-out), transform .25s var(--ease-spring);
 }
 .card-kicker {
-  font-size: 10px; letter-spacing: 0.11em; text-transform: uppercase;
+  font-size: var(--fs-caption); letter-spacing: 0.09em; text-transform: uppercase;
   font-weight: 700; color: var(--color-accent);
 }
 .blueprint {
@@ -280,7 +321,7 @@ textarea.input { min-height: 78px; resize: vertical; }
 
 /* — tags — */
 .tag {
-  display: inline-flex; align-items: center; font-size: 11px; white-space: nowrap;
+  display: inline-flex; align-items: center; font-size: var(--fs-caption); white-space: nowrap;
   font-weight: 700; letter-spacing: 0.01em; padding: 4px 11px; border-radius: 999px;
 }
 .tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
@@ -298,7 +339,7 @@ textarea.input { min-height: 78px; resize: vertical; }
   background: var(--color-surface); box-shadow: var(--elev-1);
 }
 .table th {
-  text-align: left; font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;
+  text-align: left; font-size: var(--fs-caption); letter-spacing: 0.07em; text-transform: uppercase;
   font-weight: 700; color: var(--color-neutral-600); background: var(--color-neutral-200);
   padding: 10px 12px;
 }
@@ -344,7 +385,7 @@ textarea.input { min-height: 78px; resize: vertical; }
 .bottomnav a {
   flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
   color: var(--color-neutral-500); text-decoration: none;
-  font-size: 11px; font-weight: 600; padding: 2px 0;
+  font-size: var(--fs-caption); font-weight: 600; padding: 2px 0;
   min-height: 46px; justify-content: center;
   transition: color .2s ease, transform .22s var(--ease-spring);
 }
@@ -361,9 +402,9 @@ textarea.input { min-height: 78px; resize: vertical; }
 }
 .chat-blob:active { transform: scale(.92); }
 .chat-badge {
-  position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px;
+  position: absolute; top: -3px; right: -3px; min-width: 20px; height: 20px;
   border-radius: 999px; background: var(--c-coral); color: #fff;
-  font-size: 9px; font-weight: 800; display: grid; place-items: center;
+  font-size: var(--fs-caption); font-weight: 800; display: grid; place-items: center;
   padding: 0 4px; border: 2px solid var(--color-surface);
 }
 
@@ -385,8 +426,8 @@ textarea.input { min-height: 78px; resize: vertical; }
 
 /* — misc — */
 .muted { color: var(--color-neutral-600); }
-.small { font-size: 11.5px; }
-.hint { font-size: 11.5px; color: var(--color-neutral-500); }
+.small { font-size: var(--fs-caption); }
+.hint { font-size: var(--fs-caption); color: var(--color-neutral-500); }
 .hnum {
   font-family: var(--font-heading); font-weight: 800;
   letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
@@ -440,7 +481,7 @@ textarea.input { min-height: 78px; resize: vertical; }
 .boost-art { flex: none; }
 .boost-text { min-width: 0; }
 .boost-kicker {
-  font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  font-size: var(--fs-caption); letter-spacing: .08em; text-transform: uppercase;
   font-weight: 800; color: var(--c-amber-deep); margin-bottom: 3px;
 }
 .boost-line { font-size: 13.5px; line-height: 1.42; font-weight: 500; }
@@ -547,8 +588,70 @@ textarea.input { min-height: 78px; resize: vertical; }
   40%      { transform: translate(-11%, -8%) rotate(-38deg) scale(1.12); }
   75%      { transform: translate(7%, -5%) rotate(26deg) scale(.94); }
 }
+/* Someone who has turned animation off in their phone settings meant it.
+   Previously only the mascot and this backdrop honoured the request, so the
+   card entrance, the tag pop, the meter fill and — worst — the announcement
+   ticker on its infinite loop all still ran. */
 @media (prefers-reduced-motion: reduce) {
   .aurora::before, .aurora::after { animation: none; }
+
+  .screen-pad > *,
+  .tag,
+  .meter .fill,
+  .login-bubble,
+  .mascot-art {
+    animation: none !important;
+    /* `both` fill-mode leaves elements at their from-state when the animation
+       is cancelled, so anything that animated in must be reset to visible. */
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* The tape must stop, but it also has to become readable standing still —
+     its resting position is off-screen. */
+  .ticker .tape > span {
+    animation: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    transform: none !important;
+  }
+
+  .btn:active { transform: none; }
+  * { scroll-behavior: auto !important; }
+}
+
+/* A link whose visible shape must stay small — a tag, a phone number, a date —
+   but whose tap area must not. The pseudo-element extends the target to 44px
+   without moving anything on screen: the standard is about the finger, not the
+   ink. Needs a positioned ancestor, which .listrow and .card already are. */
+.tap-safe { position: relative; }
+.tap-safe::after {
+  content: ""; position: absolute; z-index: 1;
+  left: 0; right: 0; top: 50%; transform: translateY(-50%);
+  height: var(--tap-min); min-width: var(--tap-min);
+}
+
+/* A whole row that acts as one control — the contact rows on a doctor, a stop
+   on the day's route. One target instead of several small ones sitting a few
+   pixels apart. */
+.rowlink {
+  display: flex; align-items: center; gap: var(--sp-2);
+  min-height: var(--tap-min);
+  padding: var(--sp-2) 0;
+  text-decoration: none; color: inherit;
+  border-radius: var(--r-sm);
+}
+.rowlink:hover { background: var(--color-neutral-200); }
+.rowlink:active { background: var(--color-neutral-300); }
+
+/* Stock has two presentations of the same data: cards on a phone, where six
+   columns cannot fit without shrinking everything below the readable floor,
+   and the table on a desktop, where the accountant genuinely wants a grid. */
+.stock-cards { display: flex; flex-direction: column; gap: var(--sp-2); }
+.stock-table { display: none; }
+@media (min-width: 768px) {
+  .stock-cards { display: none; }
+  .stock-table { display: block; }
 }
 
 /* — icon tiles — */
@@ -564,10 +667,10 @@ textarea.input { min-height: 78px; resize: vertical; }
 }
 .tile:hover { box-shadow: var(--elev-2); transform: translateY(-2px); }
 .tile:active { transform: scale(.95); }
-.tile span { font-size: 10.5px; font-weight: 600; line-height: 1.15; text-align: center; }
+.tile span { font-size: var(--fs-caption); font-weight: 600; line-height: 1.2; text-align: center; }
 .tile .tile-badge {
   position: absolute; top: -5px; right: -5px; min-width: 21px; height: 21px; border-radius: 999px;
-  background: var(--c-coral); color: #fff; font-size: 11px; font-weight: 800;
+  background: var(--c-coral); color: #fff; font-size: var(--fs-caption); font-weight: 800;
   display: grid; place-items: center; padding: 0 5px; border: 2px solid var(--color-bg);
   box-shadow: 0 2px 6px rgba(255, 79, 69, .4);
 }
@@ -642,7 +745,7 @@ textarea.input { min-height: 78px; resize: vertical; }
   }
   .desksidebar .sidegroup { display: flex; flex-direction: column; gap: 2px; margin-bottom: 14px; }
   .desksidebar .sidegroup-title {
-    font-size: 10px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700;
+    font-size: var(--fs-caption); letter-spacing: .08em; text-transform: uppercase; font-weight: 700;
     color: var(--color-neutral-500); padding: 6px 10px 4px;
   }
   .desksidebar a {

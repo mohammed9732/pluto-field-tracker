@@ -120,7 +120,7 @@ function NewOrderInner() {
               <div key={l.productId} className="listrow" style={{ padding: "10px 0" }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 500 }}>{l.name}</div>
-                  <div className="row" style={{ gap: 5, fontSize: 11, color: "var(--color-neutral-600)" }}>
+                  <div className="row" style={{ gap: 5, fontSize: 12, color: "var(--color-neutral-600)" }}>
                     {canEditPrice ? (
                       <input
                         className="input"
@@ -138,15 +138,15 @@ function NewOrderInner() {
                     <span>IQD / {l.unit}{l.tiers.length ? ` · ${l.tiers.map((t) => `${t.minQty}+ ${t.price.toLocaleString()}`).join(" · ")}` : ""}</span>
                   </div>
                 </div>
-                <button className="btn btn-secondary btn-icon" style={{ width: 40, height: 40 }} onClick={() => bump(i, -1)}>−</button>
-                <span className="hnum" style={{ width: 28, textAlign: "center", fontSize: 17, color: l.qty > 0 ? "var(--color-accent-700)" : "var(--color-neutral-400)" }}>{l.qty}</span>
-                <button className="btn btn-secondary btn-icon" style={{ width: 40, height: 40 }} onClick={() => bump(i, 1)}>＋</button>
+                <button className="btn btn-secondary btn-icon" style={{ }} onClick={() => bump(i, -1)}>−</button>
+                <span className="hnum" style={{ width: 28, textAlign: "center", fontSize: 18, color: l.qty > 0 ? "var(--color-accent-700)" : "var(--color-neutral-400)" }}>{l.qty}</span>
+                <button className="btn btn-secondary btn-icon" style={{ }} onClick={() => bump(i, 1)}>＋</button>
               </div>
             ))}
           </div>
           <div className="row" style={{ alignItems: "baseline", marginTop: "auto" }}>
             <span style={{ flex: 1, fontSize: 13, color: "var(--color-neutral-600)" }}>{isSample ? "Sample request — no charge" : "Order total — prices follow the quantity tiers"}</span>
-            <span className="hnum" style={{ fontSize: 30 }}>{money(total)}</span>
+            <span className="hnum" style={{ fontSize: 34 }}>{money(total)}</span>
           </div>
           {err ? <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>{err}</div> : null}
           <button className="btn btn-primary btn-block" style={{ padding: 13 }} onClick={submit} disabled={busy}>

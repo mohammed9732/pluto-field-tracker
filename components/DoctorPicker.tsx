@@ -12,7 +12,7 @@ export function DoctorCard({ doctor, onChange }: { doctor: Doc; onChange: () => 
   return (
     <div className="card" style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 12 }}>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 14, fontWeight: 500 }}>{doctor.name}</div>
+        <div style={{ fontSize: 15, fontWeight: 500 }}>{doctor.name}</div>
         <div className="small muted">{doctor.clinic} · {doctor.specialty} · Class {doctor.class}</div>
       </div>
       <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={onChange}>Change</button>

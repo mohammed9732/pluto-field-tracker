@@ -233,7 +233,7 @@ export default function ControlPanel() {
                   {settings[key] ? (
                     <img src={`/api/mascot?mood=${hint}&v=${settings[key]}`} alt=""
                       style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
-                  ) : <span className="small muted" style={{ fontSize: 10 }}>Drawn</span>}
+                  ) : <span className="small muted" style={{ fontSize: 12 }}>Drawn</span>}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 600 }}>{label}</div>

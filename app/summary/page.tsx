@@ -33,19 +33,19 @@ export default function DailySummary() {
       <div className="kpi-grid">
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">Visits</span>
-          <span className="hnum" style={{ fontSize: 24 }}>{t.visits}<span style={{ fontSize: 14, color: "var(--color-neutral-500)" }}> / {t.target}</span></span>
+          <span className="hnum" style={{ fontSize: 28 }}>{t.visits}<span style={{ fontSize: 15, color: "var(--color-neutral-500)" }}> / {t.target}</span></span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">Orders</span>
-          <span className="hnum" style={{ fontSize: 24 }}>{money0(t.orderValue)}</span>
+          <span className="hnum" style={{ fontSize: 28 }}>{money0(t.orderValue)}</span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">Collected</span>
-          <span className="hnum" style={{ fontSize: 24 }}>{money0(t.collected)}</span>
+          <span className="hnum" style={{ fontSize: 28 }}>{money0(t.collected)}</span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">Samples</span>
-          <span className="hnum" style={{ fontSize: 24 }}>{t.samples}</span>
+          <span className="hnum" style={{ fontSize: 28 }}>{t.samples}</span>
         </div>
       </div>
 

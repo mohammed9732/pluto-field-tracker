@@ -89,7 +89,7 @@ export default function Home() {
     <Screen me={me}>
       <div className="row">
         <div style={{ flex: 1 }}>
-          <div className="hnum" style={{ fontSize: 19 }}>{me.name}</div>
+          <div className="hnum" style={{ fontSize: 18 }}>{me.name}</div>
           <div className="small muted">
             {roleLabel(t, me.role)} · {weekdayShort(data.today)} {dmy(data.today)}
           </div>
@@ -97,7 +97,7 @@ export default function Home() {
         <Link href="/map" className="tag" style={{ textDecoration: "none", background: checkedIn ? "var(--c-coral-soft)" : "var(--color-neutral-200)", color: checkedIn ? "var(--c-coral-deep)" : "var(--color-neutral-600)", padding: "6px 12px", fontWeight: 600 }}>
           {checkedIn ? `● ${durationHM(data.fieldTime.minutes)}` : "Not checked in"}
         </Link>
-        <button className="btn btn-secondary btn-icon" style={{ width: 40, height: 40 }} onClick={logout} title="Sign out">
+        <button className="btn btn-secondary btn-icon" style={{ }} onClick={logout} title="Sign out">
           <Icon d={paths.logout} size={17} />
         </button>
       </div>
@@ -141,7 +141,7 @@ export default function Home() {
                 background: isNext ? "var(--color-accent-100)" : undefined,
                 borderColor: isNext ? "var(--color-accent)" : undefined,
               }}>
-                <span className="hnum" style={{ fontSize: 14, width: 16, textAlign: "center", color: isNext ? "var(--color-accent-800)" : "var(--color-neutral-500)" }}>{i + 1}</span>
+                <span className="hnum" style={{ fontSize: 15, width: 16, textAlign: "center", color: isNext ? "var(--color-accent-800)" : "var(--color-neutral-500)" }}>{i + 1}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: isNext ? "var(--color-accent-800)" : undefined }}>{d.name}</div>
                   <div className="small" style={{ color: isNext ? "var(--color-accent-700)" : "var(--color-neutral-600)" }}>

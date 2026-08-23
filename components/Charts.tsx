@@ -55,9 +55,9 @@ export function BarChart({ data, height = 150, format }: { data: { label: string
     <div style={{ display: "flex", gap: 10, alignItems: "flex-end", height: height + 34, paddingTop: 4 }}>
       {data.map((d, i) => (
         <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, minWidth: 0 }}>
-          <span className="hnum" style={{ fontSize: 11 }}>{format ? format(d.value) : d.value.toLocaleString()}</span>
+          <span className="hnum" style={{ fontSize: 12 }}>{format ? format(d.value) : d.value.toLocaleString()}</span>
           <div style={{ width: "100%", maxWidth: 46, height: Math.max(3, (d.value / max) * height), background: d.color ?? PALETTE[i % PALETTE.length], borderRadius: "6px 6px 0 0" }} />
-          <span className="small muted" style={{ fontSize: 10, textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>{d.label}</span>
+          <span className="small muted" style={{ fontSize: 12, textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>{d.label}</span>
         </div>
       ))}
     </div>

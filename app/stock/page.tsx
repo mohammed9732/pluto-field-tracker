@@ -163,7 +163,59 @@ export default function StockPage() {
         })}
       </div>
 
-      <div style={{ overflowX: "auto" }}>
+      {/* Phone: one card per product. Six columns at 375px forced everything
+          down to 9-11px and made the expiry cell a 26px target. The desktop
+          keeps the table below — same data, two presentations. */}
+      <div className="stock-cards">
+        {data.stock.map((s: any) => (
+          <div key={s.productId} className="card" style={{ gap: "var(--sp-2)", padding: "var(--sp-3)" }}>
+            <div className="row" style={{ alignItems: "baseline", gap: "var(--sp-2)" }}>
+              <span style={{ flex: 1, fontSize: 15, fontWeight: 700 }}>{s.name}</span>
+              <span className="hnum" style={{ fontSize: 22, fontWeight: 800 }}>{s.total}</span>
+              <span className="small muted">{s.unit}</span>
+            </div>
+            <div className="row" style={{ gap: "var(--sp-3)", flexWrap: "wrap" }}>
+              {locations.map((l) => {
+                const qty = s.byLocation?.[l.id] ?? 0;
+                return (
+                  <span key={l.id} className="small" style={{
+                    color: myCity === l.id ? "var(--color-accent-800)" : "var(--color-neutral-600)",
+                    fontWeight: myCity === l.id ? 700 : 400,
+                  }}>
+                    {l.name} <b className="hnum" style={{ color: qty <= low ? "var(--c-coral-deep)" : "var(--color-text)" }}>{qty}</b>
+                  </span>
+                );
+              })}
+            </div>
+            {(s.expiry || data.canSetExpiry) ? (
+              <div className="row" style={{ gap: "var(--sp-2)", alignItems: "center", borderTop: "1px solid var(--color-divider)", paddingTop: "var(--sp-2)" }}>
+                <span className="small muted" style={{ flex: 1 }}>
+                  {s.batch ? `Batch ${s.batch}` : "Expiry"}
+                </span>
+                {data.canSetExpiry ? (
+                  <input
+                    type="date"
+                    className="input"
+                    style={{ width: 150, fontSize: 13, color: expiryTone(s.expiry, data.expiryWarnMonths) }}
+                    value={s.expiry ?? ""}
+                    onChange={async (e) => {
+                      await api("/api/stock", { json: { action: "setBatch", productId: s.productId, location: "main", expiry: e.target.value || null } });
+                      load();
+                    }}
+                  />
+                ) : s.expiry ? (
+                  <span className="tag" style={{
+                    background: expiryTone(s.expiry, data.expiryWarnMonths) ? "var(--c-coral-soft)" : "var(--color-neutral-200)",
+                    color: expiryTone(s.expiry, data.expiryWarnMonths) ?? "var(--color-neutral-700)",
+                  }}>{dmy(s.expiry)}</span>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        ))}
+      </div>
+
+      <div className="stock-table" style={{ overflowX: "auto" }}>
         <table className="table" style={{ fontSize: 12, minWidth: 380 }}>
           <thead>
             <tr>

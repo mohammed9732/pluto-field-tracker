@@ -115,7 +115,7 @@ export function ChatDock() {
               <Icon d="M15 3h6v6 M10 14 21 3 M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" size={15} />
             </Link>
             <button onClick={() => setOpen(false)} aria-label="Close chat"
-              style={{ background: "none", border: "none", cursor: "pointer", fontSize: 17, lineHeight: 1, color: "var(--c-violet-deep)" }}>✕</button>
+              style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, lineHeight: 1, color: "var(--c-violet-deep)" }}>✕</button>
           </div>
 
           <select className="input" value={channel} onChange={(e) => setChannel(e.target.value)}
@@ -126,7 +126,7 @@ export function ChatDock() {
           <div className="chatdock-body">
             {messages.map((m) => (
               <div key={m.id} style={{ display: "flex", flexDirection: "column", gap: 2, alignItems: m.mine ? "flex-end" : "flex-start" }}>
-                <span style={{ fontSize: 9, color: "var(--color-neutral-500)" }}>
+                <span style={{ fontSize: 12, color: "var(--color-neutral-500)" }}>
                   {m.mine ? hm(m.ts) : `${m.senderName} · ${hm(m.ts)}`}
                 </span>
                 {m.kind === "image" && m.fileId ? (
@@ -152,7 +152,7 @@ export function ChatDock() {
           {recording ? (
             <div className="row" style={{ gap: 8, margin: "0 10px", padding: "6px 10px", borderRadius: 999, background: "var(--c-coral-soft)" }}>
               <span style={{ width: 8, height: 8, borderRadius: 999, background: "var(--c-coral)", flex: "none" }} />
-              <span style={{ flex: 1, fontSize: 11, color: "var(--c-coral-deep)" }}>Recording… tap the mic to send</span>
+              <span style={{ flex: 1, fontSize: 12, color: "var(--c-coral-deep)" }}>Recording… tap the mic to send</span>
             </div>
           ) : null}
           <div className="chatdock-foot">
@@ -162,11 +162,11 @@ export function ChatDock() {
               onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAndSend(f, "file", f.name); e.target.value = ""; }} />
             {attachOn ? (
               <>
-                <button className="btn btn-secondary btn-icon" style={{ flex: "none", width: 40, height: 40 }}
+                <button className="btn btn-secondary btn-icon" style={{ flex: "none", }}
                   onClick={() => imgRef.current?.click()} aria-label="Send a picture" title="Picture">
                   <Icon d="M21 15l-5-5L5 21M3 5h18v14H3Z" size={17} />
                 </button>
-                <button className="btn btn-secondary btn-icon" style={{ flex: "none", width: 40, height: 40 }}
+                <button className="btn btn-secondary btn-icon" style={{ flex: "none", }}
                   onClick={() => fileRef.current?.click()} aria-label="Send a file" title="File">
                   <Icon d="M21 12.5 12.5 21a4.95 4.95 0 0 1-7-7l8.5-8.5a3.5 3.5 0 0 1 5 5L10 19" size={17} />
                 </button>
@@ -178,12 +178,12 @@ export function ChatDock() {
               style={{ minHeight: 32, fontSize: 12 }} />
             {text.trim() || !attachOn ? (
               <button className="btn btn-icon" onClick={send} aria-label="Send"
-                style={{ flex: "none", width: 42, height: 42, background: "var(--c-violet)", border: "none" }}>
+                style={{ flex: "none", background: "var(--c-violet)", border: "none" }}>
                 <Icon d={paths.send} size={17} stroke="#fff" />
               </button>
             ) : (
               <button className="btn btn-icon" onClick={toggleRecord} aria-label="Voice message" title="Hold a voice note"
-                style={{ flex: "none", width: 42, height: 42, background: recording ? "var(--c-coral)" : "var(--c-violet)", border: "none" }}>
+                style={{ flex: "none", background: recording ? "var(--c-coral)" : "var(--c-violet)", border: "none" }}>
                 <Icon d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z M19 10v2a7 7 0 0 1-14 0v-2 M12 19v3" size={17} stroke="#fff" />
               </button>
             )}

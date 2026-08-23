@@ -13,7 +13,7 @@ export function PerformanceView({ data }: { data: any }) {
       <div className="card" style={{ gap: 8 }}>
         <div className="row" style={{ alignItems: "baseline", gap: 8 }}>
           <h6 style={{ margin: 0, flex: 1 }}>Visits this month</h6>
-          <span className="hnum" style={{ fontSize: 26 }}>{v.total}</span>
+          <span className="hnum" style={{ fontSize: 28 }}>{v.total}</span>
           <span className="small muted">of {v.required} expected</span>
         </div>
         <Meter pct={hitRate} gray={hitRate < 80} />
@@ -29,16 +29,16 @@ export function PerformanceView({ data }: { data: any }) {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <div className="blueprint" style={{ padding: 12 }}>
-          <div style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-coral-deep)" }}>Field time</div>
-          <div className="hnum" style={{ fontSize: 20 }}>{durationHM(data.field.avgMinutes)}</div>
+          <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-coral-deep)" }}>Field time</div>
+          <div className="hnum" style={{ fontSize: 22 }}>{durationHM(data.field.avgMinutes)}</div>
           <div className="small muted">average per day worked</div>
           {data.field.missedDays > 0 ? (
             <div className="small" style={{ color: "var(--c-amber-deep)" }}>{data.field.missedDays} day(s) never started</div>
           ) : null}
         </div>
         <div className="blueprint" style={{ padding: 12 }}>
-          <div style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-green-deep)" }}>Collected</div>
-          <div className="hnum" style={{ fontSize: 17 }}>{money(data.collected)}</div>
+          <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-green-deep)" }}>Collected</div>
+          <div className="hnum" style={{ fontSize: 18 }}>{money(data.collected)}</div>
           <div className="small muted">this month</div>
         </div>
       </div>

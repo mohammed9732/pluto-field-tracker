@@ -42,23 +42,23 @@ export default function AcctDashboard() {
     <Screen me={me} wide>
       <div className="row">
         <h4 style={{ margin: 0, flex: 1 }}>Money — {monthName(data.period)}</h4>
-        <button className="btn btn-secondary btn-icon" style={{ width: 40, height: 40 }} onClick={logout} title="Sign out">
+        <button className="btn btn-secondary btn-icon" style={{ }} onClick={logout} title="Sign out">
           <Icon d={paths.logout} size={17} />
         </button>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <div className="blueprint" style={{ padding: 12 }}>
-          <div style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--color-accent-700)" }}>Sales MTD</div>
+          <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--color-accent-700)" }}>Sales MTD</div>
           <div className="hnum" style={{ fontSize: 18 }}>{money0(k.salesMTD)}</div>
         </div>
         <div className="blueprint" style={{ padding: 12 }}>
-          <div style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-green-deep)" }}>Collected MTD</div>
+          <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-green-deep)" }}>Collected MTD</div>
           <div className="hnum" style={{ fontSize: 18 }}>{money0(k.collectedMTD)}</div>
           <div className="small muted">today {money0(k.collectedToday)}</div>
         </div>
         <Link href="/acct/queue" className="blueprint" style={{ padding: 12, textDecoration: "none", color: "inherit" }}>
-          <div style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-coral-deep)" }}>Invoice queue</div>
+          <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-coral-deep)" }}>Invoice queue</div>
           <div className="hnum" style={{ fontSize: 18 }}>{k.queueCount} waiting →</div>
         </Link>
       </div>
@@ -82,7 +82,7 @@ export default function AcctDashboard() {
                 <div className="small muted">{c.rep} · {dmy(c.ts)} {hm(c.ts)} · {c.method}{c.note ? ` · ${c.note}` : ""}</div>
               </div>
               {c.photo ? <a className="small" href={`/api/files?id=${c.photo}`} target="_blank">receipt</a> : <span className="small" style={{ color: "var(--c-amber-deep)" }}>no photo</span>}
-              <span className="hnum" style={{ fontSize: 14 }}>{money(c.amount)}</span>
+              <span className="hnum" style={{ fontSize: 15 }}>{money(c.amount)}</span>
             </div>
           ))}
         </>

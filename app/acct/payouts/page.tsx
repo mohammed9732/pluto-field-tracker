@@ -36,10 +36,10 @@ export default function Payouts() {
                 <div className="small muted">Target incentives {money(r.incentives ?? 0)} + sales commission {money(r.commission)}</div>
               ) : null}
             </div>
-            <span className="hnum" style={{ fontSize: 19 }}>{money(r.total)}</span>
+            <span className="hnum" style={{ fontSize: 18 }}>{money(r.total)}</span>
           </div>
           {r.paid ? (
-            <div className="row" style={{ gap: 8, fontSize: 11, color: "var(--color-neutral-600)" }}>
+            <div className="row" style={{ gap: 8, fontSize: 12, color: "var(--color-neutral-600)" }}>
               <span className="tag tag-ok">Paid</span>
               {dmy(r.paid.paidAt)} {r.paid.paidAt.slice(11, 16)} · by {r.paid.paidByName}
             </div>

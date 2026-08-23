@@ -84,7 +84,7 @@ export default function AcctQueue() {
       <div className="row" style={{ alignItems: "baseline" }}>
         <h4 style={{ margin: 0, flex: 1 }}>Invoicing queue</h4>
         <span className="tag tag-accent">{orders.length} approved</span>
-        <button className="btn btn-secondary btn-icon" style={{ width: 40, height: 40 }} onClick={logout} title="Sign out">
+        <button className="btn btn-secondary btn-icon" style={{ }} onClick={logout} title="Sign out">
           <Icon d={paths.logout} size={17} />
         </button>
       </div>
@@ -114,7 +114,7 @@ export default function AcctQueue() {
               </div>
               {o.isSample
                 ? <span className="tag" style={{ background: "var(--c-violet-soft)", color: "var(--c-violet-deep)" }}>FREE SAMPLE</span>
-                : <span className="hnum" style={{ fontSize: 17 }}>{money(o.total)}</span>}
+                : <span className="hnum" style={{ fontSize: 18 }}>{money(o.total)}</span>}
             </div>
             <div style={{ fontSize: 12, color: "var(--color-neutral-700)", display: "flex", flexDirection: "column", gap: 2 }}>
               {o.items.map((it: any) => (
@@ -124,7 +124,7 @@ export default function AcctQueue() {
               ))}
             </div>
             {warn ? (
-              <div className="row" style={{ gap: 6, fontSize: 11, color: "var(--color-accent-700)" }}>
+              <div className="row" style={{ gap: 6, fontSize: 12, color: "var(--color-accent-700)" }}>
                 <Icon d={paths.warn} size={16} stroke="var(--color-accent-700)" /> {warn}
               </div>
             ) : null}

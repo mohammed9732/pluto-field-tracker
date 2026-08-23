@@ -217,7 +217,7 @@ export function BottomNav({ me, unread }: { me: Me; unread?: number }) {
           <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5Z" /></svg>
           {unread ? <span className="chat-badge">{unread}</span> : null}
         </span>
-        <span style={{ fontSize: 10, color: "var(--c-violet-deep)", fontWeight: 600 }}>{tr("nav.chat", "Chat")}</span>
+        <span style={{ fontSize: 12, color: "var(--c-violet-deep)", fontWeight: 600 }}>{tr("nav.chat", "Chat")}</span>
       </Link>
       {right.map(link)}
     </nav>
@@ -284,7 +284,7 @@ export function AlertsBar() {
       >
         <Icon d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0" size={20} />
         {data.unread > 0 ? (
-          <span style={{ position: "absolute", top: -3, right: -3, minWidth: 16, height: 16, borderRadius: 999, background: "var(--c-coral)", color: "#fff", fontSize: 9, fontWeight: 700, display: "grid", placeItems: "center", padding: "0 3px" }}>{data.unread}</span>
+          <span style={{ position: "absolute", top: -3, right: -3, minWidth: 16, height: 16, borderRadius: 999, background: "var(--c-coral)", color: "#fff", fontSize: 12, fontWeight: 700, display: "grid", placeItems: "center", padding: "0 3px" }}>{data.unread}</span>
         ) : null}
       </button>
       </div>
@@ -310,7 +310,7 @@ export function AlertsBar() {
           {data.notifications.map((n: any) => (
             <a key={n.id} href={n.href ?? "#"} style={{ textDecoration: "none", color: "inherit", padding: "7px 8px", borderRadius: 10, background: n.read ? "transparent" : "var(--color-accent-100)" }}>
               <div style={{ fontSize: 12 }}>{n.body}</div>
-              <div className="small muted" style={{ fontSize: 10 }}>{n.ts.slice(0, 10).split("-").reverse().join("-")} {n.ts.slice(11, 16)}</div>
+              <div className="small muted" style={{ fontSize: 12 }}>{n.ts.slice(0, 10).split("-").reverse().join("-")} {n.ts.slice(11, 16)}</div>
             </a>
           ))}
         </div>
@@ -370,7 +370,7 @@ export function PageHead({ title, back, right }: { title: string; back?: string;
   return (
     <div className="row">
       {back ? (
-        <button className="btn btn-secondary btn-icon" style={{ width: 40, height: 40 }} onClick={() => (back === "back" ? router.back() : router.push(back))}>
+        <button className="btn btn-secondary btn-icon" style={{ }} onClick={() => (back === "back" ? router.back() : router.push(back))}>
           <Icon d={paths.back} size={17} />
         </button>
       ) : null}

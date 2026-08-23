@@ -82,7 +82,7 @@ export default function MonthEnd() {
           </div>
           {data.blockers.map((b: any) => (
             <Link key={b.key} href={b.href} className="listrow" style={{ textDecoration: "none", color: "inherit" }}>
-              <span className="hnum" style={{ fontSize: 17, width: 34 }}>{b.count}</span>
+              <span className="hnum" style={{ fontSize: 18, width: 34 }}>{b.count}</span>
               <span style={{ flex: 1, fontSize: 13 }}>{b.label}</span>
               <span className="small" style={{ color: "var(--color-accent)" }}>Open →</span>
             </Link>
@@ -93,27 +93,27 @@ export default function MonthEnd() {
       <div className="kpi-grid">
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">To hand over</span>
-          <span className="hnum" style={{ fontSize: 24 }}>{money(t.handOver)}</span>
-          <span className="small muted" style={{ fontSize: 10 }}>
+          <span className="hnum" style={{ fontSize: 28 }}>{money(t.handOver)}</span>
+          <span className="small muted" style={{ fontSize: 12 }}>
             wages {money(t.netPay)} + expenses {money(t.reimburse)}
           </span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">Sales this month</span>
-          <span className="hnum" style={{ fontSize: 24 }}>{money(t.sales)}</span>
-          <span className="small muted" style={{ fontSize: 10 }}>approved and invoiced orders</span>
+          <span className="hnum" style={{ fontSize: 28 }}>{money(t.sales)}</span>
+          <span className="small muted" style={{ fontSize: 12 }}>approved and invoiced orders</span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">Cash collected</span>
-          <span className="hnum" style={{ fontSize: 24 }}>{money(t.collected)}</span>
-          <span className="small muted" style={{ fontSize: 10 }}>commission {money(t.commission)}</span>
+          <span className="hnum" style={{ fontSize: 28 }}>{money(t.collected)}</span>
+          <span className="small muted" style={{ fontSize: 12 }}>commission {money(t.commission)}</span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">Deductions</span>
-          <span className="hnum" style={{ fontSize: 24, color: t.deducted ? "var(--c-coral-deep)" : undefined }}>
+          <span className="hnum" style={{ fontSize: 28, color: t.deducted ? "var(--c-coral-deep)" : undefined }}>
             {money(t.deducted)}
           </span>
-          <span className="small muted" style={{ fontSize: 10 }}>
+          <span className="small muted" style={{ fontSize: 12 }}>
             {t.paidCount} of {data.people.length} already paid
           </span>
         </div>
@@ -201,7 +201,7 @@ export default function MonthEnd() {
           <div className="small muted">
             This month can be closed in the control panel, which locks the figures so they cannot move afterwards.
           </div>
-          <Link className="btn btn-secondary" href="/admin/settings" style={{ alignSelf: "flex-start", fontSize: 12.5 }}>
+          <Link className="btn btn-secondary" href="/admin/settings" style={{ alignSelf: "flex-start", fontSize: 12 }}>
             Go and close it
           </Link>
         </div>

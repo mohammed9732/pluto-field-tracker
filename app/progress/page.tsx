@@ -58,7 +58,7 @@ export default function Progress() {
             return (
               <div key={r.productId} className="card" style={{ gap: 8 }}>
                 <div className="row" style={{ alignItems: "baseline", gap: 8 }}>
-                  <span style={{ fontSize: 14, fontWeight: 500, flex: 1 }}>{r.productName}</span>
+                  <span style={{ fontSize: 15, fontWeight: 500, flex: 1 }}>{r.productName}</span>
                   <span className={`tag ${r.qualified ? "tag-ok" : "tag-warn"}`}>{r.qualified ? "Qualified" : "Below min"}</span>
                 </div>
                 <div className="row" style={{ alignItems: "baseline", gap: 6, fontSize: 12, color: "var(--color-neutral-600)" }}>
@@ -79,7 +79,7 @@ export default function Progress() {
           })}
 
           <div className="blueprint" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 2, marginTop: "auto" }}>
-            <div style={{ fontSize: 10, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--color-accent-700)" }}>
+            <div style={{ fontSize: 12, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--color-accent-700)" }}>
               {data.quarter.name.replace("-", " ")} incentive accrued
             </div>
             <div className="row" style={{ alignItems: "baseline" }}>

@@ -81,7 +81,7 @@ export default function AdminMap() {
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Field time</h6>
             <div className="row" style={{ alignItems: "baseline" }}>
-              <span className="hnum" style={{ fontSize: 30 }}>{durationHM(data.fieldTime.minutes)}</span>
+              <span className="hnum" style={{ fontSize: 34 }}>{durationHM(data.fieldTime.minutes)}</span>
               {data.fieldTime.checkedIn ? <span className="small muted">and counting</span> : null}
             </div>
             <div style={{ display: "flex", height: 8, borderRadius: 4, overflow: "hidden" }}>

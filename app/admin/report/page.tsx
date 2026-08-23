@@ -148,7 +148,7 @@ export default function MonthlyReport() {
 
         <S letter="d" title="Incentives accrued">
           <div className="row" style={{ alignItems: "baseline" }}>
-            <span className="hnum" style={{ fontSize: 26 }}>{money(data.incentivesTotal)}</span>
+            <span className="hnum" style={{ fontSize: 28 }}>{money(data.incentivesTotal)}</span>
             <span className="small muted">across {new Set(data.achievementRows.filter((r: any) => r.incentiveAmount > 0).map((r: any) => r.name)).size} people · collected in month: {money(data.collected)}</span>
           </div>
         </S>

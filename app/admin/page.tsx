@@ -26,10 +26,10 @@ export default function AdminDashboard() {
     <Screen me={me} wide>
         <div className="row">
           <div style={{ flex: 1 }}>
-            <div className="hnum" style={{ fontSize: 19 }}>Company today</div>
+            <div className="hnum" style={{ fontSize: 18 }}>Company today</div>
             <div className="small muted">{me.name} · Owner · {weekdayShort(data.today)} {dmy(data.today)}</div>
           </div>
-          <button className="btn btn-secondary btn-icon" style={{ width: 40, height: 40 }} onClick={logout} title="Sign out">
+          <button className="btn btn-secondary btn-icon" style={{ }} onClick={logout} title="Sign out">
             <Icon d={paths.logout} size={17} />
           </button>
         </div>
@@ -37,23 +37,23 @@ export default function AdminDashboard() {
         <div className="kpi-grid">
           <div className="card" style={{ gap: 2, padding: 12 }}>
             <span className="card-kicker">Visits today</span>
-            <span className="hnum" style={{ fontSize: 26 }}><CountUp value={k.visitsToday} /><span style={{ fontSize: 15, color: "var(--color-neutral-600)" }}> / {k.minToday} min</span></span>
-            <span className="small muted" style={{ fontSize: 10 }}>{[k.onLeaveCount ? `${k.onLeaveCount} on leave` : "", k.outOfLocationToday ? `⚠ ${k.outOfLocationToday} out-of-location` : ""].filter(Boolean).join(" · ") || "full team in"}</span>
+            <span className="hnum" style={{ fontSize: 28 }}><CountUp value={k.visitsToday} /><span style={{ fontSize: 15, color: "var(--color-neutral-600)" }}> / {k.minToday} min</span></span>
+            <span className="small muted" style={{ fontSize: 12 }}>{[k.onLeaveCount ? `${k.onLeaveCount} on leave` : "", k.outOfLocationToday ? `⚠ ${k.outOfLocationToday} out-of-location` : ""].filter(Boolean).join(" · ") || "full team in"}</span>
           </div>
           <div className="card" style={{ gap: 2, padding: 12 }}>
             <span className="card-kicker">Sales MTD</span>
-            <span className="hnum" style={{ fontSize: 26 }}><CountUp value={k.salesValue} format={money0} /></span>
-            <span className="small muted" style={{ fontSize: 10 }}>{k.salesBoxes} boxes · 3 cities</span>
+            <span className="hnum" style={{ fontSize: 28 }}><CountUp value={k.salesValue} format={money0} /></span>
+            <span className="small muted" style={{ fontSize: 12 }}>{k.salesBoxes} boxes · 3 cities</span>
           </div>
           <div className="card" style={{ gap: 2, padding: 12 }}>
             <span className="card-kicker">Pending orders</span>
-            <span className="hnum" style={{ fontSize: 26 }}><CountUp value={k.pendingCount} /><span style={{ fontSize: 15, color: "var(--color-neutral-600)" }}> · {money0(k.pendingValue)}</span></span>
-            <span className="small muted" style={{ fontSize: 10 }}>awaiting approval</span>
+            <span className="hnum" style={{ fontSize: 28 }}><CountUp value={k.pendingCount} /><span style={{ fontSize: 15, color: "var(--color-neutral-600)" }}> · {money0(k.pendingValue)}</span></span>
+            <span className="small muted" style={{ fontSize: 12 }}>awaiting approval</span>
           </div>
           <div className="card" style={{ gap: 2, padding: 12 }}>
             <span className="card-kicker">Stock alerts</span>
-            <span className="hnum" style={{ fontSize: 26, color: k.stockAlerts.length ? "var(--c-coral-deep)" : undefined }}><CountUp value={k.stockAlerts.length} /></span>
-            <span className="small muted" style={{ fontSize: 10 }}>{k.stockAlerts.slice(0, 2).join(" · ") || "all healthy"}</span>
+            <span className="hnum" style={{ fontSize: 28, color: k.stockAlerts.length ? "var(--c-coral-deep)" : undefined }}><CountUp value={k.stockAlerts.length} /></span>
+            <span className="small muted" style={{ fontSize: 12 }}>{k.stockAlerts.slice(0, 2).join(" · ") || "all healthy"}</span>
           </div>
         </div>
 

@@ -23,6 +23,32 @@ function waNumber(raw: string): string {
   return "964" + digits.replace(/^0+/, "");
 }
 
+/* A phone number as a row rather than a line of text.
+ *
+ * Tapping anywhere on the row dials. WhatsApp is deliberately a separate
+ * control with its own 44px box: putting it inside the dial target would mean
+ * a mis-tap costs you a phone call to a doctor. */
+function ContactRow({ label, number }: { label: string; number: string }) {
+  return (
+    <div className="row" style={{ gap: "var(--sp-2)", alignItems: "center" }}>
+      <a className="rowlink" href={`tel:${number.replace(/\s/g, "")}`} style={{ flex: 1, minWidth: 0 }}>
+        {/* Handset, drawn inline — the icon set has no phone glyph. */}
+        <Icon d="M4 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L14 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 1-2Z"
+          size={17} stroke="var(--color-accent)" />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="hnum" style={{ fontSize: 13, fontWeight: 600 }}>{number}</div>
+          <div className="small muted">{label}</div>
+        </div>
+      </a>
+      <a href={`https://wa.me/${waNumber(number)}`} target="_blank" rel="noreferrer"
+         className="btn btn-secondary"
+         style={{ fontSize: 12, padding: "0 14px", flex: "none" }}>
+        WhatsApp
+      </a>
+    </div>
+  );
+}
+
 const OUTCOME: Record<string, string> = { order: "Order", follow_up: "Follow-up", payment: "Payment" };
 
 export default function DoctorProfile() {
@@ -147,25 +173,14 @@ export default function DoctorProfile() {
       <div className="card" style={{ gap: 6 }}>
         <div style={{ fontSize: 13, fontWeight: 500 }}>{d.clinic}</div>
         <div className="small muted">{d.specialty} · {d.area}{d.address ? ` · ${d.address}` : ""}</div>
-        {d.phone ? (
-          <div className="row" style={{ gap: 8, alignItems: "center" }}>
-            <span className="small muted" style={{ minWidth: 62 }}>{t("common.phone", "Phone")}</span>
-            <a href={`tel:${d.phone.replace(/\s/g, "")}`} className="small hnum">{d.phone}</a>
-            <a href={`https://wa.me/${waNumber(d.phone)}`} target="_blank" rel="noreferrer"
-               className="btn btn-ghost" style={{ fontSize: 12, marginInlineStart: "auto", padding: "4px 8px" }}>WhatsApp</a>
-          </div>
-        ) : null}
-        {/* The secretary is very often the person who actually answers, and who
-            books the appointment. Reps were keeping this number in their own
-            phones, which walked out of the door with them. */}
-        {d.secretaryPhone ? (
-          <div className="row" style={{ gap: 8, alignItems: "center" }}>
-            <span className="small muted" style={{ minWidth: 62 }}>{t("doctor.secretary", "Secretary")}</span>
-            <a href={`tel:${String(d.secretaryPhone).replace(/\s/g, "")}`} className="small hnum">{d.secretaryPhone}</a>
-            <a href={`https://wa.me/${waNumber(d.secretaryPhone)}`} target="_blank" rel="noreferrer"
-               className="btn btn-ghost" style={{ fontSize: 12, marginInlineStart: "auto", padding: "4px 8px" }}>WhatsApp</a>
-          </div>
-        ) : null}
+        {/* One row per number, each row a 44px call target in its own right.
+            These were previously three links in a 19px-tall strip, which is
+            not something you can hit reliably standing in a corridor. The
+            secretary is often the person who actually answers and books the
+            appointment, so their number gets equal billing rather than being
+            squeezed onto the end of a line. */}
+        {d.phone ? <ContactRow label={t("common.phone", "Doctor")} number={d.phone} /> : null}
+        {d.secretaryPhone ? <ContactRow label={t("doctor.secretary", "Secretary")} number={String(d.secretaryPhone)} /> : null}
         <div className="row" style={{ gap: 6 }}>
           <Icon d={paths.pinDot} size={14} stroke={d.lat != null ? "var(--color-accent)" : "var(--color-neutral-400)"} />
           <span className="small muted" style={{ flex: 1 }}>{d.lat != null ? "Clinic pin saved" : "No clinic pin yet"}</span>
@@ -178,13 +193,13 @@ export default function DoctorProfile() {
             coordinates; without one, the best we can do is hand over the
             address as a search — which is still better than retyping it. */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <a className="btn btn-secondary" style={{ padding: 9, fontSize: 12.5 }} target="_blank" rel="noreferrer"
+          <a className="btn btn-secondary" style={{ padding: 9, fontSize: 12 }} target="_blank" rel="noreferrer"
              href={d.lat != null
                ? `https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lng}`
                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([d.clinic, d.address, d.area, d.city].filter(Boolean).join(", "))}`}>
             {t("doctor.openInMaps", "Google Maps")}
           </a>
-          <a className="btn btn-secondary" style={{ padding: 9, fontSize: 12.5 }} target="_blank" rel="noreferrer"
+          <a className="btn btn-secondary" style={{ padding: 9, fontSize: 12 }} target="_blank" rel="noreferrer"
              href={d.lat != null
                ? `https://www.waze.com/ul?ll=${d.lat},${d.lng}&navigate=yes`
                : `https://www.waze.com/ul?q=${encodeURIComponent([d.clinic, d.address, d.area, d.city].filter(Boolean).join(", "))}`}>
@@ -214,12 +229,12 @@ export default function DoctorProfile() {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <div className="blueprint" style={{ padding: 12 }}>
-          <div style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--color-accent-700)" }}>Lifetime sales</div>
-          <div className="hnum" style={{ fontSize: 20 }}>{money(data.lifetimeValue)}</div>
+          <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--color-accent-700)" }}>Lifetime sales</div>
+          <div className="hnum" style={{ fontSize: 22 }}>{money(data.lifetimeValue)}</div>
         </div>
         <div className="blueprint" style={{ padding: 12 }}>
-          <div style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-green-deep)" }}>Collected</div>
-          <div className="hnum" style={{ fontSize: 20 }}>{money(data.totalCollected)}</div>
+          <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-green-deep)" }}>Collected</div>
+          <div className="hnum" style={{ fontSize: 22 }}>{money(data.totalCollected)}</div>
         </div>
       </div>
 
@@ -259,7 +274,7 @@ export default function DoctorProfile() {
         />
         <div className="row" style={{ gap: 8, alignItems: "center" }}>
           {noteSaved ? <span className="small" style={{ color: "var(--c-green-deep)" }}>{t("common.saved", "Saved")}</span> : <span />}
-          <button className="btn btn-secondary" style={{ marginInlineStart: "auto", fontSize: 12.5, padding: "6px 14px" }}
+          <button className="btn btn-secondary" style={{ marginInlineStart: "auto", fontSize: 12, padding: "6px 14px" }}
             onClick={async () => {
               await api("/api/doctors", { json: { action: "privateNote", doctorId: d.id, body: note ?? "" } });
               setNoteSaved(true);
@@ -308,7 +323,7 @@ export default function DoctorProfile() {
                 <div className="small muted">{o.byName}{o.invoicePdfName ? " · invoice attached" : ""}</div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
-                <span className="hnum" style={{ fontSize: 14 }}>{money(o.total)}</span>
+                <span className="hnum" style={{ fontSize: 15 }}>{money(o.total)}</span>
                 <span className={`tag ${STATUS_TAG[o.status][1]}`}>{STATUS_TAG[o.status][0]}</span>
               </div>
             </div>
@@ -325,7 +340,7 @@ export default function DoctorProfile() {
                 <div style={{ fontSize: 13 }}>{p.method === "cash" ? "Cash" : "Transfer"}{p.note ? ` · ${p.note}` : ""}</div>
                 <div className="small muted">{dmy(p.ts)} {hm(p.ts)} · {p.byName}</div>
               </div>
-              <span className="hnum" style={{ fontSize: 14 }}>{money(p.amount)}</span>
+              <span className="hnum" style={{ fontSize: 15 }}>{money(p.amount)}</span>
             </div>
           ))}
           {data.payments.length === 0 ? <div className="small muted">No payments recorded.</div> : null}

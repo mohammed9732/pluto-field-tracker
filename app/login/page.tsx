@@ -46,11 +46,11 @@ export default function Login() {
                 style={{ maxWidth: 160, maxHeight: 82, objectFit: "contain", display: "block" }} />
             ) : null}
             <div style={{ textAlign: "center" }}>
-              <div className="hnum" style={{ fontSize: 26, lineHeight: 1.05 }}>
+              <div className="hnum" style={{ fontSize: 28, lineHeight: 1.05 }}>
                 {(brand?.companyName ?? "Pluto Field Tracker").toUpperCase()}
               </div>
               {brand?.companySub ? (
-                <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--color-neutral-600)" }}>
+                <div style={{ fontSize: 12, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--color-neutral-600)" }}>
                   {brand.companySub}
                 </div>
               ) : null}

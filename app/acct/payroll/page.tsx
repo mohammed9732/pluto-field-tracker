@@ -39,7 +39,7 @@ export default function Payroll() {
                 {data.isQuarterEnd && r.incentiveDue > 0 ? ` + ${money(r.incentiveDue)} quarter incentives` : " · incentives pay at quarter end"}
               </div>
             </div>
-            <span className="hnum" style={{ fontSize: 19 }}>{money(r.total)}</span>
+            <span className="hnum" style={{ fontSize: 18 }}>{money(r.total)}</span>
           </div>
           {(() => {
             const flagged = (r.deductions ?? []).filter((d: any) => d.status === "flagged");
@@ -53,9 +53,9 @@ export default function Payroll() {
                   {flagged.map((d: any) => (
                     <div key={d.id} className="row" style={{ gap: 6, fontSize: 12 }}>
                       <span style={{ flex: 1, color: "var(--c-amber-deep)" }}>{dmy(d.date)} — {money(d.amount)}</span>
-                      <button className="btn" style={{ fontSize: 11, padding: "3px 10px", background: "var(--c-amber)", border: "none", color: "#fff" }}
+                      <button className="btn" style={{ fontSize: 12, padding: "3px 10px", background: "var(--c-amber)", border: "none", color: "#fff" }}
                         onClick={async () => { await api("/api/money", { json: { action: "deduction", id: d.id, decision: "confirm" } }); load(); }}>Deduct</button>
-                      <button className="btn btn-secondary" style={{ fontSize: 11, padding: "3px 10px" }}
+                      <button className="btn btn-secondary" style={{ fontSize: 12, padding: "3px 10px" }}
                         onClick={async () => { await api("/api/money", { json: { action: "deduction", id: d.id, decision: "waive" } }); load(); }}>Excuse</button>
                     </div>
                   ))}
@@ -67,12 +67,12 @@ export default function Payroll() {
           {r.spendingsDue > 0 ? (
             <div className="row" style={{ gap: 6, fontSize: 12 }}>
               <span style={{ flex: 1, color: "var(--c-green-deep)" }}>Spendings to pay back: <b>{money(r.spendingsDue)}</b></span>
-              <button className="btn btn-green" style={{ fontSize: 11, padding: "3px 10px" }}
+              <button className="btn btn-green" style={{ fontSize: 12, padding: "3px 10px" }}
                 onClick={async () => { await api("/api/spendings", { json: { action: "payMonth", userId: r.userId, period: data.period } }); load(); }}>Pay back</button>
             </div>
           ) : null}
           {r.paid ? (
-            <div className="row" style={{ gap: 8, fontSize: 11, color: "var(--color-neutral-600)" }}>
+            <div className="row" style={{ gap: 8, fontSize: 12, color: "var(--color-neutral-600)" }}>
               <span className="tag tag-ok">Paid</span>
               {dmy(r.paid.paidAt)} {r.paid.paidAt.slice(11, 16)} · by {r.paid.paidByName}
             </div>

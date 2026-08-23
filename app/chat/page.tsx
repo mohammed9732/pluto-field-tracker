@@ -115,7 +115,7 @@ function ChatInner() {
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5Z" /></svg>
         </div>
         <div style={{ flex: 1 }}>
-          <div className="hnum" style={{ fontSize: 20, lineHeight: 1.05 }}>Chat</div>
+          <div className="hnum" style={{ fontSize: 22, lineHeight: 1.05 }}>Chat</div>
           <div className="small muted">{channels.find((c) => c.id === channel)?.label ?? ""}</div>
         </div>
         {(() => {
@@ -125,14 +125,14 @@ function ChatInner() {
       </div>
       <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 2 }}>
         {mainChans.map((c) => (
-          <button key={c.id} className={`tag ${channel === c.id ? "tag-chat" : "tag-neutral"}`} style={{ border: "none", cursor: "pointer", fontSize: 11, padding: "4px 12px", flex: "none" }} onClick={() => setChannel(c.id)}>
+          <button key={c.id} className={`tag ${channel === c.id ? "tag-chat" : "tag-neutral"}`} style={{ border: "none", cursor: "pointer", fontSize: 12, padding: "4px 12px", flex: "none" }} onClick={() => setChannel(c.id)}>
             {c.label}
           </button>
         ))}
         {dms.length ? (
           <select
             className="tag tag-neutral"
-            style={{ border: "none", cursor: "pointer", fontSize: 11, flex: "none", maxWidth: 110 }}
+            style={{ border: "none", cursor: "pointer", fontSize: 12, flex: "none", maxWidth: 110 }}
             value={channel.startsWith("dm-") ? channel : ""}
             onChange={(e) => e.target.value && setChannel(e.target.value)}
           >
@@ -144,7 +144,7 @@ function ChatInner() {
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12, overflowY: "auto" }}>
         {messages.map((m) => (
           <div key={m.id} style={{ display: "flex", flexDirection: "column", gap: 3, alignItems: m.mine ? "flex-end" : "flex-start" }}>
-            <span style={{ fontSize: 10, color: "var(--color-neutral-500)" }}>
+            <span style={{ fontSize: 12, color: "var(--color-neutral-500)" }}>
               {m.mine ? hm(m.ts) : `${m.senderName} · ${hm(m.ts)}`}
             </span>
             {m.kind === "image" && m.fileId ? (
@@ -154,7 +154,7 @@ function ChatInner() {
             ) : m.kind === "voice" && m.fileId ? (
               <div className={m.mine ? "bubble-out" : "bubble-in"} style={{ padding: "6px 10px", background: m.mine ? "var(--c-violet)" : undefined }}>
                 <audio controls src={`/api/files?id=${m.fileId}`} style={{ height: 36, maxWidth: 210 }} />
-                {m.duration ? <div style={{ fontSize: 10, opacity: 0.8 }}>{Math.floor(m.duration / 60)}:{String(m.duration % 60).padStart(2, "0")}</div> : null}
+                {m.duration ? <div style={{ fontSize: 12, opacity: 0.8 }}>{Math.floor(m.duration / 60)}:{String(m.duration % 60).padStart(2, "0")}</div> : null}
               </div>
             ) : m.kind === "file" && m.fileId ? (
               <a href={`/api/files?id=${m.fileId}`} target="_blank" className={m.mine ? "bubble-out" : "bubble-in"} style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", background: m.mine ? "var(--c-violet)" : undefined, color: m.mine ? "#fff" : "inherit" }}>
@@ -177,10 +177,10 @@ function ChatInner() {
       <div className="row" style={{ gap: 7 }}>
         <input ref={imgRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAndSend(f, "image", f.name); e.target.value = ""; }} />
         <input ref={fileRef} type="file" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAndSend(f, "file", f.name); e.target.value = ""; }} />
-        <button className="btn btn-secondary btn-icon" style={{ flex: "none", width: 34, height: 34 }} onClick={() => imgRef.current?.click()} aria-label="Send image">
+        <button className="btn btn-secondary btn-icon" style={{ flex: "none", }} onClick={() => imgRef.current?.click()} aria-label="Send image">
           <Icon d="M21 15l-5-5L5 21M3 5h18v14H3Z" size={15} />
         </button>
-        <button className="btn btn-secondary btn-icon" style={{ flex: "none", width: 34, height: 34 }} onClick={() => fileRef.current?.click()} aria-label="Send file">
+        <button className="btn btn-secondary btn-icon" style={{ flex: "none", }} onClick={() => fileRef.current?.click()} aria-label="Send file">
           <Icon d="M21 12.5 12.5 21a4.95 4.95 0 0 1-7-7l8.5-8.5a3.5 3.5 0 0 1 5 5L10 19" size={15} />
         </button>
         <input
@@ -192,11 +192,11 @@ function ChatInner() {
           style={{ minHeight: 38, fontSize: 13 }}
         />
         {text.trim() ? (
-          <button className="btn btn-icon" style={{ flex: "none", width: 38, height: 38, background: "var(--c-violet)", border: "1px solid var(--c-violet)" }} onClick={send} aria-label="Send">
+          <button className="btn btn-icon" style={{ flex: "none", background: "var(--c-violet)", border: "1px solid var(--c-violet)" }} onClick={send} aria-label="Send">
             <Icon d={paths.send} size={15} stroke="#fff" />
           </button>
         ) : (
-          <button className="btn btn-icon" style={{ flex: "none", width: 38, height: 38, background: recording ? "var(--c-coral)" : "var(--c-violet)", border: "none" }} onClick={toggleRecord} aria-label="Voice message">
+          <button className="btn btn-icon" style={{ flex: "none", background: recording ? "var(--c-coral)" : "var(--c-violet)", border: "none" }} onClick={toggleRecord} aria-label="Voice message">
             <Icon d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z M19 10v2a7 7 0 0 1-14 0v-2 M12 19v3" size={15} stroke="#fff" />
           </button>
         )}

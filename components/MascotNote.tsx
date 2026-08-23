@@ -32,7 +32,7 @@ export function MascotNote({
         {body ? <div className="mnote-body">{body}</div> : null}
         {action ? (
           <Link className="btn btn-secondary" href={action.href}
-            style={{ fontSize: 12.5, padding: "7px 14px", marginTop: 9 }}>
+            style={{ fontSize: 12, padding: "7px 14px", marginTop: 9 }}>
             {action.label}
           </Link>
         ) : null}

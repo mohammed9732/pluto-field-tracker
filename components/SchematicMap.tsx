@@ -34,7 +34,7 @@ export function SchematicMap({ checkins, visits, pings, height = 270 }: { checki
         {trail ? <polyline points={trail} fill="none" stroke="var(--color-accent)" strokeWidth="0.5" strokeDasharray="2 1.6" /> : null}
       </svg>
       {checkins.filter((c) => c.lat != null).map((c) => (
-        <div key={c.id} style={{ position: "absolute", left: `calc(${X(c.lng)}% - 13px)`, top: `calc(${Y(c.lat)}% - 13px)`, width: 26, height: 26, background: "var(--color-accent)", color: "#fff", display: "grid", placeItems: "center", fontFamily: "var(--font-heading)", fontSize: 11, borderRadius: 6 }}>
+        <div key={c.id} style={{ position: "absolute", left: `calc(${X(c.lng)}% - 13px)`, top: `calc(${Y(c.lat)}% - 13px)`, width: 26, height: 26, background: "var(--color-accent)", color: "#fff", display: "grid", placeItems: "center", fontFamily: "var(--font-heading)", fontSize: 12, borderRadius: 6 }}>
           {c.type === "in" ? "IN" : "OUT"}
         </div>
       ))}
@@ -49,15 +49,15 @@ export function SchematicMap({ checkins, visits, pings, height = 270 }: { checki
       {last ? (
         <div style={{ position: "absolute", left: `${X(last.lng)}%`, top: `${Y(last.lat)}%`, display: "flex", alignItems: "center", gap: 6, transform: "translate(-6px,-6px)" }}>
           <span style={{ width: 12, height: 12, borderRadius: "50%", background: "var(--color-accent)", boxShadow: "0 0 0 4px var(--color-accent-200)" }} />
-          <span style={{ fontSize: 10, background: "var(--color-neutral-100)", border: "1px solid var(--color-accent-300)", color: "var(--color-accent-800)", padding: "2px 5px", whiteSpace: "nowrap" }}>{hm(last.ts)}</span>
+          <span style={{ fontSize: 12, background: "var(--color-neutral-100)", border: "1px solid var(--color-accent-300)", color: "var(--color-accent-800)", padding: "2px 5px", whiteSpace: "nowrap" }}>{hm(last.ts)}</span>
         </div>
       ) : null}
-      <div style={{ position: "absolute", left: 10, bottom: 8, display: "flex", flexWrap: "wrap", gap: 8, fontSize: 10, color: "var(--color-neutral-600)", background: "var(--color-neutral-100)", padding: "5px 7px", border: "1px solid var(--color-divider)" }}>
+      <div style={{ position: "absolute", left: 10, bottom: 8, display: "flex", flexWrap: "wrap", gap: 8, fontSize: 12, color: "var(--color-neutral-600)", background: "var(--color-neutral-100)", padding: "5px 7px", border: "1px solid var(--color-divider)" }}>
         <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 9, height: 9, background: "var(--color-accent)", display: "inline-block" }} />Check-in/out</span>
         <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 9, height: 9, border: "1.5px solid var(--color-accent)", display: "inline-block" }} />Clinic visit</span>
         <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, borderTop: "1.5px dashed var(--color-accent)", display: "inline-block" }} />Movement</span>
       </div>
-      <div style={{ position: "absolute", right: 12, top: 8, fontSize: 10, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--color-neutral-500)" }}>Schematic</div>
+      <div style={{ position: "absolute", right: 12, top: 8, fontSize: 12, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--color-neutral-500)" }}>Schematic</div>
     </div>
   );
 }

@@ -132,7 +132,7 @@ export default function Spendings() {
               <div style={{ fontSize: 13 }}>{TYPES.find(([v]) => v === s.type)?.[1]} · {dmy(s.date)}</div>
               <div className="small muted">{s.note}{s.status === "rejected" && s.decideNote ? ` — "${s.decideNote}"` : ""}</div>
             </div>
-            <span className="hnum" style={{ fontSize: 14 }}>{money(s.amount)}</span>
+            <span className="hnum" style={{ fontSize: 15 }}>{money(s.amount)}</span>
             <span className={`tag ${STATUS_TAG[s.status][1]}`}>{STATUS_TAG[s.status][0]}</span>
           </div>
         ))}

@@ -27,7 +27,7 @@ export default function Team() {
           <div className="row" style={{ gap: 8 }}>
             <span style={{ width: 7, height: 7, borderRadius: 999, background: r.checkedIn ? "var(--color-accent)" : "var(--color-neutral-400)", flex: "none" }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 500 }}>{r.name} · {r.cityLabel}</div>
+              <div style={{ fontSize: 15, fontWeight: 500 }}>{r.name} · {r.cityLabel}</div>
               <div className="small muted">{r.phone}</div>
               <div className="small muted">
                 {r.onLeave
@@ -39,7 +39,7 @@ export default function Team() {
                       : "Not checked in yet"}
               </div>
             </div>
-            <span className="hnum" style={{ fontSize: 17, color: r.onLeave ? "var(--color-neutral-500)" : "var(--color-accent-700)" }}>
+            <span className="hnum" style={{ fontSize: 18, color: r.onLeave ? "var(--color-neutral-500)" : "var(--color-accent-700)" }}>
               {r.onLeave ? "—" : `${r.todayVisits}/${r.dailyMin}`}
             </span>
             <CallButton phone={r.phone} name={r.name} />
@@ -53,7 +53,7 @@ export default function Team() {
           ) : (
             <>
               <Pips done={r.todayVisits} total={r.dailyMin} />
-              <div className="row" style={{ gap: 14, fontSize: 11, color: "var(--color-neutral-600)", flexWrap: "wrap" }}>
+              <div className="row" style={{ gap: 14, fontSize: 12, color: "var(--color-neutral-600)", flexWrap: "wrap" }}>
                 {r.products.map((p: any) => (
                   <span key={p.name}>{p.name} <b style={{ color: p.pct >= 70 ? "var(--color-accent-700)" : undefined }}>{p.pct}%</b></span>
                 ))}
@@ -79,7 +79,7 @@ export default function Team() {
       ))}
       <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: "auto" }}>
         <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>This week vs plan</h6>
-        <div className="row" style={{ gap: 10, fontSize: 11, color: "var(--color-neutral-600)" }}>
+        <div className="row" style={{ gap: 10, fontSize: 12, color: "var(--color-neutral-600)" }}>
           <span>Team visits <b style={{ color: "var(--color-text)" }}>{data.week.visits}/{data.week.plan}</b></span>
           <span>Joint visits <b style={{ color: "var(--color-text)" }}>{data.week.joint}</b></span>
 

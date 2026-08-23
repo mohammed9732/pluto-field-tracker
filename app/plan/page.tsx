@@ -272,7 +272,7 @@ export default function MyPlan() {
 
       <div className="row" style={{ fontSize: 12, color: "var(--color-neutral-600)" }}>
         <span style={{ flex: 1 }}>{isSup ? "Days planned" : "Total planned"}</span>
-        <span className="hnum" style={{ fontSize: 17, color: "var(--color-accent-700)" }}>
+        <span className="hnum" style={{ fontSize: 18, color: "var(--color-accent-700)" }}>
           {isSup ? `${days.filter((d) => d.city).length} days · ${total} meetings` : `${total} visits`}
         </span>
       </div>

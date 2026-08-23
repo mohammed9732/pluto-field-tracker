@@ -67,7 +67,7 @@ export default function Tasks() {
         </div>
         {t.details ? <div style={{ fontSize: 12, color: "var(--color-neutral-700)" }}>{t.details}</div> : null}
         {t.totalCount > 1 ? (
-          <div className="row" style={{ gap: 6, flexWrap: "wrap", fontSize: 11 }}>
+          <div className="row" style={{ gap: 6, flexWrap: "wrap", fontSize: 12 }}>
             {t.people.map((p: any) => (
               <span key={p.id} className={`tag ${p.done ? "tag-ok" : "tag-neutral"}`}>{p.done ? "✓ " : ""}{p.name.split(" ")[0]}</span>
             ))}

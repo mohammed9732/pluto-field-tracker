@@ -86,7 +86,7 @@ export default function Competitors() {
                 {c.city ? ` · ${c.city}` : ""} · {c.byName} · {dmy(c.ts)}
               </div>
             </div>
-            {c.price ? <span className="hnum" style={{ fontSize: 14 }}>{money(c.price)}</span> : null}
+            {c.price ? <span className="hnum" style={{ fontSize: 15 }}>{money(c.price)}</span> : null}
           </div>
           {c.note ? <div style={{ fontSize: 12, color: "var(--color-neutral-700)" }}>{c.note}</div> : null}
         </div>
