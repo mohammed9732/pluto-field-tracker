@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import "leaflet/dist/leaflet.css";
 
 /* Leaflet popups take an HTML string, not React, so anything from the database
@@ -15,6 +15,21 @@ function escapeHtml(v: unknown): string {
 export function GeoMap({ checkins, visits, pings, doctorPins = [], height = 280 }: { checkins: any[]; visits: any[]; pings: any[]; doctorPins?: any[]; height?: number }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
+
+  // The page polls every thirty seconds and hands back four brand-new arrays
+  // each time, even when nothing has moved. Keying the effect on those
+  // references tore the map down and rebuilt it mid-read, throwing away
+  // wherever the user had panned to. Compare what is actually drawn instead.
+  const signature = useMemo(
+    () => JSON.stringify([
+      checkins.map((c: any) => [c.lat, c.lng, c.type, c.ts]),
+      visits.map((v: any) => [v.lat, v.lng, v.doctorId, v.time, v.doctor?.name]),
+      pings.map((p: any) => [p.lat, p.lng, p.ts]),
+      doctorPins.map((d: any) => [d.id, d.lat, d.lng, d.name]),
+      height,
+    ]),
+    [checkins, visits, pings, doctorPins, height],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -110,7 +125,8 @@ export function GeoMap({ checkins, visits, pings, doctorPins = [], height = 280 
       cancelled = true;
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
     };
-  }, [checkins, visits, pings, doctorPins]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature]);
 
   return <div ref={boxRef} style={{ height, borderRadius: 16, border: "1px solid var(--color-divider)", overflow: "hidden", zIndex: 0 }} />;
 }

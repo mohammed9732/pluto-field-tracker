@@ -43,6 +43,10 @@ export default function Payouts() {
               <span className="tag tag-ok">Paid</span>
               {dmy(r.paid.paidAt)} {r.paid.paidAt.slice(11, 16)} · by {r.paid.paidByName}
             </div>
+          ) : r.paidWithWages ? (
+            <div className="small" style={{ color: "var(--c-green-deep)" }}>
+              Paid with the quarter-end wages on {dmy(r.paidWithWages)}
+            </div>
           ) : (
             <button className="btn btn-primary btn-block" style={{ padding: 10 }} onClick={() => pay(r.userId)} disabled={r.total <= 0}>
               Mark as paid

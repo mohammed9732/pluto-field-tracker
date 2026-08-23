@@ -33,7 +33,7 @@ export default function StockPage() {
   const [data, setData] = useState<any>(null);
   const [counts, setCounts] = useState<Record<number, string>>({});
   const [checkNote, setCheckNote] = useState("");
-  const [ask, setAsk] = useState<{ productId: string; qty: string; fromCity: string; note: string } | null>(null);
+  const [ask, setAsk] = useState<{ productId: string; qty: string; fromCity: string; toCity: string; note: string } | null>(null);
   const [askErr, setAskErr] = useState("");
   const [checkMsg, setCheckMsg] = useState("");
   const [transfer, setTransfer] = useState({ productId: "", qty: "", to: "", note: "" });
@@ -71,7 +71,21 @@ export default function StockPage() {
 
   async function submitCheck() {
     setCheckMsg("");
-    const rows = data.stock.map((s: any) => ({ productId: s.productId, counted: Number(counts[s.productId] ?? 0) }));
+    // Only products the rep actually typed a figure for. Sending 0 for the
+    // rest looked like "we have none of these", and accepting the count wrote
+    // those zeroes into stock — wiping the city's holding of anything the rep
+    // simply had not got to yet.
+    const rows = data.stock
+      .filter((s: any) => String(counts[s.productId] ?? "").trim() !== "")
+      .map((s: any) => ({ productId: s.productId, counted: Number(counts[s.productId]) }));
+    if (rows.length !== data.stock.length) {
+      const missing = data.stock.length - rows.length;
+      if (!window.confirm(
+        `${missing} product${missing === 1 ? " has" : "s have"} no count. ` +
+        `${missing === 1 ? "It" : "They"} will be left as ${missing === 1 ? "it is" : "they are"}, not set to zero.\n\nSubmit anyway?`
+      )) return;
+    }
+    if (!rows.length) { setCheckMsg("Type at least one count first."); return; }
     try {
       const r = await api<{ diffs: number }>("/api/stock", { json: { action: "submitCheck", rows, note: checkNote } });
       setCheckMsg(r.diffs ? `Submitted — ${r.diffs} difference(s) sent to the accountant.` : "Submitted — everything matches.");
@@ -213,9 +227,17 @@ export default function StockPage() {
       <div className="card" style={{ gap: 10 }}>
         <div className="row" style={{ alignItems: "baseline", gap: 8 }}>
           <h6 style={{ margin: 0, flex: 1 }}>Stock transfer requests</h6>
-          {me.role === "rep" || me.role === "supervisor" || me.role === "admin" ? (
+          {(me.role === "supervisor" || me.role === "admin" || (me.role === "rep" && myCity !== "main")) ? (
             <button className="btn btn-secondary" style={{ fontSize: 12, padding: "5px 12px" }}
-              onClick={() => { setAskErr(""); setAsk(ask ? null : { productId: "", qty: "", fromCity: "main", note: "" }); }}>
+              onClick={() => {
+                setAskErr("");
+                if (ask) { setAsk(null); return; }
+                // Seed both ends from what is actually on offer, so neither
+                // <select> can show one city while state holds another.
+                const to = myCity !== "main" ? myCity : (locations.find((l) => l.id !== "main")?.id ?? "");
+                const from = locations.find((l) => l.id !== to)?.id ?? "main";
+                setAsk({ productId: "", qty: "", fromCity: from, toCity: to, note: "" });
+              }}>
               {ask ? "Cancel" : "Ask for stock"}
             </button>
           ) : null}
@@ -239,16 +261,24 @@ export default function StockPage() {
             </div>
             <div className="field" style={{ margin: 0 }}>
               <label>Take it from</label>
-              <select className="input" value={ask.fromCity} onChange={(e) => setAsk({ ...ask, fromCity: e.target.value })}>
-                {locations.filter((l: any) => l.id !== myCity).map((l: any) => <option key={l.id} value={l.id}>{l.name}</option>)}
+              <select className="input" value={ask.fromCity}
+                onChange={(e) => {
+                  const fromCity = e.target.value;
+                  // Never leave the two pointing at the same place.
+                  const toCity = fromCity === ask.toCity
+                    ? (locations.find((l) => l.id !== fromCity)?.id ?? ask.toCity)
+                    : ask.toCity;
+                  setAsk({ ...ask, fromCity, toCity });
+                }}>
+                {locations.filter((l) => l.id !== ask.toCity).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
               </select>
             </div>
             {me.role !== "rep" ? (
               <div className="field" style={{ margin: 0 }}>
                 <label>Send it to</label>
-                <select className="input" value={(ask as any).toCity ?? myCity}
-                  onChange={(e) => setAsk({ ...ask, ...{ toCity: e.target.value } } as any)}>
-                  {locations.filter((l: any) => l.id !== ask.fromCity).map((l: any) => <option key={l.id} value={l.id}>{l.name}</option>)}
+                <select className="input" value={ask.toCity}
+                  onChange={(e) => setAsk({ ...ask, toCity: e.target.value })}>
+                  {locations.filter((l) => l.id !== ask.fromCity).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
                 </select>
               </div>
             ) : null}
@@ -262,7 +292,7 @@ export default function StockPage() {
                   await api("/api/stock", { json: {
                     action: "requestTransfer",
                     productId: Number(ask.productId), qty: Number(ask.qty),
-                    fromCity: ask.fromCity, toCity: (ask as any).toCity ?? myCity, note: ask.note,
+                    fromCity: ask.fromCity, toCity: ask.toCity, note: ask.note,
                   } });
                   setAsk(null);
                   load();
@@ -294,7 +324,11 @@ export default function StockPage() {
                 <span className={`tag ${TRANSFER_TAG[r.status]?.[1] ?? "tag-neutral"}`}>
                   {TRANSFER_TAG[r.status]?.[0] ?? r.status}
                 </span>
-                {r.status === "pending" && data.canApproveTransfer ? (
+                {/* Not on your own request — the server refuses that, so the
+                    button could only ever return an error. The owner is the
+                    exception: there is nobody above them to ask. */}
+                {r.status === "pending" && data.canApproveTransfer
+                  && (r.requestedBy !== me.id || me.role === "admin") ? (
                   <div className="row" style={{ gap: 6 }}>
                     <button className="btn btn-ghost" style={{ fontSize: 12 }}
                       onClick={() => decideTransfer(r.id, "approve")}>Approve</button>

@@ -72,6 +72,15 @@ export async function POST(req: Request) {
       requireUser(["supervisor", "accountant", "admin"]);
       const s = db.spendings.find((x) => x.id === Number(b.id));
       if (!s) return Response.json({ error: "Not found" }, { status: 404 });
+      // Nobody signs off their own expenses, whatever their role. The screen
+      // already hides these; the rule belongs here too.
+      if (s.userId === user.id && user.role !== "admin") {
+        return Response.json({ error: "Someone else has to approve your own claim" }, { status: 403 });
+      }
+      // A paid claim is settled money — it cannot be retrospectively rejected.
+      if (s.status === "paid") {
+        return Response.json({ error: "That claim has already been paid" }, { status: 400 });
+      }
       if (b.decision === "reject") {
         s.status = "rejected";
         s.decideNote = b.note ? String(b.note) : null;

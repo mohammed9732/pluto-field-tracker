@@ -22,6 +22,15 @@ function CollectPaymentInner() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [done, setDone] = useState<any>(null);
+  // Defaults to true so that a slow or failed settings fetch errs towards
+  // asking for the receipt rather than quietly dropping the requirement.
+  const [receiptRequired, setReceiptRequired] = useState(true);
+
+  useEffect(() => {
+    api("/api/settings")
+      .then((r: any) => setReceiptRequired(r.settings.paymentReceiptRequired !== false))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const docId = params.get("doctorId");
@@ -55,13 +64,13 @@ function CollectPaymentInner() {
     if (!doctor) { setErr(`Pick a ${lower(t.doctor)}`); return; }
     const amt = ungroup(amount);
     if (!(amt > 0)) { setErr("Enter the amount collected"); return; }
-    if (!photo) { setErr("Take a photo of the signed receipt first"); return; }
+    if (receiptRequired && !photo) { setErr("Take a photo of the signed receipt first"); return; }
     setBusy(true);
     try {
       const p = await getPosition();
       const body = {
         doctorId: doctor.id, amount: amt, method, note,
-        photo: photo.id, lat: p.lat, lng: p.lng, clientRef: newRef(),
+        photo: photo?.id ?? null, lat: p.lat, lng: p.lng, clientRef: newRef(),
       };
       // The photo is already on the server by this point, so the payment itself
       // is small enough to queue if the connection drops between the two.

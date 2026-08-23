@@ -223,6 +223,22 @@ export async function POST(req: Request) {
         saveDb();
         return Response.json({ ok: true, deleted: true });
       }
+      // The same boundaries the create path enforces. Without them the
+      // correction window was a way round every one of them: place a valid
+      // order, then edit it into another line's products.
+      if (isClosed(db, order.createdAt.slice(0, 10))) {
+        return Response.json({ error: closedError(db) }, { status: 400 });
+      }
+      const editable = new Set(productsFor(db, user).filter((p) => p.active).map((p) => p.id));
+      const rejected = (b.items ?? [])
+        .filter((it: any) => Number(it.qty) > 0 && !editable.has(Number(it.productId)))
+        .map((it: any) => db.products.find((p) => p.id === Number(it.productId))?.name ?? `#${it.productId}`);
+      if (rejected.length) {
+        return Response.json(
+          { error: `${rejected.join(", ")} ${rejected.length === 1 ? "is" : "are"} not on your product line` },
+          { status: 400 },
+        );
+      }
       const items: OrderItem[] = (b.items ?? [])
         .filter((it: any) => Number(it.qty) > 0)
         .map((it: any) => {

@@ -91,6 +91,27 @@ export function quarterOf(period: string): string {
   const [y, m] = period.split("-").map(Number);
   return `${y}-Q${Math.floor((m - 1) / 3) + 1}`;
 }
+/* Has this quarter's incentive already gone out — by either route?
+ *
+ * The quarterly incentive can legitimately be paid two ways: on its own from
+ * the Payouts screen, or rolled into the quarter-end month's wages. Both are
+ * reasonable and the company may use either. What must never happen is both,
+ * so every screen and every write path asks this one question first.
+ */
+export function quarterIncentivePaid(
+  db: DB,
+  userId: number,
+  quarter: string,
+): { via: "payout" | "payroll"; at: string } | null {
+  const payout = db.payoutsPaid.find((p) => p.userId === userId && p.quarter === quarter);
+  if (payout) return { via: "payout", at: payout.paidAt };
+  // The incentive rides on the LAST month of the quarter, so only that month's
+  // payroll can have carried it.
+  const lastPeriod = periodsInQuarter(quarter)[2];
+  const payroll = db.payrollPaid.find((p) => p.userId === userId && p.period === lastPeriod);
+  return payroll ? { via: "payroll", at: payroll.paidAt } : null;
+}
+
 export function periodsInQuarter(quarter: string): string[] {
   const [y, q] = quarter.split("-Q");
   const start = (Number(q) - 1) * 3 + 1;
@@ -347,6 +368,10 @@ export function canSeeFile(db: DB, user: { id: number; role: string; city: strin
     }
     return false;
   }
+
+  // The invoice on an order this person raised. The orders screen links it,
+  // so without this the app offered a link it then refused to open.
+  if (db.orders.some((o) => o.invoicePdfId === fileId && o.createdBy === user.id)) return true;
 
   // Records inside this rep's own territory.
   const mine = new Set(doctorsFor(db, user).map((d) => d.id));

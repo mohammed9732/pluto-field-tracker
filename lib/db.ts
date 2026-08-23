@@ -22,10 +22,13 @@ export function getDb(): DB {
     loaded.settings = { ...buildSeed().settings, ...loaded.settings };
     loaded.settings.terms = { ...DEFAULT_TERMS, ...(loaded.settings.terms ?? {}) };
     // Collections added by later features are simply absent in an older file.
-    for (const key of ["history", "brochures", "competitorNotes", "stockChecks",
-                       "stockTransfers", "pushSubs", "files", "privateNotes",
-                       "transferRequests"] as const) {
-      if (!Array.isArray((loaded as any)[key])) (loaded as any)[key] = [];
+    // Derived from the current shape rather than listed by hand, so a new
+    // collection cannot be forgotten here and crash on first write.
+    const shape = buildSeed() as unknown as Record<string, unknown>;
+    for (const key of Object.keys(shape)) {
+      if (Array.isArray(shape[key]) && !Array.isArray((loaded as any)[key])) {
+        (loaded as any)[key] = [];
+      }
     }
     globalThis.__plutoDb = loaded;
   } else {

@@ -86,7 +86,7 @@ export default function Manage() {
                 </select>
               </div>
               <div className="field" style={{ margin: 0 }}><label>Base salary</label><input className="input" inputMode="numeric" value={editUser.baseSalary} onChange={(e) => setEditUser({ ...editUser, baseSalary: groupDigits(e.target.value) })} /></div>
-              <div className="field" style={{ margin: 0 }}><label>Daily min</label><input className="input" inputMode="numeric" value={editUser.dailyMin} onChange={(e) => setEditUser({ ...editUser, dailyMin: groupDigits(e.target.value) })} /></div>
+              <div className="field" style={{ margin: 0 }}><label>Daily min</label><input className="input" inputMode="numeric" value={editUser.dailyMin} onChange={(e) => setEditUser({ ...editUser, dailyMin: e.target.value.replace(/[^0-9]/g, "") })} /></div>
               <div className="field" style={{ margin: 0 }}>
                 <label>Product line</label>
                 {/* Left blank the person sells everything, which is how every
@@ -230,7 +230,7 @@ Continue anyway?`)) return;
                 </div>
               ))}
               <button className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 12px", alignSelf: "flex-start" }}
-                onClick={() => setEditProduct({ ...editProduct, tiers: [...(editProduct.tiers ?? []), { minQty: 10, price: editProduct.unitPrice }] })}>
+                onClick={() => setEditProduct({ ...editProduct, tiers: [...(editProduct.tiers ?? []), { minQty: 10, price: ungroup(String(editProduct.unitPrice ?? "")) }] })}>
                 ＋ Add tier
               </button>
             </div>

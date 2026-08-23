@@ -7,10 +7,13 @@ export async function GET(req: Request) {
     const user = requireUser();
     const db = getDb();
     const url = new URL(req.url);
-    const scope = url.searchParams.get("scope") ?? "mine";
+    // Anything that is not explicitly "approvals" is your own record. The
+    // previous version fell through on an unrecognised scope and returned the
+    // whole table — every employee's leave, sick-leave reasons included.
+    const scope = url.searchParams.get("scope") === "approvals" ? "approvals" : "mine";
     let leaves = db.leaves.slice();
     if (scope === "mine") leaves = leaves.filter((l) => l.userId === user.id);
-    else if (scope === "approvals") {
+    else {
       requireUser(["supervisor", "admin"]);
       leaves = leaves.filter((l) => {
         const owner = db.users.find((u) => u.id === l.userId);

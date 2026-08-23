@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { collectionCommission, currentPeriod, currentQuarter, dailyRate, monthlyIncentiveTotal, nowIso, onApprovedLeave, quarterAccrual, quarterOf, periodsInQuarter, todayStr, workDaysInMonth } from "@/lib/compute";
+import { collectionCommission, currentPeriod, currentQuarter, dailyRate, monthlyIncentiveTotal, nowIso, onApprovedLeave, periodsInQuarter, quarterAccrual, quarterIncentivePaid, quarterOf, todayStr, workDaysInMonth } from "@/lib/compute";
 import { nextId as seqNext } from "@/lib/db";
 
 // Flag unexcused no-check-in workdays (past days only) as pending deductions.
@@ -36,10 +36,16 @@ export async function GET(req: Request) {
         .map((u) => {
           const acc = quarterAccrual(db, u.id, quarter);
           const paid = db.payoutsPaid.find((p) => p.userId === u.id && p.quarter === quarter);
+          // If the quarter-end payroll already carried this incentive, say so
+          // here rather than offering a second Mark-as-paid button.
+          const viaPayroll = !paid ? quarterIncentivePaid(db, u.id, quarter) : null;
           return {
             userId: u.id, name: u.name, city: u.city, role: u.role,
             months: acc.months, total: acc.total, incentives: acc.incentives, commission: acc.commission,
-            paid: paid ? { amount: paid.amount, paidAt: paid.paidAt, paidByName: db.users.find((x) => x.id === paid.paidBy)?.name ?? "?" } : null,
+            paid: paid
+              ? { amount: paid.amount, paidAt: paid.paidAt, paidByName: db.users.find((x) => x.id === paid.paidBy)?.name ?? "?" }
+              : null,
+            paidWithWages: viaPayroll?.via === "payroll" ? viaPayroll.at : null,
           };
         });
       const history = db.payoutsPaid
@@ -55,7 +61,13 @@ export async function GET(req: Request) {
     const rows = db.users
       .filter((u) => u.active && u.baseSalary > 0)
       .map((u) => {
-        const incentiveDue = isQuarterEnd ? quarterAccrual(db, u.id, quarterOf(period)).total : 0;
+        // Only offer the incentive here if it has not already been paid out
+        // separately — otherwise the quarter-end wage run would pay it twice.
+        const alreadyPaidOut = db.payoutsPaid.some(
+          (p) => p.userId === u.id && p.quarter === quarterOf(period));
+        const incentiveDue = isQuarterEnd && !alreadyPaidOut
+          ? quarterAccrual(db, u.id, quarterOf(period)).total
+          : 0;
         const paid = db.payrollPaid.find((p) => p.userId === u.id && p.period === period);
         const userDeductions = db.deductions.filter((x) => x.userId === u.id && x.date.slice(0, 7) === period);
         const confirmed = userDeductions.filter((x) => x.status === "confirmed").reduce((s, x) => s + x.amount, 0);
@@ -87,8 +99,13 @@ export async function POST(req: Request) {
     const b = await req.json();
     if (b.action === "payout") {
       const quarter = String(b.quarter);
-      if (db.payoutsPaid.some((p) => p.userId === Number(b.userId) && p.quarter === quarter)) {
-        return Response.json({ error: "Already paid" }, { status: 400 });
+      const settled = quarterIncentivePaid(db, Number(b.userId), quarter);
+      if (settled) {
+        return Response.json({
+          error: settled.via === "payroll"
+            ? `Already paid — it went out with the ${periodsInQuarter(quarter)[2]} wages on ${settled.at.slice(0, 10)}.`
+            : "Already paid",
+        }, { status: 400 });
       }
       const amount = quarterAccrual(db, Number(b.userId), quarter).total;
       db.payoutsPaid.push({ id: nextId(db), userId: Number(b.userId), quarter, amount, paidAt: nowIso(), paidBy: user.id });
@@ -97,10 +114,25 @@ export async function POST(req: Request) {
     }
     if (b.action === "payroll") {
       const period = String(b.period);
-      if (db.payrollPaid.some((p) => p.userId === Number(b.userId) && p.period === period)) {
+      const userId = Number(b.userId);
+      if (db.payrollPaid.some((p) => p.userId === userId && p.period === period)) {
         return Response.json({ error: "Already paid" }, { status: 400 });
       }
-      db.payrollPaid.push({ id: nextId(db), userId: Number(b.userId), period, amount: Number(b.amount) || 0, paidAt: nowIso(), paidBy: user.id });
+      const target = db.users.find((u) => u.id === userId);
+      if (!target) return Response.json({ error: "User not found" }, { status: 404 });
+      // The amount is recomputed here rather than taken from the request. The
+      // client's figure is a display value; letting it decide what was paid
+      // would put the payroll ledger at the mercy of a stale screen.
+      const quarter = quarterOf(period);
+      const isLastOfQuarter = periodsInQuarter(quarter)[2] === period;
+      const alreadyPaidOut = db.payoutsPaid.some((p) => p.userId === userId && p.quarter === quarter);
+      const incentive = isLastOfQuarter && !alreadyPaidOut ? quarterAccrual(db, userId, quarter).total : 0;
+      const deducted = db.deductions
+        .filter((x) => x.userId === userId && x.date.slice(0, 7) === period && x.status === "confirmed")
+        .reduce((s, x) => s + x.amount, 0);
+      const amount = Math.max(0,
+        target.baseSalary + incentive + collectionCommission(db, userId, period) - deducted);
+      db.payrollPaid.push({ id: nextId(db), userId, period, amount, paidAt: nowIso(), paidBy: user.id });
       saveDb();
       return Response.json({ ok: true });
     }

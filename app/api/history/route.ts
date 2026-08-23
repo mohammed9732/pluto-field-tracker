@@ -25,6 +25,16 @@ export async function GET(req: Request) {
       if (entity === "user" || entity === "settings" || entity === "target") {
         return Response.json({ entries: [] });
       }
+      // Orders and payments were falling straight through, so a rep could walk
+      // the id range and read price changes on everybody else's orders.
+      if (entity === "order") {
+        const order = db.orders.find((o) => o.id === id);
+        if (!order || order.createdBy !== user.id) return Response.json({ entries: [] });
+      }
+      if (entity === "payment") {
+        const payment = db.payments.find((p) => p.id === id);
+        if (!payment || payment.collectedBy !== user.id) return Response.json({ entries: [] });
+      }
     }
 
     const entries = (db.history ?? [])

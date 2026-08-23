@@ -22,13 +22,17 @@ export default function MonthlyReport() {
 
   if (!me || !data) return <Spinner />;
 
+  // Built from year/month arithmetic, not by stepping a Date. setMonth keeps
+  // the day-of-month, so on the 31st a step into a 30-day month overflowed
+  // into the next one and skipped a month entirely.
   const monthOptions: string[] = [];
   {
-    const d = new Date();
-    d.setMonth(d.getMonth() - 3);
-    for (let i = 0; i < 4; i++) {
-      monthOptions.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-      d.setMonth(d.getMonth() + 1);
+    const now = new Date();
+    for (let back = 3; back >= 0; back--) {
+      const m = now.getMonth() - back;
+      const year = now.getFullYear() + Math.floor(m / 12);
+      const month = ((m % 12) + 12) % 12;
+      monthOptions.push(`${year}-${String(month + 1).padStart(2, "0")}`);
     }
   }
 

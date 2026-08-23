@@ -86,6 +86,10 @@ export async function POST(req: Request) {
       }
       if (t.createdBy !== user.id) notify(db, () => nextId(db), t.createdBy, `${user.name} finished: ${t.title} (${t.completions.length}/${t.assigneeIds.length})`, "/tasks");
     } else if (b.action === "reopen") {
+      // Only somebody the task belongs to — an assignee undoing their own tick,
+      // or the person who set it. Everybody else was able to reopen any task.
+      const mine = t.assigneeIds.includes(user.id) || t.createdBy === user.id || user.role === "admin";
+      if (!mine) return Response.json({ error: "Not your task" }, { status: 403 });
       t.completions = t.completions.filter((c) => c.userId !== user.id);
       t.status = "open";
       t.doneAt = null;

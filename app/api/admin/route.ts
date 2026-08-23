@@ -3,6 +3,19 @@ import { hashPassword } from "@/lib/passwords";
 import { requireUser, errResponse } from "@/lib/auth";
 import { cityName, logActivity, notify, recordChange } from "@/lib/compute";
 
+/* A number from the client, or the value already stored.
+ *
+ * Commas, blanks and stray text all give NaN from Number(), and NaN written to
+ * the JSON file reads back as null — so a mistyped salary would not fail
+ * loudly, it would erase the salary. Anything not finite means "no change".
+ */
+function num(v: unknown, fallback: number): number {
+  if (v === null || v === undefined || v === "") return fallback;
+  const n = Number(String(v).replace(/,/g, ""));
+  return Number.isFinite(n) ? Math.round(n) : fallback;
+}
+
+
 export async function GET() {
   try {
     const user = requireUser(["admin", "accountant"]);
@@ -35,8 +48,8 @@ export async function POST(req: Request) {
           role: b.role ?? u.role,
           city: b.city ?? u.city,
           phone: b.phone ?? u.phone,
-          baseSalary: b.baseSalary != null ? Number(b.baseSalary) : u.baseSalary,
-          dailyMin: b.dailyMin != null ? Number(b.dailyMin) : u.dailyMin,
+          baseSalary: num(b.baseSalary, u.baseSalary),
+          dailyMin: num(b.dailyMin, u.dailyMin),
           productLine: b.productLine !== undefined ? (String(b.productLine).trim() || null) : u.productLine,
           active: b.active != null ? !!b.active : u.active,
         });
@@ -49,7 +62,7 @@ export async function POST(req: Request) {
         db.users.push({
           id: nextId(db), name: String(b.name), role: b.role ?? "rep", city: b.city ?? "erbil",
           phone: String(b.phone), password: hashPassword(String(b.password || "password")),
-          baseSalary: Number(b.baseSalary) || 0, dailyMin: Number(b.dailyMin) || 5,
+          baseSalary: num(b.baseSalary, 0), dailyMin: num(b.dailyMin, 5),
           productLine: String(b.productLine ?? "").trim() || null, active: true,
         });
       }
@@ -62,7 +75,7 @@ export async function POST(req: Request) {
         if (!p) return Response.json({ error: "Product not found" }, { status: 404 });
         Object.assign(p, {
           name: b.name ?? p.name, sku: b.sku ?? p.sku,
-          unitPrice: b.unitPrice != null ? Number(b.unitPrice) : p.unitPrice,
+          unitPrice: num(b.unitPrice, p.unitPrice),
           unit: b.unit ?? p.unit,
           line: b.line !== undefined ? (String(b.line).trim() || null) : p.line,
           active: b.active != null ? !!b.active : p.active,
@@ -80,7 +93,7 @@ export async function POST(req: Request) {
         if (!b.name || !b.sku) return Response.json({ error: "Name and SKU required" }, { status: 400 });
         db.products.push({
           id: nextId(db), name: String(b.name), sku: String(b.sku),
-          unitPrice: Number(b.unitPrice) || 0, unit: String(b.unit ?? "box"),
+          unitPrice: num(b.unitPrice, 0), unit: String(b.unit ?? "box"),
           line: String(b.line ?? "").trim() || null, active: true,
           imageId: b.imageId ?? null, brochureId: b.brochureId ?? null, brochureName: b.brochureName ?? null,
           tiers: Array.isArray(b.tiers)
