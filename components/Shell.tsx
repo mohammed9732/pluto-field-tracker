@@ -1,9 +1,8 @@
 "use client";
 import { LangToggle } from "./LangToggle";
 import { OutboxBar } from "./OutboxBar";
-import { setTerms, setBrand, useBrand, useTerms } from "@/lib/terms";
+import { setBrand, setTerms, term, useBrand, useTerms } from "@/lib/terms";
 import { setLang, tr, useLang, useT } from "@/lib/i18n";
-import { DEFAULT_TERMS } from "@/lib/types";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -40,15 +39,6 @@ export function useMe(): Me | null | undefined {
 // Read lazily so a renamed word reaches the nav without a reload.
 const DOCTORS_LABEL = "Doctors";
 
-/* The word for "Doctors" comes from two places that can disagree: the company's
-   own vocabulary (terms) and the person's language. The company wins when it has
-   actually chosen a word — a pharmacy chain that renamed them "Pharmacies" means
-   it in any language. Only when the term is still the default do we translate. */
-function customerWord(t: { doctorPlural: string }): string {
-  return t.doctorPlural === DEFAULT_TERMS.doctorPlural
-    ? tr("nav.doctors", t.doctorPlural)
-    : t.doctorPlural;
-}
 
 
 const NAV: Record<string, { href: string; label: string; tkey?: string; icon: keyof typeof paths }[]> = {
@@ -183,7 +173,7 @@ export function DeskSidebar({ me, company }: { me: Me; company?: string }) {
             return (
               <Link key={it.href} href={it.href} className={active ? "active" : ""}>
                 <Icon d={paths[it.icon]} size={15} />
-                <span>{it.label === DOCTORS_LABEL ? customerWord(t) : (it as any).tkey ? tr((it as any).tkey, it.label) : it.label}</span>
+                <span>{it.label === DOCTORS_LABEL ? term(t, "doctorPlural", "nav.doctors") : (it as any).tkey ? tr((it as any).tkey, it.label) : it.label}</span>
               </Link>
             );
           })}
@@ -205,7 +195,7 @@ export function BottomNav({ me, unread }: { me: Me; unread?: number }) {
     return (
       <Link key={it.href} href={it.href} className={active ? "active" : ""}>
         <Icon d={paths[it.icon]} size={22} />
-        <span>{it.label === DOCTORS_LABEL ? customerWord(t) : it.tkey ? tr(it.tkey, it.label) : it.label}</span>
+        <span>{it.label === DOCTORS_LABEL ? term(t, "doctorPlural", "nav.doctors") : it.tkey ? tr(it.tkey, it.label) : it.label}</span>
       </Link>
     );
   };

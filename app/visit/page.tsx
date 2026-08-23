@@ -159,7 +159,7 @@ function LogVisitInner() {
           </div>
           {outcome ? (
             <div className="field m0">
-              <label>Next visit {outcome === "follow_up" ? "(required)" : "(optional)"}</label>
+              <label>{tx("visit.nextVisitLabel", "Next visit")} {outcome === "follow_up" ? tx("visit.required", "(required)") : tx("visit.optional", "(optional)")}</label>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
                 {([["1 week", 7], ["10 days", 10], ["1 month", 30]] as [string, number][]).map(([label, days]) => {
                   const d = new Date(); d.setDate(d.getDate() + days);

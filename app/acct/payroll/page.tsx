@@ -49,7 +49,7 @@ export default function Payroll() {
             return (
               <details style={{ background: "var(--c-amber-soft)", borderRadius: 10, padding: "7px 10px" }}>
                 <summary style={{ fontSize: 12, color: "var(--c-amber-deep)", cursor: "pointer", fontWeight: 600 }}>
-                  {flagged.length} day{flagged.length === 1 ? "" : "s"} without check-in — review
+                  {tx("payroll.missedDays", "{n} days without check-in — review").replace("{n}", String(flagged.length))}
                 </summary>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, paddingTop: 8 }}>
                   {flagged.map((d: any) => (
@@ -65,7 +65,7 @@ export default function Payroll() {
               </details>
             );
           })()}
-          {r.deducted > 0 ? <div className="small" style={{ color: "var(--c-coral-deep)" }}>Deducted {money(r.deducted)} for missed days</div> : null}
+          {r.deducted > 0 ? <div className="small" style={{ color: "var(--c-coral-deep)" }}>{tx("payroll.deductedFor", "Deducted")} {money(r.deducted)} {tx("payroll.forMissedDays", "for missed days")}</div> : null}
           {r.spendingsDue > 0 ? (
             <div className="row" style={{ gap: 6, fontSize: 12 }}>
               <span style={{ flex: 1, color: "var(--c-green-deep)" }}>{tx("payroll.spendingsToPayBack", "Spendings to pay back:")} <b>{money(r.spendingsDue)}</b></span>

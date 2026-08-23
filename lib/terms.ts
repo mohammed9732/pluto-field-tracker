@@ -1,6 +1,7 @@
 "use client";
 import { useSyncExternalStore } from "react";
 import { Terms, DEFAULT_TERMS } from "./types";
+import { tr } from "./i18n";
 
 // A tiny store rather than a React context, so any component can ask for the
 // company's wording without every page having to thread a provider through.
@@ -31,6 +32,20 @@ export function useTerms(): Terms {
 // Lower-case form for mid-sentence use ("pick a doctor").
 export function lower(word: string): string {
   return word ? word.charAt(0).toLowerCase() + word.slice(1) : word;
+}
+
+/* The company's word for a thing, in the reader's language.
+ *
+ * Two systems meet here and the precedence matters:
+ *   - the company HAS renamed it  -> their word, untouched, in both languages.
+ *     It is usually a brand or legal term and translating it would be wrong.
+ *   - the company has NOT renamed it -> the default word, translated.
+ *
+ * Without this an Arabic reader at a company using the defaults saw "Doctors"
+ * in the middle of an otherwise Arabic screen.
+ */
+export function term(t: Terms, key: keyof Terms, i18nKey: string): string {
+  return t[key] === DEFAULT_TERMS[key] ? tr(i18nKey, t[key]) : t[key];
 }
 
 export function roleLabel(t: Terms, role: string): string {

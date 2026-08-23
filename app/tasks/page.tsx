@@ -73,7 +73,7 @@ export default function Tasks() {
             {t.people.map((p: any) => (
               <span key={p.id} className={`tag ${p.done ? "tag-ok" : "tag-neutral"}`}>{p.done ? "✓ " : ""}{p.name.split(" ")[0]}</span>
             ))}
-            <span className="small muted" style={{ marginLeft: "auto" }}>{t.doneCount}/{t.totalCount} done</span>
+            <span className="small muted" style={{ marginLeft: "auto" }}>{t.doneCount}/{t.totalCount} {tx("task.doneWord", "done")}</span>
           </div>
         ) : null}
         {mineToDo && !t.myDone && t.status === "open" ? (
@@ -82,7 +82,7 @@ export default function Tasks() {
           </button>
         ) : null}
         {mineToDo && t.myDone && t.status === "open" ? <div className="small" style={{ color: "var(--c-green-deep)" }}>{tx("task.yourPartIsDone", "Your part is done — waiting for the others")}</div> : null}
-        {t.status === "done" ? <div className="small" style={{ color: "var(--c-green-deep)" }}>Done {t.doneAt ? dmy(t.doneAt) : ""}</div> : null}
+        {t.status === "done" ? <div className="small" style={{ color: "var(--c-green-deep)" }}>{tx("task.doneOn", "Done")} {t.doneAt ? dmy(t.doneAt) : ""}</div> : null}
         {!mineToDo && t.status === "done" ? (
           <button className="btn btn-secondary btn-block" style={{ padding: 8, fontSize: 12 }} onClick={async () => { await api("/api/tasks", { json: { action: "close", id: t.id } }); load(); }}>
             {tx("task.verifiedCloseIt", "Verified — close it")}
@@ -127,7 +127,7 @@ export default function Tasks() {
               ))}
             </div>
           </div>
-          <div className="field m0"><label>Due</label><input className="input" type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /></div>
+          <div className="field m0"><label>{tx("task.dueWord", "Due")}</label><input className="input" type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /></div>
           {err ? <div className="tag tag-hot self-start">{err}</div> : null}
           <button className="btn btn-primary btn-block p-3" onClick={create}>{tx("task.assign", "Assign")}</button>
         </div>
@@ -165,7 +165,7 @@ export default function Tasks() {
       {canCreate && review ? (
         <div className="stack-2">
           <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>
-            This month&apos;s review — {review.filter((t: any) => t.status !== "open").length} finished · {review.filter((t: any) => t.status === "open").length} still open
+            {tx("task.monthReview", "This month's review")} — {review.filter((t: any) => t.status !== "open").length} {tx("task.finished", "finished")} · {review.filter((t: any) => t.status === "open").length} {tx("task.stillOpen", "still open")}
           </h6>
           {review.map((t: any) => (
             <div key={t.id} className="listrow" style={{ padding: "7px 0", fontSize: 12 }}>

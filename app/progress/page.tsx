@@ -82,7 +82,7 @@ export default function Progress() {
 
           <div className="blueprint" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 2, marginTop: "auto" }}>
             <div style={{ fontSize: 12, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--color-accent-700)" }}>
-              {data.quarter.name.replace("-", " ")} incentive accrued
+              {data.quarter.name.replace("-", " ")} {tx("prog.incentiveAccrued", "incentive accrued")}
             </div>
             <div className="row items-base">
               <span className="hnum fs-figure">{money(data.quarter.total)}</span>
@@ -93,7 +93,7 @@ export default function Progress() {
             </div>
             {data.quarter.commission > 0 ? (
               <div className="small muted">
-                Target incentives {money(data.quarter.incentives)} + sales commission {money(data.quarter.commission)} — paid quarterly, read-only
+                {tx("prog.targetIncentives", "Target incentives")} {money(data.quarter.incentives)} + {tx("prog.salesCommission", "sales commission")} {money(data.quarter.commission)} — {tx("prog.paidQuarterly", "paid quarterly, read-only")}
               </div>
             ) : (
               <div className="small muted">{tx("prog.paidQuarterlyReadOnly", "Paid quarterly, read-only")}</div>

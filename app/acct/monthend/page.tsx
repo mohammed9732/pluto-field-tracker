@@ -97,18 +97,18 @@ export default function MonthEnd() {
           <span className="card-kicker">{tx("monthend.toHandOver", "To hand over")}</span>
           <span className="hnum fs-h2">{money(t.handOver)}</span>
           <span className="small muted fs-caption">
-            wages {money(t.netPay)} + expenses {money(t.reimburse)}
+            {tx("monthend.wagesWord", "wages")} {money(t.netPay)} + {tx("monthend.expensesWord", "expenses")} {money(t.reimburse)}
           </span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">{tx("monthend.salesThisMonth", "Sales this month")}</span>
           <span className="hnum fs-h2">{money(t.sales)}</span>
-          <span className="small muted fs-caption">approved and invoiced orders</span>
+          <span className="small muted fs-caption">{tx("monthend.approvedInvoiced", "approved and invoiced orders")}</span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">{tx("monthend.cashCollected", "Cash collected")}</span>
           <span className="hnum fs-h2">{money(t.collected)}</span>
-          <span className="small muted fs-caption">commission {money(t.commission)}</span>
+          <span className="small muted fs-caption">{tx("monthend.commissionWord", "commission")} {money(t.commission)}</span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">{tx("monthend.deductions", "Deductions")}</span>
@@ -116,7 +116,7 @@ export default function MonthEnd() {
             {money(t.deducted)}
           </span>
           <span className="small muted fs-caption">
-            {t.paidCount} of {data.people.length} already paid
+            {tx("monthend.alreadyPaid", "{a} of {b} already paid").replace("{a}", String(t.paidCount)).replace("{b}", String(data.people.length))}
           </span>
         </div>
       </div>
@@ -124,7 +124,7 @@ export default function MonthEnd() {
       {data.isQuarterEnd ? (
         <div className="card" style={{ gap: 4, borderColor: "var(--c-violet)" }}>
           <span className="card-kicker" style={{ color: "var(--c-violet-deep)" }}>
-            Quarter end — {data.quarter.replace("-", " ")}
+            {tx("monthend.quarterEnd", "Quarter end")} — {data.quarter.replace("-", " ")}
           </span>
           <div className="small">
             {tx("monthend.thisIsTheThird", "This is the third month of the quarter, so accrued sales incentives of")} <b>{money(t.incentiveDue)}</b> fall
@@ -164,20 +164,20 @@ export default function MonthEnd() {
                 <td style={{ textAlign: "right", color: p.deducted ? "var(--c-coral-deep)" : undefined }}>
                   {p.deducted ? `−${money(p.deducted)}` : "—"}
                   {p.undecidedDeductions ? (
-                    <div className="small" style={{ color: "var(--c-amber-deep)" }}>{p.undecidedDeductions} undecided</div>
+                    <div className="small" style={{ color: "var(--c-amber-deep)" }}>{p.undecidedDeductions} {tx("monthend.undecided", "undecided")}</div>
                   ) : null}
                 </td>
                 <td style={{ textAlign: "right", fontWeight: 700 }}>{money(p.netPay)}</td>
                 <td className="ta-r">
                   {p.reimburse ? money(p.reimburse) : "—"}
                   {p.spendingsPendingCount ? (
-                    <div className="small" style={{ color: "var(--c-amber-deep)" }}>{p.spendingsPendingCount} pending</div>
+                    <div className="small" style={{ color: "var(--c-amber-deep)" }}>{p.spendingsPendingCount} {tx("monthend.pending", "pending")}</div>
                   ) : null}
                 </td>
                 <td style={{ textAlign: "right", fontWeight: 700 }}>{money(p.handOver)}</td>
                 <td className="ta-r">
                   {p.paid ? (
-                    <span className="tag tag-ok">Paid {dmy(p.paid.paidAt)}</span>
+                    <span className="tag tag-ok">{tx("monthend.paidOn", "Paid")} {dmy(p.paid.paidAt)}</span>
                   ) : (
                     <button className="btn btn-primary" style={{ fontSize: 12, padding: "6px 12px" }}
                       disabled={busy === p.userId || data.isClosedAlready}

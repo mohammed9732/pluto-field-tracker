@@ -1,5 +1,5 @@
 "use client";
-import { useTerms } from "@/lib/terms";
+import { term, useTerms } from "@/lib/terms";
 import { useT } from "@/lib/i18n";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -95,7 +95,7 @@ export default function Doctors() {
   return (
     <Screen me={me}>
       <div className="row">
-        <h4 className="m0 f1">{t.doctorPlural}</h4>
+        <h4 className="m0 f1">{term(t, "doctorPlural", "nav.doctors")}</h4>
         {canEdit ? (
           <>
             <button className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 10px" }} onClick={() => fileRef.current?.click()}>{tx("docs.importXlsx", "Import .xlsx")}</button>

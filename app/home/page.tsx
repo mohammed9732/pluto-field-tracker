@@ -1,7 +1,7 @@
 "use client";
 import { tr, useT } from "@/lib/i18n";
 import { DailyBoost } from "@/components/DailyBoost";
-import { useTerms, roleLabel } from "@/lib/terms";
+import { roleLabel, term, useTerms } from "@/lib/terms";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Screen, useMe, Spinner, Pips } from "@/components/Shell";
@@ -75,7 +75,7 @@ export default function Home() {
   // Everything that isn't part of the daily flow lives in the icon grid.
   const tiles: { href: string; label: string; icon: keyof typeof paths; badge?: number }[] = [
     { href: "/map", label: "Map", icon: "pin" },
-    { href: "/doctors", label: t.doctorPlural, icon: "pinDot" },
+    { href: "/doctors", label: term(t, "doctorPlural", "nav.doctors"), icon: "pinDot" },
     ...(data.settings?.tasksEnabled ? [{ href: "/tasks", label: "Tasks", icon: "check" as const, badge: openTasks || undefined }] : []),
     ...(data.settings?.spendingsEnabled ? [{ href: "/spendings", label: "Spendings", icon: "receipt" as const }] : []),
     { href: "/stock", label: "Stock", icon: "warehouse" },

@@ -1,5 +1,5 @@
 "use client";
-import { useTerms } from "@/lib/terms";
+import { term, useTerms } from "@/lib/terms";
 import { useT } from "@/lib/i18n";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -51,7 +51,7 @@ export default function Team() {
             </Link>
           </div>
           {r.onLeave ? (
-            <div className="small" style={{ color: "var(--color-neutral-500)" }}>Leave until {dm(r.leaveUntil)} · excluded from minimums</div>
+            <div className="small" style={{ color: "var(--color-neutral-500)" }}>{tx("team.leaveUntil", "Leave until")} {dm(r.leaveUntil)} · {tx("team.excludedFromMinimums", "excluded from minimums")}</div>
           ) : (
             <>
               <Pips done={r.todayVisits} total={r.dailyMin} />
@@ -64,7 +64,10 @@ export default function Team() {
               {r.outOfLocationVisits?.length ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 4, alignSelf: "stretch" }}>
                   <div className="tag tag-hot self-start">
-                    ⚠ {r.outOfLocationVisits.length} out-of-location visit{r.outOfLocationVisits.length === 1 ? "" : "s"} this week
+                    {/* One sentence with the number dropped in: Arabic does not
+                        pluralise by adding an s, so it cannot be assembled from
+                        fragments the way the English was. */}
+                    ⚠ {tx("team.outOfLocationWeek", "{n} out-of-location visits this week").replace("{n}", String(r.outOfLocationVisits.length))}
                   </div>
                   {r.outOfLocationVisits.map((v: any) => (
                     <Link key={v.id} href={`/doctors/${v.doctorId}`} className="small"
@@ -90,7 +93,7 @@ export default function Team() {
       </div>
       <div className="two">
         <Link href="/targets" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>{tx("team.setTargets", "Set targets")}</Link>
-        <Link href="/doctors" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>{t.doctorPlural}</Link>
+        <Link href="/doctors" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>{term(t, "doctorPlural", "nav.doctors")}</Link>
         <Link href="/summary" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>{tx("team.daySummary", "Day summary")}</Link>
         <Link href="/competitors" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>{tx("team.marketIntel", "Market intel")}</Link>
       </div>

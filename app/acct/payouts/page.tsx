@@ -35,7 +35,7 @@ export default function Payouts() {
                 {r.months.map((m: any) => `${monthName(m.period).slice(0, 3)} ${(m.amount + (m.commission ?? 0)) > 0 ? money(m.amount + (m.commission ?? 0)) : "—"}`).join(" · ")}
               </div>
               {r.commission > 0 ? (
-                <div className="small muted">Target incentives {money(r.incentives ?? 0)} + sales commission {money(r.commission)}</div>
+                <div className="small muted">{tx("payouts.targetIncentives", "Target incentives")} {money(r.incentives ?? 0)} + {tx("payouts.salesCommission", "sales commission")} {money(r.commission)}</div>
               ) : null}
             </div>
             <span className="hnum fs-lead">{money(r.total)}</span>
@@ -47,7 +47,7 @@ export default function Payouts() {
             </div>
           ) : r.paidWithWages ? (
             <div className="small" style={{ color: "var(--c-green-deep)" }}>
-              Paid with the quarter-end wages on {dmy(r.paidWithWages)}
+              {tx("payouts.paidWithWages", "Paid with the quarter-end wages on")} {dmy(r.paidWithWages)}
             </div>
           ) : (
             <button className="btn btn-primary btn-block p-3" onClick={() => pay(r.userId)} disabled={r.total <= 0}>

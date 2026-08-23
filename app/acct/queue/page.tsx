@@ -93,7 +93,10 @@ export default function AcctQueue() {
       <input ref={fileRef} type="file" accept=".pdf,image/*" className="hidden" onChange={onFile} />
       {orders.length > 0 ? (
         <div className="row" style={{ gap: 8, padding: "10px 12px", background: "var(--c-coral-soft)", borderRadius: 14, fontSize: 13, fontWeight: 600, color: "var(--c-coral-deep)" }}>
-          ⏱ {orders.length} approved order{orders.length === 1 ? "" : "s"} waiting for invoicing — doctors are waiting.
+          {/* Arabic has no "add an s" plural, so the whole sentence is one
+              string with the number dropped into it rather than assembled
+              from fragments. */}
+          ⏱ {tx("queue.waitingLine", "{n} approved orders waiting for invoicing — doctors are waiting.").replace("{n}", String(orders.length))}
         </div>
       ) : null}
       {warnings.map((w, i) => (

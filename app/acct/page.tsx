@@ -1,5 +1,5 @@
 "use client";
-import { useTerms } from "@/lib/terms";
+import { term, useTerms } from "@/lib/terms";
 import { useT } from "@/lib/i18n";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -43,7 +43,7 @@ export default function AcctDashboard() {
   return (
     <Screen me={me} wide>
       <div className="row">
-        <h4 className="m0 f1">Money — {monthName(data.period)}</h4>
+        <h4 className="m0 f1">{tx("acct.moneyFor", "Money")} — {monthName(data.period)}</h4>
         <button className="btn btn-secondary btn-icon" style={{ }} onClick={logout} title={tx("acct.signOutPh", "Sign out")}>
           <Icon d={paths.logout} size={17} />
         </button>
@@ -57,11 +57,11 @@ export default function AcctDashboard() {
         <div className="blueprint" style={{ padding: 12 }}>
           <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-green-deep)" }}>{tx("acct.collectedMtd", "Collected MTD")}</div>
           <div className="hnum fs-lead">{money0(k.collectedMTD)}</div>
-          <div className="small muted">today {money0(k.collectedToday)}</div>
+          <div className="small muted">{tx("acct.today", "today")} {money0(k.collectedToday)}</div>
         </div>
         <Link href="/acct/queue" className="blueprint" style={{ padding: 12, textDecoration: "none", color: "inherit" }}>
           <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-coral-deep)" }}>{tx("acct.invoiceQueue", "Invoice queue")}</div>
-          <div className="hnum fs-lead">{k.queueCount} waiting →</div>
+          <div className="hnum fs-lead">{k.queueCount} {tx("acct.waiting", "waiting")} →</div>
         </Link>
       </div>
 
@@ -83,7 +83,7 @@ export default function AcctDashboard() {
                 <div className="fs-small"><DoctorLink id={c.doctorId} name={c.doctor} /></div>
                 <div className="small muted">{c.rep} · {dmy(c.ts)} {hm(c.ts)} · {c.method}{c.note ? ` · ${c.note}` : ""}</div>
               </div>
-              {c.photo ? <a className="small" href={`/api/files?id=${c.photo}`} target="_blank">receipt</a> : <span className="small" style={{ color: "var(--c-amber-deep)" }}>no photo</span>}
+              {c.photo ? <a className="small" href={`/api/files?id=${c.photo}`} target="_blank">{tx("acct.receipt", "receipt")}</a> : <span className="small" style={{ color: "var(--c-amber-deep)" }}>{tx("acct.noPhoto", "no photo")}</span>}
               <span className="hnum fs-body">{money(c.amount)}</span>
             </div>
           ))}
@@ -94,7 +94,7 @@ export default function AcctDashboard() {
         <>
           <div className="hint">Per rep per day — match the cash column against what was physically handed in, then enter it in the accounting system.</div>
           <table className="table fs-caption">
-            <thead><tr><th>Rep</th><th>{tx("acct.date", "Date")}</th><th className="ta-r">{tx("acct.cash", "Cash")}</th><th className="ta-r">{tx("acct.transfer", "Transfer")}</th><th className="ta-r">{tx("acct.receipts", "Receipts")}</th></tr></thead>
+            <thead><tr><th>{tx("acct.rep", "Rep")}</th><th>{tx("acct.date", "Date")}</th><th className="ta-r">{tx("acct.cash", "Cash")}</th><th className="ta-r">{tx("acct.transfer", "Transfer")}</th><th className="ta-r">{tx("acct.receipts", "Receipts")}</th></tr></thead>
             <tbody>
               {data.reconciliation.map((r: any, i: number) => (
                 <tr key={i}>
@@ -123,7 +123,7 @@ export default function AcctDashboard() {
                   <td style={{ textAlign: "right", color: "var(--c-green-deep)" }}>{p.commission ? money0(p.commission) : "—"}</td>
                   <td className="ta-r">{p.spendings ? money0(p.spendings) : "—"}</td>
                   <td style={{ textAlign: "right", color: p.deducted ? "var(--c-coral-deep)" : undefined }}>{p.deducted ? money0(p.deducted) : "—"}</td>
-                  <td className="ta-r">{p.paid ? <span className="tag tag-ok">{tx("acct.paid", "Paid")}</span> : <span className="tag tag-warn">Due</span>}</td>
+                  <td className="ta-r">{p.paid ? <span className="tag tag-ok">{tx("acct.paid", "Paid")}</span> : <span className="tag tag-warn">{tx("acct.due", "Due")}</span>}</td>
                 </tr>
               ))}
             </tbody>
@@ -134,7 +134,7 @@ export default function AcctDashboard() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: "auto" }}>
         <Link href="/acct/payouts" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>{tx("acct.quarterlyPayouts", "Quarterly payouts")}</Link>
         <Link href="/tasks" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>{tx("acct.tasks", "Tasks")}</Link>
-        <Link href="/doctors" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>{t.doctorPlural}</Link>
+        <Link href="/doctors" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>{term(t, "doctorPlural", "nav.doctors")}</Link>
         <Link href="/catalog" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>{tx("acct.products", "Products")}</Link>
       </div>
     </Screen>
