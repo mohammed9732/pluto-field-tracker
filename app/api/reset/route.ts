@@ -28,7 +28,14 @@ export async function POST(req: Request) {
       const keep = db.settings;
       const owner = db.users.find((u) => u.id === user.id);
 
+      // The branding survives below, so the files behind it have to survive
+      // too — settings holds ids, and an id whose StoredFile is gone is a 404.
+      const brandingIds = [keep.logoId, keep.mascotIdleId, keep.mascotHelloId,
+                           keep.mascotCheerId, keep.mascotSadId].filter(Boolean) as string[];
+      const brandingFiles = db.files.filter((f) => brandingIds.includes(f.id));
+
       Object.assign(db, demo);
+      db.files = [...brandingFiles, ...db.files.filter((f) => !brandingIds.includes(f.id))];
       db.settings = {
         ...demo.settings,
         companyName: keep.companyName,

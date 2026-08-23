@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { cityIds, currentPeriod, doctorsFor, nowIso, recordChange } from "@/lib/compute";
+import { cityIds, currentPeriod, doctorsFor, hqCityId, nowIso, recordChange } from "@/lib/compute";
 
 export async function GET(req: Request) {
   try {
@@ -176,9 +176,16 @@ export async function POST(req: Request) {
         if (!r.name || !String(r.name).trim()) { errors.push(`Row ${i + 2}: missing doctor name — skipped`); continue; }
         const cls = String(r.class ?? "B").toUpperCase();
         if (!["A", "B", "C"].includes(cls)) { errors.push(`Row ${i + 2}: class "${r.class}" not A/B/C — skipped`); continue; }
+        // A city that does not exist silently hides the doctor from everyone,
+        // because reps are scoped to their own city by exact match.
+        const city = String(r.city ?? "").trim().toLowerCase() || hqCityId(db);
+        if (!cityIds(db).includes(city)) {
+          errors.push(`Row ${i + 2}: city "${r.city}" is not one of your cities — skipped`);
+          continue;
+        }
         db.doctors.push({
           id: nextId(db), name: String(r.name).trim(), clinic: String(r.clinic ?? "").trim(),
-          city: String(r.city ?? "erbil").trim().toLowerCase(), area: String(r.area ?? "").trim(),
+          city, area: String(r.area ?? "").trim(),
           address: String(r.address ?? "").trim(), potentialMonthly: Math.max(0, Math.round(Number(r.potential) || 0)),
           class: cls as "A" | "B" | "C", specialty: String(r.specialty ?? "").trim() || "Dermatologist",
           phone: String(r.phone ?? "").trim(), secretaryPhone: String(r.secretaryPhone ?? r.secretary ?? "").trim(),

@@ -14,10 +14,13 @@ export default function Targets() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    // next month by default
-    const d = new Date();
-    d.setMonth(d.getMonth() + 1);
-    setPeriod(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    // Next month, by arithmetic rather than by stepping a Date. setMonth keeps
+    // the day-of-month, so on the 31st it overflows a short month and lands
+    // two months out — targets would be set against the wrong month.
+    const now = new Date();
+    const m = now.getMonth() + 1;
+    const year = now.getFullYear() + Math.floor(m / 12);
+    setPeriod(`${year}-${String((m % 12) + 1).padStart(2, "0")}`);
     api("/api/team").then((r: any) => {
       setUsers(r.rows);
       if (r.rows.length) setUserId(r.rows[0].userId);

@@ -114,6 +114,12 @@ export async function POST(req: Request) {
         const sku = String(r.sku ?? "").trim();
         const product = db.products.find((p) => p.sku.toLowerCase() === sku.toLowerCase());
         if (!product) { errors.push(`Row ${i + 2}: SKU "${sku}" unknown — skipped`); continue; }
+        // An empty cell is a gap in the count, not a zero. Number("") is 0,
+        // which would have set that product's stock to nothing.
+        if (r.qty === undefined || r.qty === null || String(r.qty).trim() === "") {
+          errors.push(`Row ${i + 2}: no quantity — skipped, stock left as it was`);
+          continue;
+        }
         const qty = Number(r.qty);
         if (!Number.isFinite(qty) || qty < 0) { errors.push(`Row ${i + 2}: bad quantity "${r.qty}" — skipped`); continue; }
         let s = db.stock.find((x) => x.productId === product.id && x.location === "main");
