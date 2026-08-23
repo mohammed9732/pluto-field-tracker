@@ -40,7 +40,7 @@ export function PieChart({ data, size = 150 }: { data: { label: string; value: n
         {slices.map((s, i) => (
           <div key={i} className="row" style={{ gap: 6, fontSize: 12 }}>
             <span style={{ width: 10, height: 10, borderRadius: 3, background: s.color, flex: "none" }} />
-            <span style={{ flex: 1 }}>{s.label}</span>
+            <span className="f1">{s.label}</span>
             <b>{s.pct}%</b>
           </div>
         ))}
@@ -55,7 +55,7 @@ export function BarChart({ data, height = 150, format }: { data: { label: string
     <div style={{ display: "flex", gap: 10, alignItems: "flex-end", height: height + 34, paddingTop: 4 }}>
       {data.map((d, i) => (
         <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, minWidth: 0 }}>
-          <span className="hnum" style={{ fontSize: 12 }}>{format ? format(d.value) : d.value.toLocaleString()}</span>
+          <span className="hnum fs-caption">{format ? format(d.value) : d.value.toLocaleString()}</span>
           <div style={{ width: "100%", maxWidth: 46, height: Math.max(3, (d.value / max) * height), background: d.color ?? PALETTE[i % PALETTE.length], borderRadius: "6px 6px 0 0" }} />
           <span className="small muted" style={{ fontSize: 12, textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>{d.label}</span>
         </div>

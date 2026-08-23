@@ -654,6 +654,57 @@ textarea.input { min-height: 78px; resize: vertical; }
   .stock-table { display: block; }
 }
 
+/* ---------------------------------------------------------------------------
+   Utilities.
+   These exist because the same handful of shapes were being retyped inline
+   hundreds of times — `margin: 0` eighty-nine times, `textAlign: "right"`
+   sixty-nine. Each one on its own was harmless; together they were the reason
+   two cards that should match never quite did.
+
+   Everything here is either a layout primitive or a token from the scale
+   above. Anything genuinely one-off, or computed at render time, still belongs
+   in a style prop — that is not a failure, it is what the prop is for.
+--------------------------------------------------------------------------- */
+
+/* spacing */
+.m0        { margin: 0; }
+.mt-auto   { margin-top: auto; }
+.p-2       { padding: var(--sp-2); }
+.p-3       { padding: var(--sp-3); }
+.py-2      { padding-block: var(--sp-2); }
+
+/* flex and grid */
+.f1        { flex: 1; }
+.f1min     { flex: 1; min-width: 0; }
+.stack     { display: flex; flex-direction: column; }
+.stack-1   { display: flex; flex-direction: column; gap: var(--sp-1); }
+.stack-2   { display: flex; flex-direction: column; gap: var(--sp-2); }
+.stack-3   { display: flex; flex-direction: column; gap: var(--sp-3); }
+.two       { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
+.two-3     { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
+.gap-1     { gap: var(--sp-1); }
+.gap-2     { gap: var(--sp-2); }
+.gap-3     { gap: var(--sp-3); }
+.self-start{ align-self: flex-start; }
+.items-base{ align-items: baseline; }
+
+/* text */
+.ta-r      { text-align: right; }
+.fs-caption{ font-size: var(--fs-caption); }
+.fs-small  { font-size: var(--fs-small); }
+.fs-body   { font-size: var(--fs-body); }
+.fs-lead   { font-size: var(--fs-lead); }
+.fs-h2     { font-size: var(--fs-h2); }
+.fs-figure { font-size: var(--fs-figure); }
+.w-500     { font-weight: 500; }
+.w-700     { font-weight: 700; }
+
+/* Right-aligned in English, left-aligned in Arabic — a column of figures
+   should hug the edge the reader's eye returns to, whichever that is. */
+[dir="rtl"] .ta-r { text-align: left; }
+
+.hidden    { display: none; }
+
 /* — icon tiles — */
 .tilegrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
 .tile {
@@ -817,6 +868,10 @@ textarea.input { min-height: 78px; resize: vertical; }
 
 @media print {
   .no-print { display: none !important; }
+  /* The monthly report carries a heading meant only for the printout. It was
+     hidden on screen and never shown anywhere else, so every printed report
+     came out untitled. */
+  .print-title { display: block !important; margin-bottom: 12px; }
   body { background: #fff; }
   .screen, .desktop-panel { border: none !important; box-shadow: none !important; }
   .card, .table, .tile { box-shadow: none !important; }

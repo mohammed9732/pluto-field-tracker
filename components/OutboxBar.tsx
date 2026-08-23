@@ -33,7 +33,7 @@ export function OutboxBar() {
         <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: "0 12px 10px" }}>
           {items.map((i) => (
             <div key={i.ref} className="row" style={{ gap: 8, alignItems: "flex-start" }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="f1min">
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{i.label}</div>
                 {i.error ? (
                   <div className="small" style={{ color: "var(--c-coral-deep)" }}>{i.error}</div>
@@ -42,7 +42,7 @@ export function OutboxBar() {
                 )}
               </div>
               {i.error ? (
-                <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => drop(i.ref)}>
+                <button className="btn btn-ghost fs-caption" onClick={() => drop(i.ref)}>
                   Discard
                 </button>
               ) : null}

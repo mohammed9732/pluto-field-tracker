@@ -93,43 +93,43 @@ export default function Doctors() {
   return (
     <Screen me={me}>
       <div className="row">
-        <h4 style={{ margin: 0, flex: 1 }}>{t.doctorPlural}</h4>
+        <h4 className="m0 f1">{t.doctorPlural}</h4>
         {canEdit ? (
           <>
             <button className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 10px" }} onClick={() => fileRef.current?.click()}>Import .xlsx</button>
-            <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{ display: "none" }} onChange={onFile} />
+            <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={onFile} />
           </>
         ) : null}
         {canAdd ? <button className="btn btn-primary" style={{ fontSize: 12, padding: "6px 10px" }} onClick={() => { setAdding((a) => !a); setAddErr(""); }}>＋ Add</button> : null}
       </div>
       {adding ? (
-        <div className="card" style={{ gap: 10 }}>
-          <h6 style={{ margin: 0 }}>New doctor</h6>
-          <div className="field" style={{ margin: 0 }}><label>Doctor name</label><input className="input" value={newDoc.name} onChange={(e) => setNewDoc({ ...newDoc, name: e.target.value })} /></div>
-          <div className="field" style={{ margin: 0 }}><label>Center / clinic name</label><input className="input" value={newDoc.clinic} onChange={(e) => setNewDoc({ ...newDoc, clinic: e.target.value })} /></div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <div className="field" style={{ margin: 0 }}><label>City</label>
+        <div className="card gap-3">
+          <h6 className="m0">New doctor</h6>
+          <div className="field m0"><label>Doctor name</label><input className="input" value={newDoc.name} onChange={(e) => setNewDoc({ ...newDoc, name: e.target.value })} /></div>
+          <div className="field m0"><label>Center / clinic name</label><input className="input" value={newDoc.clinic} onChange={(e) => setNewDoc({ ...newDoc, clinic: e.target.value })} /></div>
+          <div className="two-3">
+            <div className="field m0"><label>City</label>
               <select className="input" value={newDoc.city} disabled={!!scoped} onChange={(e) => setNewDoc({ ...newDoc, city: e.target.value })}>
                 {cities.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
-            <div className="field" style={{ margin: 0 }}><label>Area</label><input className="input" value={newDoc.area} onChange={(e) => setNewDoc({ ...newDoc, area: e.target.value })} /></div>
+            <div className="field m0"><label>Area</label><input className="input" value={newDoc.area} onChange={(e) => setNewDoc({ ...newDoc, area: e.target.value })} /></div>
           </div>
-          <div className="field" style={{ margin: 0 }}><label>Address</label><input className="input" value={newDoc.address} onChange={(e) => setNewDoc({ ...newDoc, address: e.target.value })} placeholder="Street, building, floor…" /></div>
+          <div className="field m0"><label>Address</label><input className="input" value={newDoc.address} onChange={(e) => setNewDoc({ ...newDoc, address: e.target.value })} placeholder="Street, building, floor…" /></div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-            <div className="field" style={{ margin: 0 }}><label>Specialty</label>
+            <div className="field m0"><label>Specialty</label>
               <select className="input" value={newDoc.specialty} onChange={(e) => setNewDoc({ ...newDoc, specialty: e.target.value })}>
                 <option>Dermatologist</option><option>Plastic surgeon</option><option>GP</option><option>Dentist</option><option>Other</option>
               </select>
             </div>
-            <div className="field" style={{ margin: 0 }}><label>Class</label>
+            <div className="field m0"><label>Class</label>
               <select className="input" value={newDoc.class} onChange={(e) => setNewDoc({ ...newDoc, class: e.target.value })}>
                 <option>A</option><option>B</option><option>C</option>
               </select>
             </div>
-            <div className="field" style={{ margin: 0 }}><label>Phone</label><input className="input" value={newDoc.phone} onChange={(e) => setNewDoc({ ...newDoc, phone: e.target.value })} /></div>
+            <div className="field m0"><label>Phone</label><input className="input" value={newDoc.phone} onChange={(e) => setNewDoc({ ...newDoc, phone: e.target.value })} /></div>
           </div>
-          <div className="field" style={{ margin: 0 }}>
+          <div className="field m0">
             <label>Monthly potential (IQD, optional)</label>
             <input className="input" inputMode="numeric" placeholder="What this doctor should buy per month"
               value={newDoc.potentialMonthly} onChange={(e) => setNewDoc({ ...newDoc, potentialMonthly: e.target.value })} />
@@ -144,9 +144,9 @@ export default function Doctors() {
             <Icon d={paths.target} size={15} stroke="var(--color-accent-700)" />
             <span style={{ color: "var(--color-accent-800)" }}>Set clinic location from my current GPS</span>
           </label>
-          {addErr ? <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>{addErr}</div> : null}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            <button className="btn btn-primary" style={{ padding: 10 }} onClick={async () => {
+          {addErr ? <div className="tag tag-hot self-start">{addErr}</div> : null}
+          <div className="two">
+            <button className="btn btn-primary p-3" onClick={async () => {
               setAddErr("");
               if (!newDoc.name.trim()) { setAddErr("Doctor name is required"); return; }
               const pos = useGps ? await getPosition() : { lat: null, lng: null };
@@ -157,13 +157,13 @@ export default function Doctors() {
                 load();
               } catch (e: any) { setAddErr(e.message); }
             }}>Save doctor</button>
-            <button className="btn btn-secondary" style={{ padding: 10 }} onClick={() => setAdding(false)}>Cancel</button>
+            <button className="btn btn-secondary p-3" onClick={() => setAdding(false)}>Cancel</button>
           </div>
         </div>
       ) : null}
       {preview ? (
         <div className="soft-accent" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-          <div className="row" style={{ gap: 8 }}>
+          <div className="row gap-2">
             <Icon d={paths.file} size={16} stroke="var(--color-accent-700)" />
             <div style={{ flex: 1, fontSize: 13, fontWeight: 500, color: "var(--color-accent-800)" }}>{preview.filename}</div>
             <span className="small" style={{ color: "var(--color-accent-700)" }}>{preview.rows.length} rows</span>
@@ -171,14 +171,14 @@ export default function Doctors() {
           <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, maxHeight: 180, overflowY: "auto" }}>
             {preview.rows.slice(0, 20).map((r, i) => (
               <div key={i} style={{ display: "flex", gap: 8 }}>
-                <span style={{ flex: 1 }}>{r.name || <span style={{ color: "var(--c-coral-deep)" }}>missing name</span>}</span>
+                <span className="f1">{r.name || <span style={{ color: "var(--c-coral-deep)" }}>missing name</span>}</span>
                 <span className="muted">{r.clinic}</span>
                 <span className="muted">{r.city}</span>
               </div>
             ))}
             {preview.rows.length > 20 ? <div className="muted">…and {preview.rows.length - 20} more</div> : null}
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <div className="two">
             <button className="btn btn-primary" style={{ padding: 9 }} onClick={confirmImport}>Confirm import</button>
             <button className="btn btn-secondary" style={{ padding: 9 }} onClick={() => setPreview(null)}>Cancel</button>
           </div>
@@ -186,7 +186,7 @@ export default function Doctors() {
       ) : null}
       {importResult ? (
         <div className="card" style={{ gap: 4 }}>
-          <span className="tag tag-ok" style={{ alignSelf: "flex-start" }}>{importResult.added} doctors imported</span>
+          <span className="tag tag-ok self-start">{importResult.added} doctors imported</span>
           {importResult.errors.map((e, i) => <div key={i} className="small" style={{ color: "var(--c-amber-deep)" }}>{e}</div>)}
         </div>
       ) : null}
@@ -204,8 +204,8 @@ export default function Doctors() {
       <div style={{ display: "flex", flexDirection: "column" }}>
         {filtered.map((d) => (
           <Link key={d.id} href={`/doctors/${d.id}`} className="listrow" style={{ padding: "10px 0", textDecoration: "none", color: "inherit" }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 500 }}>{d.name}</div>
+            <div className="f1min">
+              <div className="fs-small w-500">{d.name}</div>
               <div className="small muted">{d.clinic} · {d.specialty} · {d.area}</div>
             </div>
             <Icon d={paths.pinDot} size={14} stroke={d.lat != null ? "var(--color-accent)" : "var(--color-neutral-400)"} />
@@ -213,7 +213,7 @@ export default function Doctors() {
           </Link>
         ))}
       </div>
-      <div className="hint" style={{ marginTop: "auto" }}>
+      <div className="hint mt-auto">
         {scoped ? "You see the doctors in your city. " : ""}Grey pin = no clinic location yet — captured by the rep on first visit.{" "}
         {canEdit ? <>Import template: Name | Clinic | City | Area | Specialty | Class | Phone. <a href="#" onClick={(e) => { e.preventDefault(); downloadTemplate(); }}>Download blank template</a>.</> : null}
       </div>

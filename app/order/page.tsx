@@ -107,7 +107,7 @@ function NewOrderInner() {
               background: isSample ? "var(--c-violet-soft)" : undefined,
             }}>
               <input type="checkbox" checked={isSample} onChange={(e) => setIsSample(e.target.checked)} style={{ width: 18, height: 18, accentColor: "var(--c-violet)" }} />
-              <div style={{ flex: 1 }}>
+              <div className="f1">
                 <div style={{ fontSize: 13, fontWeight: 500, color: isSample ? "var(--c-violet-deep)" : undefined }}>Free sample</div>
                 <div className="small" style={{ color: isSample ? "var(--c-violet-deep)" : "var(--color-neutral-600)" }}>
                   Price is 0 · stock still leaves the warehouse · does not count toward targets
@@ -118,8 +118,8 @@ function NewOrderInner() {
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
             {lines.map((l, i) => (
               <div key={l.productId} className="listrow" style={{ padding: "10px 0" }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500 }}>{l.name}</div>
+                <div className="f1min">
+                  <div className="fs-small w-500">{l.name}</div>
                   <div className="row" style={{ gap: 5, fontSize: 12, color: "var(--color-neutral-600)" }}>
                     {canEditPrice ? (
                       <input
@@ -146,9 +146,9 @@ function NewOrderInner() {
           </div>
           <div className="row" style={{ alignItems: "baseline", marginTop: "auto" }}>
             <span style={{ flex: 1, fontSize: 13, color: "var(--color-neutral-600)" }}>{isSample ? "Sample request — no charge" : "Order total — prices follow the quantity tiers"}</span>
-            <span className="hnum" style={{ fontSize: 34 }}>{money(total)}</span>
+            <span className="hnum fs-figure">{money(total)}</span>
           </div>
-          {err ? <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>{err}</div> : null}
+          {err ? <div className="tag tag-hot self-start">{err}</div> : null}
           <button className="btn btn-primary btn-block" style={{ padding: 13 }} onClick={submit} disabled={busy}>
             {busy ? "Sending…" : isSample ? "Send sample request for approval" : "Send for approval"}
           </button>

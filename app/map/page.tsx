@@ -61,8 +61,8 @@ function MapInner() {
 
   return (
     <Screen me={me}>
-      <div className="row" style={{ alignItems: "baseline" }}>
-        <h4 style={{ margin: 0, flex: 1 }}>Map</h4>
+      <div className="row items-base">
+        <h4 className="m0 f1">Map</h4>
         <span className={`tag ${checkedIn ? "tag-hot" : "tag-neutral"}`}>
           {checkedIn ? `In field ${durationHM(data.fieldTime.minutes)}` : "Not in field"}
         </span>
@@ -85,10 +85,10 @@ function MapInner() {
       {self ? (
         checkedIn ? (
           <div className="card" style={{ gap: 8, padding: 14, borderColor: "var(--c-coral)" }}>
-            <div className="row" style={{ gap: 8 }}>
+            <div className="row gap-2">
               <span style={{ width: 9, height: 9, borderRadius: 999, background: "var(--c-coral)", flex: "none" }} />
               <span className="small" style={{ letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-coral-deep)", flex: 1 }}>In the field</span>
-              <span className="hnum" style={{ fontSize: 18 }}>{durationHM(data.fieldTime.minutes)}</span>
+              <span className="hnum fs-lead">{durationHM(data.fieldTime.minutes)}</span>
             </div>
             <button className="btn btn-coral btn-block" style={{ padding: 13, fontSize: 15 }} onClick={toggleCheck} disabled={busy}>
               {busy ? "Getting GPS…" : "End day"}
@@ -113,7 +113,7 @@ function MapInner() {
       <GeoMap checkins={data.checkins} visits={data.visits} pings={data.pings} doctorPins={data.doctorPins ?? []} height={self ? 380 : 320} />
       <div className="hint">Tap a numbered visit pin for Google Maps / Waze navigation. Today&apos;s visits are highlighted.</div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div className="stack-2">
         <div className="row" style={{ alignItems: "baseline", gap: 8 }}>
           <h6 style={{ margin: 0, color: "var(--color-neutral-600)", flex: 1 }}>{data.userName} — today</h6>
           <span className="hint">in field {durationHM(data.fieldTime.minutes)}</span>
@@ -124,11 +124,11 @@ function MapInner() {
             <div key={v.id} className="listrow" style={{ padding: "8px 0", fontSize: 12 }}>
               <span className="hnum" style={{ width: 18, color: "var(--color-accent-700)" }}>{i + 1}</span>
               <span style={{ width: 42, color: "var(--color-neutral-500)" }}>{v.time}</span>
-              <span style={{ flex: 1 }}>
+              <span className="f1">
                 <DoctorLink id={v.doctorId} name={v.doctor?.name ?? "?"} /> — {v.outcome === "order" ? "Order" : v.outcome === "payment" ? "Payment" : "Follow-up"}
                 {v.outOfLocation ? <span className="tag tag-hot" style={{ marginLeft: 6 }}>out of location</span> : null}
               </span>
-              {dwell ? <b className="hnum" style={{ fontSize: 15 }}>{durationHM(dwell.minutes)}</b> : null}
+              {dwell ? <b className="hnum fs-body">{durationHM(dwell.minutes)}</b> : null}
             </div>
           );
         })}
@@ -136,7 +136,7 @@ function MapInner() {
         {data.travelMinutes > 0 ? (
           <div className="listrow" style={{ padding: "8px 0", fontSize: 12, color: "var(--color-neutral-600)" }}>
             <span style={{ width: 60 }}>travel</span>
-            <span style={{ flex: 1 }}>Between clinics</span>
+            <span className="f1">Between clinics</span>
             <b className="hnum" style={{ fontSize: 15, color: "var(--color-text)" }}>{durationHM(data.travelMinutes)}</b>
           </div>
         ) : null}
@@ -147,7 +147,7 @@ function MapInner() {
           </div>
         ) : null}
       </div>
-      <div className="hint" style={{ marginTop: "auto" }}>
+      <div className="hint mt-auto">
         GPS pinned on check-in, check-out, and every visit. Pings pause when the phone is locked or the browser closed — a PWA constraint, not a fault.
       </div>
     </Screen>

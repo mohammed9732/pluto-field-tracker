@@ -55,8 +55,8 @@ export default function Tasks() {
     const finished = mineToDo ? t.myDone : t.status !== "open";
     return (
       <div className="card" style={{ gap: 8, padding: 12, borderLeft: `4px solid ${c.text}` }}>
-        <div className="row" style={{ gap: 8 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="row gap-2">
+          <div className="f1min">
             <div style={{ fontSize: 13, fontWeight: 500, textDecoration: finished ? "line-through" : undefined, color: finished ? "var(--color-neutral-500)" : undefined }}>{t.title}</div>
             <div className="small muted">
               {mineToDo ? `from ${t.createdByName}` : `for ${t.assigneeNames.join(", ")}`}
@@ -97,15 +97,15 @@ export default function Tasks() {
   return (
     <Screen me={me}>
       <div className="row">
-        <h4 style={{ margin: 0, flex: 1 }}>Tasks</h4>
+        <h4 className="m0 f1">Tasks</h4>
         {canCreate ? <button className="btn btn-primary" style={{ fontSize: 12, padding: "6px 12px" }} onClick={() => setShowNew((s) => !s)}>＋ Assign task</button> : null}
       </div>
 
       {showNew ? (
-        <div className="card" style={{ gap: 10 }}>
-          <div className="field" style={{ margin: 0 }}><label>Task</label><input className="input" placeholder="e.g. Collect payment from Dr. Rebin" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-          <div className="field" style={{ margin: 0 }}><label>Details</label><textarea className="input" style={{ minHeight: 50 }} value={form.details} onChange={(e) => setForm({ ...form, details: e.target.value })} /></div>
-          <div className="field" style={{ margin: 0 }}>
+        <div className="card gap-3">
+          <div className="field m0"><label>Task</label><input className="input" placeholder="e.g. Collect payment from Dr. Rebin" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+          <div className="field m0"><label>Details</label><textarea className="input" style={{ minHeight: 50 }} value={form.details} onChange={(e) => setForm({ ...form, details: e.target.value })} /></div>
+          <div className="field m0">
             <label>Who — pick one or many</label>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
               <button type="button" className="tag tag-outline" style={{ cursor: "pointer", background: "transparent" }}
@@ -125,9 +125,9 @@ export default function Tasks() {
               ))}
             </div>
           </div>
-          <div className="field" style={{ margin: 0 }}><label>Due</label><input className="input" type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /></div>
-          {err ? <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>{err}</div> : null}
-          <button className="btn btn-primary btn-block" style={{ padding: 10 }} onClick={create}>Assign</button>
+          <div className="field m0"><label>Due</label><input className="input" type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /></div>
+          {err ? <div className="tag tag-hot self-start">{err}</div> : null}
+          <button className="btn btn-primary btn-block p-3" onClick={create}>Assign</button>
         </div>
       ) : null}
 
@@ -153,7 +153,7 @@ export default function Tasks() {
         const others = allTasks.filter((t: any) => t.createdBy !== me.id && t.status === "open" && !t.assigneeIds.includes(me.id));
         if (!others.length) return null;
         return (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div className="stack-2">
             <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Assigned by others</h6>
             {others.map((t: any) => <TaskCard key={t.id} t={t} mineToDo={false} />)}
           </div>
@@ -161,13 +161,13 @@ export default function Tasks() {
       })() : null}
 
       {canCreate && review ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className="stack-2">
           <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>
             This month&apos;s review — {review.filter((t: any) => t.status !== "open").length} finished · {review.filter((t: any) => t.status === "open").length} still open
           </h6>
           {review.map((t: any) => (
             <div key={t.id} className="listrow" style={{ padding: "7px 0", fontSize: 12 }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="f1min">
                 <div style={{ fontSize: 12, fontWeight: 500 }}>{t.title}</div>
                 <div className="small muted">{t.createdByName} → {t.assigneeNames.join(", ")}{t.dueDate ? ` · due ${dmy(t.dueDate)}` : ""}</div>
               </div>
@@ -182,7 +182,7 @@ export default function Tasks() {
         </div>
       ) : null}
 
-      <div className="hint" style={{ marginTop: "auto" }}>
+      <div className="hint mt-auto">
         Green tasks come from the accountant (payments), blue from the supervisor (field duties), violet from the owner. Nothing disappears — every month&apos;s tasks stay reviewable here.
       </div>
     </Screen>

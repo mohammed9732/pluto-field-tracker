@@ -25,7 +25,7 @@ export default function Progress() {
     <Screen me={me}>
       <div>
         <h4 style={{ margin: "0 0 2px" }}>Progress</h4>
-        <div className="small muted" style={{ fontSize: 12 }}>{monthName(period)} · approved + invoiced orders count</div>
+        <div className="small muted fs-caption">{monthName(period)} · approved + invoiced orders count</div>
       </div>
 
       {perfOn ? (
@@ -56,7 +56,7 @@ export default function Progress() {
           {data.accrual.map((r: any) => {
             const pct = Math.round(r.achievementPct);
             return (
-              <div key={r.productId} className="card" style={{ gap: 8 }}>
+              <div key={r.productId} className="card gap-2">
                 <div className="row" style={{ alignItems: "baseline", gap: 8 }}>
                   <span style={{ fontSize: 15, fontWeight: 500, flex: 1 }}>{r.productName}</span>
                   <span className={`tag ${r.qualified ? "tag-ok" : "tag-warn"}`}>{r.qualified ? "Qualified" : "Below min"}</span>
@@ -82,8 +82,8 @@ export default function Progress() {
             <div style={{ fontSize: 12, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--color-accent-700)" }}>
               {data.quarter.name.replace("-", " ")} incentive accrued
             </div>
-            <div className="row" style={{ alignItems: "baseline" }}>
-              <span className="hnum" style={{ fontSize: 34 }}>{money(data.quarter.total)}</span>
+            <div className="row items-base">
+              <span className="hnum fs-figure">{money(data.quarter.total)}</span>
               <span className="tag tag-outline">Accrued</span>
             </div>
             <div className="small muted">

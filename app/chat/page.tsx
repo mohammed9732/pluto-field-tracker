@@ -110,11 +110,11 @@ function ChatInner() {
 
   return (
     <Screen me={me}>
-      <div className="row" style={{ gap: 10 }}>
+      <div className="row gap-3">
         <div style={{ width: 38, height: 38, borderRadius: "44% 44% 46% 46%/48% 48% 42% 42%", background: "var(--c-violet)", display: "grid", placeItems: "center", flex: "none" }}>
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5Z" /></svg>
         </div>
-        <div style={{ flex: 1 }}>
+        <div className="f1">
           <div className="hnum" style={{ fontSize: 22, lineHeight: 1.05 }}>Chat</div>
           <div className="small muted">{channels.find((c) => c.id === channel)?.label ?? ""}</div>
         </div>
@@ -159,7 +159,7 @@ function ChatInner() {
             ) : m.kind === "file" && m.fileId ? (
               <a href={`/api/files?id=${m.fileId}`} target="_blank" className={m.mine ? "bubble-out" : "bubble-in"} style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", background: m.mine ? "var(--c-violet)" : undefined, color: m.mine ? "#fff" : "inherit" }}>
                 <Icon d={paths.file} size={15} />
-                <span style={{ fontSize: 13 }}>{m.fileName ?? "file"}</span>
+                <span className="fs-small">{m.fileName ?? "file"}</span>
               </a>
             ) : (
               <div className={m.mine ? "bubble-out" : "bubble-in"} style={m.mine ? { background: "var(--c-violet)" } : undefined}>{m.body}</div>
@@ -175,8 +175,8 @@ function ChatInner() {
         </div>
       ) : null}
       <div className="row" style={{ gap: 7 }}>
-        <input ref={imgRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAndSend(f, "image", f.name); e.target.value = ""; }} />
-        <input ref={fileRef} type="file" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAndSend(f, "file", f.name); e.target.value = ""; }} />
+        <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAndSend(f, "image", f.name); e.target.value = ""; }} />
+        <input ref={fileRef} type="file" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAndSend(f, "file", f.name); e.target.value = ""; }} />
         <button className="btn btn-secondary btn-icon" style={{ flex: "none", }} onClick={() => imgRef.current?.click()} aria-label="Send image">
           <Icon d="M21 15l-5-5L5 21M3 5h18v14H3Z" size={15} />
         </button>

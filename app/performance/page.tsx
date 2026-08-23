@@ -32,7 +32,7 @@ export default function Performance() {
     <Screen me={me} wide={me.role === "admin"}>
       <div>
         <h4 style={{ margin: "0 0 2px" }}>Performance</h4>
-        <div className="small muted" style={{ fontSize: 12 }}>{data.name} · {monthName(data.period)}</div>
+        <div className="small muted fs-caption">{data.name} · {monthName(data.period)}</div>
       </div>
       {me.role === "supervisor" || me.role === "admin" ? (
         <div className="seg" style={{ width: "100%", overflowX: "auto" }}>

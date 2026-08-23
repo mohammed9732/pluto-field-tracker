@@ -33,9 +33,9 @@ function OrdersInner() {
   return (
     <Screen me={me}>
       <div className="row">
-        <h4 style={{ margin: 0, flex: 1 }}>{tab === "orders" ? "My orders" : "Payments"}</h4>
+        <h4 className="m0 f1">{tab === "orders" ? "My orders" : "Payments"}</h4>
         {tab === "orders"
-          ? <Link href="/order" className="btn btn-ghost" style={{ fontSize: 13 }}>＋ New order</Link>
+          ? <Link href="/order" className="btn btn-ghost fs-small">＋ New order</Link>
           : <Link href="/pay" className="btn btn-primary" style={{ fontSize: 12, padding: "6px 12px" }}>＋ Record</Link>}
       </div>
       <div className="seg" style={{ width: "100%" }}>
@@ -66,9 +66,9 @@ function OrdersInner() {
           ) : null}
           {orders.map((o) => (
             <div key={o.id} className="card" style={{ gap: 6, padding: 12 }}>
-              <div className="row" style={{ gap: 10 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500 }}><DoctorLink id={o.doctor?.id} name={o.doctor?.name ?? "?"} /></div>
+              <div className="row gap-3">
+                <div className="f1min">
+                  <div className="fs-small w-500"><DoctorLink id={o.doctor?.id} name={o.doctor?.name ?? "?"} /></div>
                   <div className="small muted">
                     {dmy(o.createdAt)} · {o.items.length} product{o.items.length === 1 ? "" : "s"}
                     {o.invoicePdfName ? " · invoice attached" : ""}
@@ -106,7 +106,7 @@ function OrdersInner() {
           {today.length ? (
             <div className="blueprint" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 2 }}>
               <div style={{ fontSize: 12, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--c-green-deep)" }}>Collected today</div>
-              <span className="hnum" style={{ fontSize: 34 }}>{money(todayTotal)}</span>
+              <span className="hnum fs-figure">{money(todayTotal)}</span>
               <span className="small muted">{today.length} receipt{today.length === 1 ? "" : "s"}</span>
             </div>
           ) : null}
@@ -117,14 +117,14 @@ function OrdersInner() {
           ) : null}
           {(payments ?? []).map((p) => (
             <div key={p.id} className="listrow">
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 500 }}><DoctorLink id={p.doctorId} name={p.doctorName} /></div>
+              <div className="f1min">
+                <div className="fs-small w-500"><DoctorLink id={p.doctorId} name={p.doctorName} /></div>
                 <div className="small muted">
                   {me.role === "rep" ? "" : `by ${p.collectedByName} · `}{dmy(p.ts)} {hm(p.ts)} · {p.method}{p.note ? ` · ${p.note}` : ""}
                 </div>
               </div>
               {p.photo ? <a className="small" href={`/api/files?id=${p.photo}`} target="_blank">receipt</a> : null}
-              <span className="hnum" style={{ fontSize: 15 }}>{money(p.amount)}</span>
+              <span className="hnum fs-body">{money(p.amount)}</span>
             </div>
           ))}
           <div className="hint" style={{ textAlign: "center", marginTop: "auto" }}>

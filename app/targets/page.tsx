@@ -81,16 +81,16 @@ export default function Targets() {
     <Screen me={me}>
       <div>
         <h4 style={{ margin: "0 0 2px" }}>Set targets</h4>
-        <div className="small muted" style={{ fontSize: 12 }}>Quantities per product per month</div>
+        <div className="small muted fs-caption">Quantities per product per month</div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <div className="field" style={{ margin: 0 }}>
+      <div className="two-3">
+        <div className="field m0">
           <label>Rep</label>
           <select className="input" value={userId ?? ""} onChange={(e) => setUserId(Number(e.target.value))}>
             {users.map((u) => <option key={u.userId} value={u.userId}>{u.name}</option>)}
           </select>
         </div>
-        <div className="field" style={{ margin: 0 }}>
+        <div className="field m0">
           <label>Month</label>
           <select className="input" value={period} onChange={(e) => setPeriod(e.target.value)}>
             {monthOptions.map((m) => <option key={m} value={m}>{monthName(m)}</option>)}
@@ -98,20 +98,20 @@ export default function Targets() {
         </div>
       </div>
       {products.map((p) => (
-        <div key={p.id} className="card" style={{ gap: 8 }}>
-          <div style={{ fontSize: 13, fontWeight: 500 }}>
+        <div key={p.id} className="card gap-2">
+          <div className="fs-small w-500">
             {p.name} <span style={{ fontWeight: 400, color: "var(--color-neutral-600)" }}>· {money(p.unitPrice)}</span>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-            <div className="field" style={{ margin: 0 }}>
+            <div className="field m0">
               <label>Target qty</label>
               <input className="input" inputMode="numeric" value={rows[p.id]?.targetQty ?? ""} onChange={(e) => setRows((r) => ({ ...r, [p.id]: { ...r[p.id], targetQty: e.target.value } }))} />
             </div>
-            <div className="field" style={{ margin: 0 }}>
+            <div className="field m0">
               <label>Min %</label>
               <input className="input" inputMode="numeric" value={rows[p.id]?.minPct ?? ""} onChange={(e) => setRows((r) => ({ ...r, [p.id]: { ...r[p.id], minPct: e.target.value } }))} />
             </div>
-            <div className="field" style={{ margin: 0 }}>
+            <div className="field m0">
               <label>Incentive %</label>
               <input className="input" inputMode="decimal" value={rows[p.id]?.incentivePct ?? ""} onChange={(e) => setRows((r) => ({ ...r, [p.id]: { ...r[p.id], incentivePct: e.target.value } }))} />
             </div>
@@ -119,7 +119,7 @@ export default function Targets() {
         </div>
       ))}
       <div className="hint">Below the minimum → incentive is $0 for that product that month. Achieved value uses price snapshots. Leave qty empty to remove a target.</div>
-      {saved ? <div className="tag tag-ok" style={{ alignSelf: "flex-start" }}>Targets saved</div> : null}
+      {saved ? <div className="tag tag-ok self-start">Targets saved</div> : null}
       <button className="btn btn-primary btn-block" style={{ padding: 13, marginTop: "auto" }} onClick={save} disabled={busy || !userId}>
         {busy ? "Saving…" : `Save ${monthName(period)} targets`}
       </button>

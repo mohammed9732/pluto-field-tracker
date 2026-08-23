@@ -20,15 +20,15 @@ export default function Payouts() {
 
   return (
     <Screen me={me} wide>
-      <div className="row" style={{ alignItems: "baseline" }}>
-        <h4 style={{ margin: 0, flex: 1 }}>Payouts</h4>
+      <div className="row items-base">
+        <h4 className="m0 f1">Payouts</h4>
         <span className="tag tag-neutral">{data.quarter.replace("-", " ")}</span>
       </div>
       {data.rows.map((r: any) => (
-        <div key={r.userId} className="card" style={{ gap: 8 }}>
-          <div className="row" style={{ gap: 10 }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 500 }}>{r.name}</div>
+        <div key={r.userId} className="card gap-2">
+          <div className="row gap-3">
+            <div className="f1">
+              <div className="fs-small w-500">{r.name}</div>
               <div className="small muted">
                 {r.months.map((m: any) => `${monthName(m.period).slice(0, 3)} ${(m.amount + (m.commission ?? 0)) > 0 ? money(m.amount + (m.commission ?? 0)) : "—"}`).join(" · ")}
               </div>
@@ -36,7 +36,7 @@ export default function Payouts() {
                 <div className="small muted">Target incentives {money(r.incentives ?? 0)} + sales commission {money(r.commission)}</div>
               ) : null}
             </div>
-            <span className="hnum" style={{ fontSize: 18 }}>{money(r.total)}</span>
+            <span className="hnum fs-lead">{money(r.total)}</span>
           </div>
           {r.paid ? (
             <div className="row" style={{ gap: 8, fontSize: 12, color: "var(--color-neutral-600)" }}>
@@ -48,7 +48,7 @@ export default function Payouts() {
               Paid with the quarter-end wages on {dmy(r.paidWithWages)}
             </div>
           ) : (
-            <button className="btn btn-primary btn-block" style={{ padding: 10 }} onClick={() => pay(r.userId)} disabled={r.total <= 0}>
+            <button className="btn btn-primary btn-block p-3" onClick={() => pay(r.userId)} disabled={r.total <= 0}>
               Mark as paid
             </button>
           )}
@@ -58,16 +58,16 @@ export default function Payouts() {
         <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Paid</h6>
         {data.history.length === 0 ? <div className="small muted">No payout history yet.</div> : null}
         {data.history.map((p: any) => (
-          <div key={p.id} className="listrow" style={{ padding: "8px 0" }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13 }}>{p.quarter.replace("-", " ")} · {p.name}</div>
+          <div key={p.id} className="listrow py-2">
+            <div className="f1">
+              <div className="fs-small">{p.quarter.replace("-", " ")} · {p.name}</div>
               <div className="small muted">paid {dmy(p.paidAt)} by {p.paidByName}</div>
             </div>
             <span className="tag tag-ok">Paid · {money(p.amount)}</span>
           </div>
         ))}
       </div>
-      <div className="hint" style={{ marginTop: "auto" }}>
+      <div className="hint mt-auto">
         Marking as paid locks the quarter with timestamp and accountant ID. Reps see accrued vs paid, read-only.
       </div>
     </Screen>

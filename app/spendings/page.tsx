@@ -68,22 +68,22 @@ export default function Spendings() {
 
   return (
     <Screen me={me}>
-      <h4 style={{ margin: 0 }}>Spendings</h4>
+      <h4 className="m0">Spendings</h4>
 
-      <div className="card" style={{ gap: 10 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <div className="field" style={{ margin: 0 }}>
+      <div className="card gap-3">
+        <div className="two-3">
+          <div className="field m0">
             <label>Amount (IQD)</label>
             <input className="input hnum" inputMode="numeric" placeholder="25,000" value={amount} onChange={(e) => setAmount(groupDigits(e.target.value))} style={{ fontSize: 16 }} />
           </div>
-          <div className="field" style={{ margin: 0 }}>
+          <div className="field m0">
             <label>Type</label>
             <select className="input" value={type} onChange={(e) => setType(e.target.value)}>
               {TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </div>
         </div>
-        <div className="field" style={{ margin: 0 }}>
+        <div className="field m0">
           <label>Note</label>
           <input className="input" placeholder="e.g. fuel for the Soran circuit" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
@@ -92,9 +92,9 @@ export default function Spendings() {
           <span style={{ flex: 1, color: receipt ? "var(--c-green-deep)" : "var(--color-neutral-600)" }}>
             {receipt ? `Receipt attached — ${receipt.name}` : "Attach receipt photo"}
           </span>
-          <input type="file" accept="image/*,.pdf" capture="environment" style={{ display: "none" }} onChange={(e) => e.target.files?.[0] && attachReceipt(e.target.files[0])} />
+          <input type="file" accept="image/*,.pdf" capture="environment" className="hidden" onChange={(e) => e.target.files?.[0] && attachReceipt(e.target.files[0])} />
         </label>
-        {err ? <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>{err}</div> : null}
+        {err ? <div className="tag tag-hot self-start">{err}</div> : null}
         <button className="btn btn-primary btn-block" style={{ padding: 11 }} onClick={submit} disabled={busy}>
           {busy ? "Saving…" : "Log spending"}
         </button>
@@ -102,19 +102,19 @@ export default function Spendings() {
       </div>
 
       {isApprover && mineApprovals.length ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className="stack-2">
           <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Waiting for your decision</h6>
           {mineApprovals.map((s: any) => (
             <div key={s.id} className="card" style={{ gap: 8, padding: 12 }}>
-              <div className="row" style={{ gap: 8 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500 }}>{s.userName} · {TYPES.find(([v]) => v === s.type)?.[1]}</div>
+              <div className="row gap-2">
+                <div className="f1">
+                  <div className="fs-small w-500">{s.userName} · {TYPES.find(([v]) => v === s.type)?.[1]}</div>
                   <div className="small muted">{dmy(s.date)}{s.note ? ` · ${s.note}` : ""}</div>
                 </div>
-                <span className="hnum" style={{ fontSize: 15 }}>{money(s.amount)}</span>
+                <span className="hnum fs-body">{money(s.amount)}</span>
               </div>
               {s.receipt ? <a className="small" href={`/api/files?id=${s.receipt}`} target="_blank">View receipt</a> : <span className="small" style={{ color: "var(--c-amber-deep)" }}>No receipt attached</span>}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <div className="two">
                 <button className="btn btn-primary" style={{ padding: 8 }} onClick={() => decide(s.id, "approve")}>Approve</button>
                 <button className="btn btn-secondary" style={{ padding: 8 }} onClick={() => decide(s.id, "reject")}>Reject…</button>
               </div>
@@ -123,16 +123,16 @@ export default function Spendings() {
         </div>
       ) : null}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div className="stack-2">
         <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>My spendings</h6>
         {data.spendings.length === 0 ? <div className="small muted">Nothing logged yet.</div> : null}
         {data.spendings.map((s: any) => (
-          <div key={s.id} className="listrow" style={{ padding: "8px 0" }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13 }}>{TYPES.find(([v]) => v === s.type)?.[1]} · {dmy(s.date)}</div>
+          <div key={s.id} className="listrow py-2">
+            <div className="f1min">
+              <div className="fs-small">{TYPES.find(([v]) => v === s.type)?.[1]} · {dmy(s.date)}</div>
               <div className="small muted">{s.note}{s.status === "rejected" && s.decideNote ? ` — "${s.decideNote}"` : ""}</div>
             </div>
-            <span className="hnum" style={{ fontSize: 15 }}>{money(s.amount)}</span>
+            <span className="hnum fs-body">{money(s.amount)}</span>
             <span className={`tag ${STATUS_TAG[s.status][1]}`}>{STATUS_TAG[s.status][0]}</span>
           </div>
         ))}

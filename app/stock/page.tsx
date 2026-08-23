@@ -136,9 +136,9 @@ export default function StockPage() {
 
   return (
     <Screen me={me} wide>
-      <div className="row" style={{ alignItems: "baseline" }}>
-        <h4 style={{ margin: 0, flex: 1 }}>Stock</h4>
-        {isAcct ? <a href="#" style={{ fontSize: 12 }} onClick={(e) => { e.preventDefault(); downloadTemplate(); }}>Blank template</a> : null}
+      <div className="row items-base">
+        <h4 className="m0 f1">Stock</h4>
+        {isAcct ? <a href="#" className="fs-caption" onClick={(e) => { e.preventDefault(); downloadTemplate(); }}>Blank template</a> : null}
       </div>
 
       {data.mustCheck ? (
@@ -189,7 +189,7 @@ export default function StockPage() {
             </div>
             {(s.expiry || data.canSetExpiry) ? (
               <div className="row" style={{ gap: "var(--sp-2)", alignItems: "center", borderTop: "1px solid var(--color-divider)", paddingTop: "var(--sp-2)" }}>
-                <span className="small muted" style={{ flex: 1 }}>
+                <span className="small muted f1">
                   {s.batch ? `Batch ${s.batch}` : "Expiry"}
                 </span>
                 {data.canSetExpiry ? (
@@ -223,7 +223,7 @@ export default function StockPage() {
               {locations.map((l) => (
                 <th key={l.id} style={{ textAlign: "right", background: myCity === l.id ? "var(--color-accent-100)" : undefined }}>{l.name}</th>
               ))}
-              <th style={{ textAlign: "right" }}>Total</th>
+              <th className="ta-r">Total</th>
               <th style={{ whiteSpace: "nowrap" }}>Expires</th>
             </tr>
           </thead>
@@ -276,9 +276,9 @@ export default function StockPage() {
           Reps and supervisors ask; a supervisor agrees; the accountant is the
           only one who can actually move the quantities. Each person below sees
           only the step that is theirs to take. */}
-      <div className="card" style={{ gap: 10 }}>
+      <div className="card gap-3">
         <div className="row" style={{ alignItems: "baseline", gap: 8 }}>
-          <h6 style={{ margin: 0, flex: 1 }}>Stock transfer requests</h6>
+          <h6 className="m0 f1">Stock transfer requests</h6>
           {(me.role === "supervisor" || me.role === "admin" || (me.role === "rep" && myCity !== "main")) ? (
             <button className="btn btn-secondary" style={{ fontSize: 12, padding: "5px 12px" }}
               onClick={() => {
@@ -296,22 +296,22 @@ export default function StockPage() {
         </div>
 
         {ask ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <div className="two-col" style={{ gap: 8 }}>
-              <div className="field" style={{ margin: 0 }}>
+          <div className="stack-2">
+            <div className="two-col gap-2">
+              <div className="field m0">
                 <label>Product</label>
                 <select className="input" value={ask.productId} onChange={(e) => setAsk({ ...ask, productId: e.target.value })}>
                   <option value="">Choose…</option>
                   {data.stock.map((x: any) => <option key={x.productId} value={x.productId}>{x.name}</option>)}
                 </select>
               </div>
-              <div className="field" style={{ margin: 0 }}>
+              <div className="field m0">
                 <label>Quantity</label>
                 <input className="input" inputMode="numeric" value={ask.qty}
                   onChange={(e) => setAsk({ ...ask, qty: e.target.value.replace(/[^0-9]/g, "") })} />
               </div>
             </div>
-            <div className="field" style={{ margin: 0 }}>
+            <div className="field m0">
               <label>Take it from</label>
               <select className="input" value={ask.fromCity}
                 onChange={(e) => {
@@ -326,7 +326,7 @@ export default function StockPage() {
               </select>
             </div>
             {me.role !== "rep" ? (
-              <div className="field" style={{ margin: 0 }}>
+              <div className="field m0">
                 <label>Send it to</label>
                 <select className="input" value={ask.toCity}
                   onChange={(e) => setAsk({ ...ask, toCity: e.target.value })}>
@@ -336,8 +336,8 @@ export default function StockPage() {
             ) : null}
             <input className="input" placeholder="Why do you need it? (optional)" value={ask.note}
               onChange={(e) => setAsk({ ...ask, note: e.target.value })} />
-            {askErr ? <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>{askErr}</div> : null}
-            <button className="btn btn-primary btn-block" style={{ padding: 10 }}
+            {askErr ? <div className="tag tag-hot self-start">{askErr}</div> : null}
+            <button className="btn btn-primary btn-block p-3"
               onClick={async () => {
                 setAskErr("");
                 try {
@@ -360,8 +360,8 @@ export default function StockPage() {
         ) : (
           (data.transferRequests ?? []).map((r: any) => (
             <div key={r.id} className="listrow" style={{ alignItems: "flex-start", gap: 8 }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13 }}>
+              <div className="f1min">
+                <div className="fs-small">
                   <span className="hnum">{r.qty}</span> × {r.productName}
                   <span className="muted"> · {r.fromName} → {r.toName}</span>
                 </div>
@@ -381,15 +381,15 @@ export default function StockPage() {
                     exception: there is nobody above them to ask. */}
                 {r.status === "pending" && data.canApproveTransfer
                   && (r.requestedBy !== me.id || me.role === "admin") ? (
-                  <div className="row" style={{ gap: 6 }}>
-                    <button className="btn btn-ghost" style={{ fontSize: 12 }}
+                  <div className="row gap-2">
+                    <button className="btn btn-ghost fs-caption"
                       onClick={() => decideTransfer(r.id, "approve")}>Approve</button>
                     <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-coral-deep)" }}
                       onClick={() => decideTransfer(r.id, "reject")}>Decline</button>
                   </div>
                 ) : null}
                 {r.status === "supervisor_ok" && data.canFulfilTransfer ? (
-                  <div className="row" style={{ gap: 6 }}>
+                  <div className="row gap-2">
                     <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-green-deep)" }}
                       onClick={() => decideTransfer(r.id, "fulfil")}>Mark moved</button>
                     <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-coral-deep)" }}
@@ -403,14 +403,14 @@ export default function StockPage() {
       </div>
 
       {me.role === "rep" && myCity !== "main" && data.weeklyStockCheck ? (
-        <div className="card" style={{ gap: 10 }}>
-          <h6 style={{ margin: 0 }}>Weekly stock check — {data.myCityLabel}</h6>
+        <div className="card gap-3">
+          <h6 className="m0">Weekly stock check — {data.myCityLabel}</h6>
           {data.mustCheck ? (
             <>
               <div className="hint">Count what you physically have. Don&apos;t look at the system numbers — count first.</div>
               {data.stock.map((s: any) => (
                 <div key={s.productId} className="row" style={{ gap: 8, fontSize: 13 }}>
-                  <span style={{ flex: 1 }}>{s.name}</span>
+                  <span className="f1">{s.name}</span>
                   <input className="input" style={{ width: 80, minHeight: 32, textAlign: "right" }} inputMode="numeric"
                     placeholder="0" value={counts[s.productId] ?? ""}
                     onChange={(e) => setCounts((c) => ({ ...c, [s.productId]: e.target.value }))} />
@@ -421,7 +421,7 @@ export default function StockPage() {
               <button className="btn btn-primary btn-block" style={{ padding: 11 }} onClick={submitCheck}>Submit count to accountant</button>
             </>
           ) : (
-            <div className="tag tag-ok" style={{ alignSelf: "flex-start" }}>This week&apos;s check is submitted ✓</div>
+            <div className="tag tag-ok self-start">This week&apos;s check is submitted ✓</div>
           )}
           {checkMsg ? <div className="small" style={{ color: "var(--c-green-deep)" }}>{checkMsg}</div> : null}
         </div>
@@ -429,8 +429,8 @@ export default function StockPage() {
 
       {isAcct ? (
         <>
-          <div className="card" style={{ gap: 10 }}>
-            <h6 style={{ margin: 0 }}>Transfer to a city</h6>
+          <div className="card gap-3">
+            <h6 className="m0">Transfer to a city</h6>
             <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 8 }}>
               <select className="input" value={transfer.productId} onChange={(e) => setTransfer({ ...transfer, productId: e.target.value })}>
                 <option value="">Product…</option>
@@ -447,13 +447,13 @@ export default function StockPage() {
           </div>
 
           {data.checks?.length ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="stack-2">
               <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Weekly checks from reps</h6>
               {data.checks.map((c: any) => (
                 <div key={c.id} className="card" style={{ gap: 8, padding: 12, borderColor: c.hasDiff && !c.reviewedBy ? "var(--c-amber)" : undefined }}>
-                  <div className="row" style={{ gap: 8 }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500 }}>{c.userName} · {label(c.city)}</div>
+                  <div className="row gap-2">
+                    <div className="f1">
+                      <div className="fs-small w-500">{c.userName} · {label(c.city)}</div>
                       <div className="small muted">week of {dmy(c.weekStart)} · submitted {dmy(c.ts)}</div>
                     </div>
                     {c.reviewedBy ? <span className="tag tag-ok">Reviewed</span> : c.hasDiff ? <span className="tag tag-warn">Differences</span> : <span className="tag tag-ok">Matches</span>}
@@ -461,14 +461,14 @@ export default function StockPage() {
                   <div style={{ display: "flex", flexDirection: "column", gap: 3, fontSize: 12 }}>
                     {c.rows.map((r: any) => (
                       <div key={r.productId} className="row" style={{ gap: 8, color: r.counted !== r.system ? "var(--c-coral-deep)" : "var(--color-neutral-600)" }}>
-                        <span style={{ flex: 1 }}>{r.productName}</span>
+                        <span className="f1">{r.productName}</span>
                         <span>counted <b>{r.counted}</b> · system <b>{r.system}</b></span>
                       </div>
                     ))}
                   </div>
                   {c.note ? <div className="small muted">&quot;{c.note}&quot;</div> : null}
                   {!c.reviewedBy ? (
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <div className="two">
                       <button className="btn btn-primary" style={{ padding: 8, fontSize: 12 }}
                         onClick={async () => { await api("/api/stock", { json: { action: "reviewCheck", id: c.id, applyCounts: true } }); load(); }}>
                         Accept counts (fix system)
@@ -484,19 +484,19 @@ export default function StockPage() {
             </div>
           ) : null}
 
-          <button className="btn btn-secondary" style={{ padding: 10 }} onClick={() => fileRef.current?.click()}>
+          <button className="btn btn-secondary p-3" onClick={() => fileRef.current?.click()}>
             <Icon d={paths.upload} size={14} /> Upload main-warehouse count (.xlsx)
           </button>
-          <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{ display: "none" }} onChange={onFile} />
+          <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={onFile} />
           {preview ? (
             <div className="soft-accent" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-              <div className="row" style={{ gap: 8 }}>
+              <div className="row gap-2">
                 <Icon d={paths.file} size={16} stroke="var(--color-accent-700)" />
                 <div style={{ flex: 1, fontSize: 13, fontWeight: 500, color: "var(--color-accent-800)" }}>{preview.filename}</div>
                 <span className="small" style={{ color: "var(--color-accent-700)" }}>replaces main-warehouse counts</span>
               </div>
               <div className="small" style={{ color: "var(--color-accent-800)" }}>{preview.rows.length} rows — confirm to apply.</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <div className="two">
                 <button className="btn btn-primary" style={{ padding: 9 }} onClick={confirmUpload}>Confirm</button>
                 <button className="btn btn-secondary" style={{ padding: 9 }} onClick={() => setPreview(null)}>Cancel</button>
               </div>
@@ -504,7 +504,7 @@ export default function StockPage() {
           ) : null}
           {result ? (
             <div className="card" style={{ gap: 4 }}>
-              <span className="tag tag-ok" style={{ alignSelf: "flex-start" }}>{result.processed} rows applied</span>
+              <span className="tag tag-ok self-start">{result.processed} rows applied</span>
               {result.errors.map((e, i) => <div key={i} className="small" style={{ color: "var(--c-amber-deep)" }}>{e}</div>)}
             </div>
           ) : null}
@@ -514,7 +514,7 @@ export default function StockPage() {
               <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Recent transfers</h6>
               {data.transfers.map((t: any) => (
                 <div key={t.id} className="small muted" style={{ display: "flex", gap: 8 }}>
-                  <span style={{ flex: 1 }}>{t.qty} × {t.productName} · {label(t.from)} → {label(t.to)}</span>
+                  <span className="f1">{t.qty} × {t.productName} · {label(t.from)} → {label(t.to)}</span>
                   <span>{dmy(t.ts)} · {t.byName}</span>
                 </div>
               ))}
@@ -523,7 +523,7 @@ export default function StockPage() {
         </>
       ) : null}
 
-      <div className="hint" style={{ marginTop: "auto" }}>
+      <div className="hint mt-auto">
         {isMgmt
           ? "Invoices deduct from the seller's city stock automatically. Highlighted column = low at or below " + low + "."
           : `Your city column is highlighted. Invoiced orders deduct from ${data.myCityLabel} stock automatically.`}

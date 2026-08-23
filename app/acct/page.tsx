@@ -41,25 +41,25 @@ export default function AcctDashboard() {
   return (
     <Screen me={me} wide>
       <div className="row">
-        <h4 style={{ margin: 0, flex: 1 }}>Money — {monthName(data.period)}</h4>
+        <h4 className="m0 f1">Money — {monthName(data.period)}</h4>
         <button className="btn btn-secondary btn-icon" style={{ }} onClick={logout} title="Sign out">
           <Icon d={paths.logout} size={17} />
         </button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+      <div className="two-3">
         <div className="blueprint" style={{ padding: 12 }}>
           <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--color-accent-700)" }}>Sales MTD</div>
-          <div className="hnum" style={{ fontSize: 18 }}>{money0(k.salesMTD)}</div>
+          <div className="hnum fs-lead">{money0(k.salesMTD)}</div>
         </div>
         <div className="blueprint" style={{ padding: 12 }}>
           <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-green-deep)" }}>Collected MTD</div>
-          <div className="hnum" style={{ fontSize: 18 }}>{money0(k.collectedMTD)}</div>
+          <div className="hnum fs-lead">{money0(k.collectedMTD)}</div>
           <div className="small muted">today {money0(k.collectedToday)}</div>
         </div>
         <Link href="/acct/queue" className="blueprint" style={{ padding: 12, textDecoration: "none", color: "inherit" }}>
           <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-coral-deep)" }}>Invoice queue</div>
-          <div className="hnum" style={{ fontSize: 18 }}>{k.queueCount} waiting →</div>
+          <div className="hnum fs-lead">{k.queueCount} waiting →</div>
         </Link>
       </div>
 
@@ -77,12 +77,12 @@ export default function AcctDashboard() {
           {data.collections.length === 0 ? <div className="card muted">Nothing collected this month yet.</div> : null}
           {data.collections.map((c: any) => (
             <div key={c.ref} className="listrow">
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13 }}><DoctorLink id={c.doctorId} name={c.doctor} /></div>
+              <div className="f1min">
+                <div className="fs-small"><DoctorLink id={c.doctorId} name={c.doctor} /></div>
                 <div className="small muted">{c.rep} · {dmy(c.ts)} {hm(c.ts)} · {c.method}{c.note ? ` · ${c.note}` : ""}</div>
               </div>
               {c.photo ? <a className="small" href={`/api/files?id=${c.photo}`} target="_blank">receipt</a> : <span className="small" style={{ color: "var(--c-amber-deep)" }}>no photo</span>}
-              <span className="hnum" style={{ fontSize: 15 }}>{money(c.amount)}</span>
+              <span className="hnum fs-body">{money(c.amount)}</span>
             </div>
           ))}
         </>
@@ -91,15 +91,15 @@ export default function AcctDashboard() {
       {tab === "recon" ? (
         <>
           <div className="hint">Per rep per day — match the cash column against what was physically handed in, then enter it in the accounting system.</div>
-          <table className="table" style={{ fontSize: 12 }}>
-            <thead><tr><th>Rep</th><th>Date</th><th style={{ textAlign: "right" }}>Cash</th><th style={{ textAlign: "right" }}>Transfer</th><th style={{ textAlign: "right" }}>Receipts</th></tr></thead>
+          <table className="table fs-caption">
+            <thead><tr><th>Rep</th><th>Date</th><th className="ta-r">Cash</th><th className="ta-r">Transfer</th><th className="ta-r">Receipts</th></tr></thead>
             <tbody>
               {data.reconciliation.map((r: any, i: number) => (
                 <tr key={i}>
                   <td>{r.rep}</td><td>{dmy(r.date)}</td>
                   <td style={{ textAlign: "right", fontWeight: 700 }}>{r.cash ? money0(r.cash) : "—"}</td>
-                  <td style={{ textAlign: "right" }}>{r.transfer ? money0(r.transfer) : "—"}</td>
-                  <td style={{ textAlign: "right" }}>{r.receipts}</td>
+                  <td className="ta-r">{r.transfer ? money0(r.transfer) : "—"}</td>
+                  <td className="ta-r">{r.receipts}</td>
                 </tr>
               ))}
               {data.reconciliation.length === 0 ? <tr><td colSpan={5} className="muted">No payments this month.</td></tr> : null}
@@ -111,17 +111,17 @@ export default function AcctDashboard() {
       {tab === "people" ? (
         <>
           <div className="hint">This month per person — full detail on the <Link href="/acct/payroll">Payroll</Link> and <Link href="/spendings">Spendings</Link> pages.</div>
-          <table className="table" style={{ fontSize: 12 }}>
-            <thead><tr><th>Person</th><th style={{ textAlign: "right" }}>Base</th><th style={{ textAlign: "right" }}>Commission</th><th style={{ textAlign: "right" }}>Spendings</th><th style={{ textAlign: "right" }}>Deducted</th><th></th></tr></thead>
+          <table className="table fs-caption">
+            <thead><tr><th>Person</th><th className="ta-r">Base</th><th className="ta-r">Commission</th><th className="ta-r">Spendings</th><th className="ta-r">Deducted</th><th></th></tr></thead>
             <tbody>
               {data.people.map((p: any) => (
                 <tr key={p.name}>
                   <td>{p.name}</td>
-                  <td style={{ textAlign: "right" }}>{money0(p.base)}</td>
+                  <td className="ta-r">{money0(p.base)}</td>
                   <td style={{ textAlign: "right", color: "var(--c-green-deep)" }}>{p.commission ? money0(p.commission) : "—"}</td>
-                  <td style={{ textAlign: "right" }}>{p.spendings ? money0(p.spendings) : "—"}</td>
+                  <td className="ta-r">{p.spendings ? money0(p.spendings) : "—"}</td>
                   <td style={{ textAlign: "right", color: p.deducted ? "var(--c-coral-deep)" : undefined }}>{p.deducted ? money0(p.deducted) : "—"}</td>
-                  <td style={{ textAlign: "right" }}>{p.paid ? <span className="tag tag-ok">Paid</span> : <span className="tag tag-warn">Due</span>}</td>
+                  <td className="ta-r">{p.paid ? <span className="tag tag-ok">Paid</span> : <span className="tag tag-warn">Due</span>}</td>
                 </tr>
               ))}
             </tbody>

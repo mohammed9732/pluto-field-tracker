@@ -10,10 +10,10 @@ export function PerformanceView({ data }: { data: any }) {
   return (
     <>
       {/* Visits — spelled out so the numbers explain themselves. */}
-      <div className="card" style={{ gap: 8 }}>
+      <div className="card gap-2">
         <div className="row" style={{ alignItems: "baseline", gap: 8 }}>
-          <h6 style={{ margin: 0, flex: 1 }}>Visits this month</h6>
-          <span className="hnum" style={{ fontSize: 28 }}>{v.total}</span>
+          <h6 className="m0 f1">Visits this month</h6>
+          <span className="hnum fs-h2">{v.total}</span>
           <span className="small muted">of {v.required} expected</span>
         </div>
         <Meter pct={hitRate} gray={hitRate < 80} />
@@ -27,7 +27,7 @@ export function PerformanceView({ data }: { data: any }) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+      <div className="two-3">
         <div className="blueprint" style={{ padding: 12 }}>
           <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-coral-deep)" }}>Field time</div>
           <div className="hnum" style={{ fontSize: 22 }}>{durationHM(data.field.avgMinutes)}</div>
@@ -38,15 +38,15 @@ export function PerformanceView({ data }: { data: any }) {
         </div>
         <div className="blueprint" style={{ padding: 12 }}>
           <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-green-deep)" }}>Collected</div>
-          <div className="hnum" style={{ fontSize: 18 }}>{money(data.collected)}</div>
+          <div className="hnum fs-lead">{money(data.collected)}</div>
           <div className="small muted">this month</div>
         </div>
       </div>
 
       {/* Coverage — explained in words, not a bar. */}
-      <div className="card" style={{ gap: 8 }}>
+      <div className="card gap-2">
         <div className="row" style={{ alignItems: "baseline", gap: 8 }}>
-          <h6 style={{ margin: 0, flex: 1 }}>Doctors reached</h6>
+          <h6 className="m0 f1">Doctors reached</h6>
           <span className="hnum" style={{ fontSize: 22 }}>{data.coverage.visited}</span>
           <span className="small muted">of {data.coverage.total}{data.cityLabel ? ` in ${data.cityLabel}` : ""}</span>
         </div>
@@ -56,7 +56,7 @@ export function PerformanceView({ data }: { data: any }) {
         {data.byClass.length ? (
           <table className="table" style={{ fontSize: 12, marginTop: 4 }}>
             <thead>
-              <tr><th>Class</th><th style={{ textAlign: "right" }}>Reached</th><th style={{ textAlign: "right" }}>Visits</th></tr>
+              <tr><th>Class</th><th className="ta-r">Reached</th><th className="ta-r">Visits</th></tr>
             </thead>
             <tbody>
               {data.byClass.map((c: any) => (
@@ -65,7 +65,7 @@ export function PerformanceView({ data }: { data: any }) {
                   <td style={{ textAlign: "right", fontWeight: 700, color: c.reached < c.total ? "var(--c-amber-deep)" : "var(--c-green-deep)" }}>
                     {c.reached} / {c.total}
                   </td>
-                  <td style={{ textAlign: "right" }}>{c.visits}</td>
+                  <td className="ta-r">{c.visits}</td>
                 </tr>
               ))}
             </tbody>
@@ -75,11 +75,11 @@ export function PerformanceView({ data }: { data: any }) {
       </div>
 
       {data.cityDays?.length ? (
-        <div className="card" style={{ gap: 6 }}>
-          <h6 style={{ margin: 0 }}>Days per city</h6>
+        <div className="card gap-2">
+          <h6 className="m0">Days per city</h6>
           {data.cityDays.map((c: any) => (
-            <div key={c.city} className="row" style={{ fontSize: 13 }}>
-              <span style={{ flex: 1 }}>{c.label}</span>
+            <div key={c.city} className="row fs-small">
+              <span className="f1">{c.label}</span>
               <b className="hnum">{c.days} day{c.days === 1 ? "" : "s"}</b>
             </div>
           ))}
@@ -87,12 +87,12 @@ export function PerformanceView({ data }: { data: any }) {
       ) : null}
 
       {data.accrual.length ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className="stack-2">
           <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Product targets</h6>
           {data.accrual.map((r: any) => (
-            <div key={r.productId} className="row" style={{ fontSize: 12 }}>
+            <div key={r.productId} className="row fs-caption">
               <span style={{ width: 108, flex: "none" }}>{r.productName}</span>
-              <div style={{ flex: 1 }}><Meter pct={r.achievementPct} min={r.minPct} gray={!r.qualified} /></div>
+              <div className="f1"><Meter pct={r.achievementPct} min={r.minPct} gray={!r.qualified} /></div>
               <b style={{ width: 66, textAlign: "right", color: r.qualified ? "var(--c-green-deep)" : "var(--c-amber-deep)" }}>
                 {r.achievedQty}/{r.targetQty}
               </b>
@@ -102,22 +102,22 @@ export function PerformanceView({ data }: { data: any }) {
       ) : null}
 
       <div className="two-col" style={{ gap: 14 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div className="stack-2">
           <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Most visited</h6>
           {data.mostVisited.map((d: any) => (
-            <div key={d.name} className="row" style={{ fontSize: 12 }}>
-              <span style={{ flex: 1 }}><DoctorLink id={d.id} name={d.name} /></span>
+            <div key={d.name} className="row fs-caption">
+              <span className="f1"><DoctorLink id={d.id} name={d.name} /></span>
               <span className={`tag ${d.class === "A" ? "tag-accent" : "tag-neutral"}`}>{d.class}</span>
               <b className="hnum">×{d.n}</b>
             </div>
           ))}
           {data.mostVisited.length === 0 ? <div className="small muted">No visits yet this month.</div> : null}
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div className="stack-2">
           <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Not visited yet</h6>
           {data.leastVisited.map((d: any) => (
             <div key={d.name} className="row" style={{ fontSize: 12, color: "var(--color-neutral-600)" }}>
-              <span style={{ flex: 1 }}><DoctorLink id={d.id} name={d.name} /></span>
+              <span className="f1"><DoctorLink id={d.id} name={d.name} /></span>
               <span className={`tag ${d.class === "A" ? "tag-accent" : "tag-neutral"}`}>{d.class}</span>
             </div>
           ))}
@@ -126,16 +126,16 @@ export function PerformanceView({ data }: { data: any }) {
       </div>
 
       {data.leaderboardOn && data.leaderboard.length ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className="stack-2">
           <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Leaderboard — {monthName(data.period)}</h6>
           {data.leaderboard.map((r: any, i: number) => (
-            <div key={r.name} className="listrow" style={{ padding: "8px 0" }}>
+            <div key={r.name} className="listrow py-2">
               <span className="hnum" style={{ width: 22, fontSize: 16, color: i === 0 ? "var(--c-amber-deep)" : "var(--color-neutral-500)" }}>{i + 1}</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 500 }}>{r.name}</div>
+              <div className="f1">
+                <div className="fs-small w-500">{r.name}</div>
                 <div className="small muted">{r.visits} visits · {money(r.collected)} collected</div>
               </div>
-              <b className="hnum" style={{ fontSize: 15 }}>{r.avgPct}%</b>
+              <b className="hnum fs-body">{r.avgPct}%</b>
             </div>
           ))}
         </div>

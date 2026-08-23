@@ -65,7 +65,7 @@ export default function Login() {
               <label>Password</label>
               <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
-            {err ? <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>{err}</div> : null}
+            {err ? <div className="tag tag-hot self-start">{err}</div> : null}
             <button className="btn btn-primary btn-block" style={{ padding: 12 }} disabled={busy}>
               {busy ? "Signing in…" : "Sign in"}
             </button>

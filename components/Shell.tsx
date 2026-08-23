@@ -309,8 +309,8 @@ export function AlertsBar() {
           {data.notifications.length === 0 ? <div className="small muted" style={{ padding: 8 }}>Nothing yet.</div> : null}
           {data.notifications.map((n: any) => (
             <a key={n.id} href={n.href ?? "#"} style={{ textDecoration: "none", color: "inherit", padding: "7px 8px", borderRadius: 10, background: n.read ? "transparent" : "var(--color-accent-100)" }}>
-              <div style={{ fontSize: 12 }}>{n.body}</div>
-              <div className="small muted" style={{ fontSize: 12 }}>{n.ts.slice(0, 10).split("-").reverse().join("-")} {n.ts.slice(11, 16)}</div>
+              <div className="fs-caption">{n.body}</div>
+              <div className="small muted fs-caption">{n.ts.slice(0, 10).split("-").reverse().join("-")} {n.ts.slice(11, 16)}</div>
             </a>
           ))}
         </div>
@@ -374,7 +374,7 @@ export function PageHead({ title, back, right }: { title: string; back?: string;
           <Icon d={paths.back} size={17} />
         </button>
       ) : null}
-      <h4 style={{ margin: 0, flex: 1 }}>{title}</h4>
+      <h4 className="m0 f1">{title}</h4>
       {right}
     </div>
   );

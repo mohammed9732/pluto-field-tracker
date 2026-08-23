@@ -156,9 +156,9 @@ export function ChatDock() {
             </div>
           ) : null}
           <div className="chatdock-foot">
-            <input ref={imgRef} type="file" accept="image/*" style={{ display: "none" }}
+            <input ref={imgRef} type="file" accept="image/*" className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAndSend(f, "image", f.name); e.target.value = ""; }} />
-            <input ref={fileRef} type="file" style={{ display: "none" }}
+            <input ref={fileRef} type="file" className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAndSend(f, "file", f.name); e.target.value = ""; }} />
             {attachOn ? (
               <>

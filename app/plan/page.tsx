@@ -102,11 +102,11 @@ export default function MyPlan() {
 
   return (
     <Screen me={me}>
-      <div className="row" style={{ alignItems: "baseline" }}>
-        <h4 style={{ margin: 0, flex: 1 }}>My weekly plan</h4>
+      <div className="row items-base">
+        <h4 className="m0 f1">My weekly plan</h4>
         {statusTag}
       </div>
-      <div className="small muted" style={{ fontSize: 12 }}>
+      <div className="small muted fs-caption">
         Week of Sat {dm(data.nextWeekStart)} → Thu {dm(weekEnd)}
         {isSup ? " · pick the city you work each day" : ` · ${tVisit} to visit + ${tBackup} backup per day`}
       </div>
@@ -137,15 +137,15 @@ export default function MyPlan() {
       {plan?.status === "returned" && plan.note ? (
         <div className="card" style={{ borderColor: "var(--c-coral)", gap: 4 }}>
           <div className="small" style={{ color: "var(--c-coral-deep)", fontWeight: 600 }}>Returned with a note</div>
-          <div style={{ fontSize: 13 }}>&quot;{plan.note}&quot;</div>
+          <div className="fs-small">&quot;{plan.note}&quot;</div>
         </div>
       ) : null}
 
       {isSup ? (
         /* Supervisor: one city per day, optionally riding with a rep. */
         days.map((d, i) => (
-          <div key={d.day} className="card" style={{ gap: 8 }}>
-            <div className="row" style={{ gap: 8 }}>
+          <div key={d.day} className="card gap-2">
+            <div className="row gap-2">
               <span className="hnum" style={{ fontSize: 15, width: 34, color: "var(--color-neutral-500)" }}>{d.day}</span>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flex: 1 }}>
                 {(data.cities ?? []).map((c: any) => (
@@ -173,7 +173,7 @@ export default function MyPlan() {
             ) : null}
             {d.city && !d.jointWith ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 6, borderTop: "1px solid var(--color-divider)", paddingTop: 8 }}>
-                <div className="row" style={{ gap: 6 }}>
+                <div className="row gap-2">
                   <span className="small" style={{ flex: 1, color: d.doctorIds.length >= tVisit ? "var(--c-green-deep)" : "var(--c-amber-deep)", fontWeight: 600 }}>
                     Solo day — pick the doctors you will see
                   </span>
@@ -190,10 +190,10 @@ export default function MyPlan() {
                     onClick={() => { setPicker({ dayIdx: i, kind: "visit" }); setQ(""); }}>＋ doctor</button>
                 </div>
                 {picker?.dayIdx === i ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    <div className="row" style={{ gap: 6 }}>
+                  <div className="stack-2">
+                    <div className="row gap-2">
                       <input className="input" autoFocus placeholder="Search doctors in this city…" value={q} onChange={(e) => setQ(e.target.value)} style={{ minHeight: 32, fontSize: 13 }} />
-                      <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => setPicker(null)}>Done</button>
+                      <button className="btn btn-ghost fs-caption" onClick={() => setPicker(null)}>Done</button>
                     </div>
                     {doctors
                       .filter((doc) => doc.city === d.city && !d.doctorIds.includes(doc.id))
@@ -221,8 +221,8 @@ export default function MyPlan() {
         days.map((d, i) => {
           const short = d.doctorIds.length < tVisit || d.backupIds.length < tBackup;
           return (
-            <div key={d.day} className="card" style={{ gap: 8 }}>
-              <div className="row" style={{ gap: 8 }}>
+            <div key={d.day} className="card gap-2">
+              <div className="row gap-2">
                 <span className="hnum" style={{ fontSize: 15, width: 34, color: "var(--color-neutral-500)" }}>{d.day}</span>
                 <input className="input" placeholder="Area / route" value={d.area}
                   onChange={(e) => setDays((ds) => ds.map((x, j) => (j === i ? { ...x, area: e.target.value } : x)))}
@@ -251,9 +251,9 @@ export default function MyPlan() {
               </div>
               {picker?.dayIdx === i ? (
                 <div style={{ borderTop: "1px solid var(--color-divider)", paddingTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
-                  <div className="row" style={{ gap: 6 }}>
+                  <div className="row gap-2">
                     <input className="input" autoFocus placeholder={`Add ${picker.kind === "visit" ? "visit" : "backup"} doctor…`} value={q} onChange={(e) => setQ(e.target.value)} style={{ minHeight: 32, fontSize: 13 }} />
-                    <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => setPicker(null)}>Done</button>
+                    <button className="btn btn-ghost fs-caption" onClick={() => setPicker(null)}>Done</button>
                   </div>
                   {pickList.map((doc) => (
                     <button key={doc.id} onClick={() => addDoctor(doc.id)} className="row" style={{ gap: 8, background: "none", border: "none", cursor: "pointer", font: "inherit", textAlign: "left", padding: "4px 0" }}>
@@ -271,12 +271,12 @@ export default function MyPlan() {
       )}
 
       <div className="row" style={{ fontSize: 12, color: "var(--color-neutral-600)" }}>
-        <span style={{ flex: 1 }}>{isSup ? "Days planned" : "Total planned"}</span>
+        <span className="f1">{isSup ? "Days planned" : "Total planned"}</span>
         <span className="hnum" style={{ fontSize: 18, color: "var(--color-accent-700)" }}>
           {isSup ? `${days.filter((d) => d.city).length} days · ${total} meetings` : `${total} visits`}
         </span>
       </div>
-      {err ? <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>{err}</div> : null}
+      {err ? <div className="tag tag-hot self-start">{err}</div> : null}
       <button className="btn btn-primary btn-block" style={{ padding: 12, marginTop: "auto" }} onClick={submit} disabled={busy || total === 0}>
         {busy ? "Submitting…" : plan && plan.status !== "returned" ? "Re-submit plan" : "Submit plan"}
       </button>

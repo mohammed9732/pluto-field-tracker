@@ -60,10 +60,10 @@ export default function MonthlyReport() {
   }
 
   const S = ({ letter, title, children }: { letter: string; title: string; children: React.ReactNode }) => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <div className="row" style={{ gap: 8 }}>
+    <div className="stack-2">
+      <div className="row gap-2">
         <span className="hnum" style={{ fontSize: 15, color: "var(--color-accent-700)" }}>{letter}</span>
-        <h6 style={{ margin: 0 }}>{title}</h6>
+        <h6 className="m0">{title}</h6>
       </div>
       {children}
     </div>
@@ -72,7 +72,7 @@ export default function MonthlyReport() {
   return (
     <Screen me={me} wide>
         <div className="row no-print" style={{ flexWrap: "wrap", gap: 10 }}>
-          <h4 style={{ margin: 0 }}>Monthly report</h4>
+          <h4 className="m0">Monthly report</h4>
           <select className="input" style={{ width: "auto" }} value={period} onChange={(e) => setPeriod(e.target.value)}>
             {monthOptions.map((m) => <option key={m} value={m}>{monthName(m)}</option>)}
           </select>
@@ -81,16 +81,16 @@ export default function MonthlyReport() {
             <button className="btn btn-secondary" style={{ padding: "9px 16px" }} onClick={exportExcel}>Export Excel</button>
           </div>
         </div>
-        <div style={{ display: "none" }} className="print-title">
+        <div className="print-title hidden">
           <h3>Pluto Field Tracker — {monthName(period)}</h3>
         </div>
 
         <S letter="a" title="Visits vs plan (incl. joint visits)">
-          <table className="table" style={{ fontSize: 12 }}>
-            <thead><tr><th>Person</th><th style={{ textAlign: "right" }}>Visits</th><th style={{ textAlign: "right" }}>Plan</th><th style={{ textAlign: "right" }}>Joint</th><th style={{ textAlign: "right" }}>Samples</th></tr></thead>
+          <table className="table fs-caption">
+            <thead><tr><th>Person</th><th className="ta-r">Visits</th><th className="ta-r">Plan</th><th className="ta-r">Joint</th><th className="ta-r">Samples</th></tr></thead>
             <tbody>
               {data.visitRows.map((r: any) => (
-                <tr key={r.name}><td>{r.name}</td><td style={{ textAlign: "right", fontWeight: 700 }}>{r.visits}</td><td style={{ textAlign: "right" }}>{r.plan}</td><td style={{ textAlign: "right" }}>{r.joint}</td><td style={{ textAlign: "right", color: "var(--c-violet-deep)" }}>{r.samples || "—"}</td></tr>
+                <tr key={r.name}><td>{r.name}</td><td style={{ textAlign: "right", fontWeight: 700 }}>{r.visits}</td><td className="ta-r">{r.plan}</td><td className="ta-r">{r.joint}</td><td style={{ textAlign: "right", color: "var(--c-violet-deep)" }}>{r.samples || "—"}</td></tr>
               ))}
             </tbody>
           </table>
@@ -119,11 +119,11 @@ export default function MonthlyReport() {
               )} />
             </div>
           </div>
-          <table className="table" style={{ fontSize: 12 }}>
-            <thead><tr><th>Product</th><th>City</th><th>Rep</th><th style={{ textAlign: "right" }}>Qty</th><th style={{ textAlign: "right" }}>Value</th></tr></thead>
+          <table className="table fs-caption">
+            <thead><tr><th>Product</th><th>City</th><th>Rep</th><th className="ta-r">Qty</th><th className="ta-r">Value</th></tr></thead>
             <tbody>
               {data.salesRows.map((r: any, i: number) => (
-                <tr key={i}><td>{r.product}</td><td>{r.city}</td><td>{r.rep}</td><td style={{ textAlign: "right" }}>{r.qty}</td><td style={{ textAlign: "right", fontWeight: 700 }}>{money(r.value)}</td></tr>
+                <tr key={i}><td>{r.product}</td><td>{r.city}</td><td>{r.rep}</td><td className="ta-r">{r.qty}</td><td style={{ textAlign: "right", fontWeight: 700 }}>{money(r.value)}</td></tr>
               ))}
               {data.salesRows.length === 0 ? <tr><td colSpan={5} className="muted">No approved sales this month.</td></tr> : null}
             </tbody>
@@ -131,13 +131,13 @@ export default function MonthlyReport() {
         </S>
 
         <S letter="c" title="Target achievement %">
-          <table className="table" style={{ fontSize: 12 }}>
-            <thead><tr><th>Person</th><th>Product</th><th style={{ textAlign: "right" }}>Achieved</th><th style={{ textAlign: "right" }}>%</th><th style={{ textAlign: "right" }}>Min</th></tr></thead>
+          <table className="table fs-caption">
+            <thead><tr><th>Person</th><th>Product</th><th className="ta-r">Achieved</th><th className="ta-r">%</th><th className="ta-r">Min</th></tr></thead>
             <tbody>
               {data.achievementRows.map((r: any, i: number) => (
                 <tr key={i}>
                   <td>{r.name}</td><td>{r.productName}</td>
-                  <td style={{ textAlign: "right" }}>{r.achievedQty}/{r.targetQty}</td>
+                  <td className="ta-r">{r.achievedQty}/{r.targetQty}</td>
                   <td style={{ textAlign: "right", fontWeight: 700, color: r.qualified ? "var(--c-green-deep)" : "var(--c-amber-deep)" }}>{Math.round(r.achievementPct)}%</td>
                   <td style={{ textAlign: "right", color: "var(--color-neutral-600)" }}>{r.minPct}%</td>
                 </tr>
@@ -147,8 +147,8 @@ export default function MonthlyReport() {
         </S>
 
         <S letter="d" title="Incentives accrued">
-          <div className="row" style={{ alignItems: "baseline" }}>
-            <span className="hnum" style={{ fontSize: 28 }}>{money(data.incentivesTotal)}</span>
+          <div className="row items-base">
+            <span className="hnum fs-h2">{money(data.incentivesTotal)}</span>
             <span className="small muted">across {new Set(data.achievementRows.filter((r: any) => r.incentiveAmount > 0).map((r: any) => r.name)).size} people · collected in month: {money(data.collected)}</span>
           </div>
         </S>
@@ -174,8 +174,8 @@ export default function MonthlyReport() {
         </S>
 
         <S letter="f" title="Stock position & expiry alerts">
-          <table className="table" style={{ fontSize: 12 }}>
-            <thead><tr><th>Product</th><th style={{ textAlign: "right" }}>Qty</th><th style={{ textAlign: "right" }}>Expiry</th></tr></thead>
+          <table className="table fs-caption">
+            <thead><tr><th>Product</th><th className="ta-r">Qty</th><th className="ta-r">Expiry</th></tr></thead>
             <tbody>
               {data.stock.map((s: any) => (
                 <tr key={s.product}>
@@ -190,13 +190,13 @@ export default function MonthlyReport() {
 
         {data.competitors?.length ? (
           <S letter="h" title="Competitor activity seen in the field">
-            <table className="table" style={{ fontSize: 12 }}>
-              <thead><tr><th>Competitor</th><th>Product</th><th>Doctor</th><th style={{ textAlign: "right" }}>Their price</th><th>Seen by</th></tr></thead>
+            <table className="table fs-caption">
+              <thead><tr><th>Competitor</th><th>Product</th><th>Doctor</th><th className="ta-r">Their price</th><th>Seen by</th></tr></thead>
               <tbody>
                 {data.competitors.map((c: any, i: number) => (
                   <tr key={i}>
                     <td>{c.competitor}</td><td>{c.product || "—"}</td><td>{c.doctor}</td>
-                    <td style={{ textAlign: "right" }}>{c.price ? money(c.price) : "—"}</td>
+                    <td className="ta-r">{c.price ? money(c.price) : "—"}</td>
                     <td>{c.by}</td>
                   </tr>
                 ))}
@@ -207,7 +207,7 @@ export default function MonthlyReport() {
 
         <S letter="g" title="Leaves taken">
           {data.leaves.length === 0 ? <div className="small muted">No approved leave this month.</div> : (
-            <table className="table" style={{ fontSize: 12 }}>
+            <table className="table fs-caption">
               <thead><tr><th>Person</th><th>From</th><th>To</th><th>Type</th></tr></thead>
               <tbody>
                 {data.leaves.map((l: any, i: number) => (

@@ -51,7 +51,7 @@ export default function MonthEnd() {
   return (
     <Screen me={me} wide>
       <div className="row" style={{ alignItems: "baseline", flexWrap: "wrap" }}>
-        <h4 style={{ margin: 0, flex: 1 }}>Month-end pack</h4>
+        <h4 className="m0 f1">Month-end pack</h4>
         <button className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 11px" }} onClick={() => shiftMonth(-1)}>
           ← Earlier
         </button>
@@ -62,7 +62,7 @@ export default function MonthEnd() {
       </div>
 
       {data.isClosedAlready ? (
-        <div className="tag tag-ok" style={{ alignSelf: "flex-start" }}>
+        <div className="tag tag-ok self-start">
           Closed — these figures can no longer change
         </div>
       ) : null}
@@ -73,7 +73,7 @@ export default function MonthEnd() {
           body="Every missed day, spending and order for this month has been dealt with. Safe to pay." />
       ) : (
         <div className="card" style={{ gap: 8, borderColor: "var(--c-amber)" }}>
-          <div className="row" style={{ gap: 8 }}>
+          <div className="row gap-2">
             <span style={{ fontWeight: 700, flex: 1 }}>Deal with these first</span>
             <span className="tag tag-warn">{data.blockers.length}</span>
           </div>
@@ -93,27 +93,27 @@ export default function MonthEnd() {
       <div className="kpi-grid">
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">To hand over</span>
-          <span className="hnum" style={{ fontSize: 28 }}>{money(t.handOver)}</span>
-          <span className="small muted" style={{ fontSize: 12 }}>
+          <span className="hnum fs-h2">{money(t.handOver)}</span>
+          <span className="small muted fs-caption">
             wages {money(t.netPay)} + expenses {money(t.reimburse)}
           </span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">Sales this month</span>
-          <span className="hnum" style={{ fontSize: 28 }}>{money(t.sales)}</span>
-          <span className="small muted" style={{ fontSize: 12 }}>approved and invoiced orders</span>
+          <span className="hnum fs-h2">{money(t.sales)}</span>
+          <span className="small muted fs-caption">approved and invoiced orders</span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">Cash collected</span>
-          <span className="hnum" style={{ fontSize: 28 }}>{money(t.collected)}</span>
-          <span className="small muted" style={{ fontSize: 12 }}>commission {money(t.commission)}</span>
+          <span className="hnum fs-h2">{money(t.collected)}</span>
+          <span className="small muted fs-caption">commission {money(t.commission)}</span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">Deductions</span>
           <span className="hnum" style={{ fontSize: 28, color: t.deducted ? "var(--c-coral-deep)" : undefined }}>
             {money(t.deducted)}
           </span>
-          <span className="small muted" style={{ fontSize: 12 }}>
+          <span className="small muted fs-caption">
             {t.paidCount} of {data.people.length} already paid
           </span>
         </div>
@@ -137,13 +137,13 @@ export default function MonthEnd() {
           <thead>
             <tr>
               <th>Person</th>
-              <th style={{ textAlign: "right" }}>Base</th>
-              <th style={{ textAlign: "right" }}>Commission</th>
-              {data.isQuarterEnd ? <th style={{ textAlign: "right" }}>Quarter</th> : null}
-              <th style={{ textAlign: "right" }}>Deducted</th>
-              <th style={{ textAlign: "right" }}>Wages</th>
-              <th style={{ textAlign: "right" }}>Expenses</th>
-              <th style={{ textAlign: "right" }}>Hand over</th>
+              <th className="ta-r">Base</th>
+              <th className="ta-r">Commission</th>
+              {data.isQuarterEnd ? <th className="ta-r">Quarter</th> : null}
+              <th className="ta-r">Deducted</th>
+              <th className="ta-r">Wages</th>
+              <th className="ta-r">Expenses</th>
+              <th className="ta-r">Hand over</th>
               <th></th>
             </tr>
           </thead>
@@ -154,10 +154,10 @@ export default function MonthEnd() {
                   <div style={{ fontWeight: 600 }}>{p.name}</div>
                   <div className="small muted">{p.city}</div>
                 </td>
-                <td style={{ textAlign: "right" }}>{money(p.base)}</td>
-                <td style={{ textAlign: "right" }}>{p.commission ? money(p.commission) : "—"}</td>
+                <td className="ta-r">{money(p.base)}</td>
+                <td className="ta-r">{p.commission ? money(p.commission) : "—"}</td>
                 {data.isQuarterEnd ? (
-                  <td style={{ textAlign: "right" }}>{p.incentiveDue ? money(p.incentiveDue) : "—"}</td>
+                  <td className="ta-r">{p.incentiveDue ? money(p.incentiveDue) : "—"}</td>
                 ) : null}
                 <td style={{ textAlign: "right", color: p.deducted ? "var(--c-coral-deep)" : undefined }}>
                   {p.deducted ? `−${money(p.deducted)}` : "—"}
@@ -166,14 +166,14 @@ export default function MonthEnd() {
                   ) : null}
                 </td>
                 <td style={{ textAlign: "right", fontWeight: 700 }}>{money(p.netPay)}</td>
-                <td style={{ textAlign: "right" }}>
+                <td className="ta-r">
                   {p.reimburse ? money(p.reimburse) : "—"}
                   {p.spendingsPendingCount ? (
                     <div className="small" style={{ color: "var(--c-amber-deep)" }}>{p.spendingsPendingCount} pending</div>
                   ) : null}
                 </td>
                 <td style={{ textAlign: "right", fontWeight: 700 }}>{money(p.handOver)}</td>
-                <td style={{ textAlign: "right" }}>
+                <td className="ta-r">
                   {p.paid ? (
                     <span className="tag tag-ok">Paid {dmy(p.paid.paidAt)}</span>
                   ) : (

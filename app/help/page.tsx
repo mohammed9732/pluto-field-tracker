@@ -26,7 +26,7 @@ export default function HelpPage() {
         {t("help.intro", "Written for what you do. Tap a heading to open it.")}
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div className="stack-2">
         {sections.map((s) => {
           const isOpen = open === s.id;
           return (

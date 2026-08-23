@@ -81,14 +81,14 @@ export default function AcctQueue() {
 
   return (
     <Screen me={me} wide>
-      <div className="row" style={{ alignItems: "baseline" }}>
-        <h4 style={{ margin: 0, flex: 1 }}>Invoicing queue</h4>
+      <div className="row items-base">
+        <h4 className="m0 f1">Invoicing queue</h4>
         <span className="tag tag-accent">{orders.length} approved</span>
         <button className="btn btn-secondary btn-icon" style={{ }} onClick={logout} title="Sign out">
           <Icon d={paths.logout} size={17} />
         </button>
       </div>
-      <input ref={fileRef} type="file" accept=".pdf,image/*" style={{ display: "none" }} onChange={onFile} />
+      <input ref={fileRef} type="file" accept=".pdf,image/*" className="hidden" onChange={onFile} />
       {orders.length > 0 ? (
         <div className="row" style={{ gap: 8, padding: "10px 12px", background: "var(--c-coral-soft)", borderRadius: 14, fontSize: 13, fontWeight: 600, color: "var(--c-coral-deep)" }}>
           ⏱ {orders.length} approved order{orders.length === 1 ? "" : "s"} waiting for invoicing — doctors are waiting.
@@ -106,15 +106,15 @@ export default function AcctQueue() {
       {orders.map((o) => {
         const warn = stockWarning(o);
         return (
-          <div key={o.id} className="card" style={{ gap: 10 }}>
-            <div className="row" style={{ gap: 10 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 500 }}><DoctorLink id={o.doctor?.id} name={o.doctor?.name ?? "?"} /></div>
+          <div key={o.id} className="card gap-3">
+            <div className="row gap-3">
+              <div className="f1">
+                <div className="fs-small w-500"><DoctorLink id={o.doctor?.id} name={o.doctor?.name ?? "?"} /></div>
                 <div className="small muted">by {o.createdByName} · approved by {o.approvedByName} {o.approvedAt ? hm(o.approvedAt) : ""}</div>
               </div>
               {o.isSample
                 ? <span className="tag" style={{ background: "var(--c-violet-soft)", color: "var(--c-violet-deep)" }}>FREE SAMPLE</span>
-                : <span className="hnum" style={{ fontSize: 18 }}>{money(o.total)}</span>}
+                : <span className="hnum fs-lead">{money(o.total)}</span>}
             </div>
             <div style={{ fontSize: 12, color: "var(--color-neutral-700)", display: "flex", flexDirection: "column", gap: 2 }}>
               {o.items.map((it: any) => (
@@ -134,7 +134,7 @@ export default function AcctQueue() {
               </button>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 8 }}>
-              <button className="btn btn-primary" style={{ padding: 10 }} onClick={() => invoice(o)}>Confirm & invoice</button>
+              <button className="btn btn-primary p-3" onClick={() => invoice(o)}>Confirm & invoice</button>
             </div>
           </div>
         );
@@ -143,12 +143,12 @@ export default function AcctQueue() {
         <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Cash collected today</h6>
         {payments.length === 0 ? <div className="small muted">Nothing collected yet today.</div> : null}
         {payments.map((p) => (
-          <div key={p.id} className="listrow" style={{ padding: "8px 0" }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13 }}><DoctorLink id={p.doctorId} name={p.doctorName} /></div>
+          <div key={p.id} className="listrow py-2">
+            <div className="f1">
+              <div className="fs-small"><DoctorLink id={p.doctorId} name={p.doctorName} /></div>
               <div className="small muted">by {p.collectedByName} · {hm(p.ts)} · {p.method}</div>
             </div>
-            <span className="hnum" style={{ fontSize: 15 }}>{money(p.amount)}</span>
+            <span className="hnum fs-body">{money(p.amount)}</span>
           </div>
         ))}
       </div>

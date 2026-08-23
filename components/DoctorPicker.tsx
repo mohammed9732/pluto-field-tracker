@@ -11,11 +11,11 @@ export interface Doc {
 export function DoctorCard({ doctor, onChange }: { doctor: Doc; onChange: () => void }) {
   return (
     <div className="card" style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 12 }}>
-      <div style={{ flex: 1 }}>
+      <div className="f1">
         <div style={{ fontSize: 15, fontWeight: 500 }}>{doctor.name}</div>
         <div className="small muted">{doctor.clinic} · {doctor.specialty} · Class {doctor.class}</div>
       </div>
-      <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={onChange}>Change</button>
+      <button className="btn btn-ghost fs-caption" onClick={onChange}>Change</button>
     </div>
   );
 }
@@ -57,10 +57,10 @@ export function DoctorPicker({ onPick, allowAdd }: { onPick: (d: Doc) => void; a
   if (adding) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <div className="row"><h5 style={{ margin: 0, flex: 1 }}>New doctor</h5><button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => setAdding(false)}>Back to search</button></div>
+        <div className="row"><h5 className="m0 f1">New doctor</h5><button className="btn btn-ghost fs-caption" onClick={() => setAdding(false)}>Back to search</button></div>
         <div className="field"><label>Doctor name</label><input className="input" value={newDoc.name} onChange={(e) => setNewDoc({ ...newDoc, name: e.target.value })} /></div>
         <div className="field"><label>Clinic</label><input className="input" value={newDoc.clinic} onChange={(e) => setNewDoc({ ...newDoc, clinic: e.target.value })} /></div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div className="two-3">
           <div className="field"><label>City</label>
             <select className="input" value={newDoc.city} disabled={!!scoped} onChange={(e) => setNewDoc({ ...newDoc, city: e.target.value })}>
               {cities.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -68,7 +68,7 @@ export function DoctorPicker({ onPick, allowAdd }: { onPick: (d: Doc) => void; a
           </div>
           <div className="field"><label>Area</label><input className="input" value={newDoc.area} onChange={(e) => setNewDoc({ ...newDoc, area: e.target.value })} /></div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div className="two-3">
           <div className="field"><label>Specialty</label>
             <select className="input" value={newDoc.specialty} onChange={(e) => setNewDoc({ ...newDoc, specialty: e.target.value })}>
               <option>Dermatologist</option><option>Plastic surgeon</option><option>GP</option><option>Dentist</option><option>Other</option>
@@ -102,8 +102,8 @@ export function DoctorPicker({ onPick, allowAdd }: { onPick: (d: Doc) => void; a
       <div style={{ display: "flex", flexDirection: "column" }}>
         {filtered.map((d) => (
           <button key={d.id} className="listrow" style={{ background: "none", border: "none", borderBottom: "1px solid var(--color-divider)", textAlign: "left", cursor: "pointer", font: "inherit", width: "100%" }} onClick={() => onPick(d)}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 500 }}>{d.name}</div>
+            <div className="f1min">
+              <div className="fs-small w-500">{d.name}</div>
               <div className="small muted">{d.clinic} · {d.specialty} · {d.area}</div>
             </div>
             <Icon d={paths.pinDot} size={14} stroke={d.lat != null ? "var(--color-accent)" : "var(--color-neutral-400)"} />

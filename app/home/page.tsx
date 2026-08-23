@@ -88,8 +88,8 @@ export default function Home() {
   return (
     <Screen me={me}>
       <div className="row">
-        <div style={{ flex: 1 }}>
-          <div className="hnum" style={{ fontSize: 18 }}>{me.name}</div>
+        <div className="f1">
+          <div className="hnum fs-lead">{me.name}</div>
           <div className="small muted">
             {roleLabel(t, me.role)} · {weekdayShort(data.today)} {dmy(data.today)}
           </div>
@@ -104,7 +104,7 @@ export default function Home() {
 
       {!checkedIn ? (
         <Link href="/map" className="card" style={{ gap: 6, padding: 14, textDecoration: "none", color: "inherit", borderColor: "var(--color-accent)" }}>
-          <div className="row" style={{ gap: 8 }}>
+          <div className="row gap-2">
             <Icon d={paths.pin} size={16} stroke="var(--color-accent)" />
             <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: "var(--color-accent-800)" }}>Start your day — check in on the Map tab</span>
             <span style={{ color: "var(--color-neutral-400)" }}>→</span>
@@ -112,9 +112,9 @@ export default function Home() {
         </Link>
       ) : null}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div className="stack-2">
         <div className="row" style={{ alignItems: "baseline", gap: 8 }}>
-          <h5 style={{ margin: 0 }}>{route ? "Today's route" : "Today"}</h5>
+          <h5 className="m0">{route ? "Today's route" : "Today"}</h5>
           <span className="hnum" style={{ fontSize: 16, color: "var(--color-accent-700)" }}>{visitCount}/{min}</span>
           {route ? <span className="small muted" style={{ marginLeft: "auto" }}>{route.area}</span>
             : <span className="small muted" style={{ marginLeft: "auto" }}>{visitCount >= min ? "minimum reached" : `${min - visitCount} to go`}</span>}
@@ -123,13 +123,13 @@ export default function Home() {
       </div>
 
       {route ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className="stack-2">
           {route.doctors.map((d: any, i: number) => {
             const isNext = nextDoctor && d.id === nextDoctor.id;
             return d.visited ? (
               <div key={d.id} className="card" style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: "10px 12px" }}>
                 <Icon d={paths.check} size={15} stroke="var(--c-green-deep)" />
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="f1min">
                   <div style={{ fontSize: 13, fontWeight: 500, color: "var(--color-neutral-500)", textDecoration: "line-through" }}>{d.name}</div>
                   <div className="small muted">{d.time}</div>
                 </div>
@@ -142,7 +142,7 @@ export default function Home() {
                 borderColor: isNext ? "var(--color-accent)" : undefined,
               }}>
                 <span className="hnum" style={{ fontSize: 15, width: 16, textAlign: "center", color: isNext ? "var(--color-accent-800)" : "var(--color-neutral-500)" }}>{i + 1}</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="f1min">
                   <div style={{ fontSize: 13, fontWeight: 500, color: isNext ? "var(--color-accent-800)" : undefined }}>{d.name}</div>
                   <div className="small" style={{ color: isNext ? "var(--color-accent-700)" : "var(--color-neutral-600)" }}>
                     {/* Every stop is tappable — the route is a suggestion, not an
@@ -160,12 +160,12 @@ export default function Home() {
           ) : null}
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className="stack-2">
           {data.visits.map((v: any) => (
             <div key={v.id} className="listrow">
               <span className="small" style={{ color: "var(--color-neutral-500)", width: 34 }}>{v.time}</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 500 }}><DoctorLink id={v.doctorId} name={v.doctor?.name ?? "?"} /></div>
+              <div className="f1min">
+                <div className="fs-small w-500"><DoctorLink id={v.doctorId} name={v.doctor?.name ?? "?"} /></div>
                 <div className="small muted">{v.doctor?.clinic}</div>
               </div>
               <span className={`tag ${OUTCOME_TAG[v.outcome]?.[1] ?? "tag-neutral"}`}>{OUTCOME_TAG[v.outcome]?.[0] ?? v.outcome}</span>
@@ -184,12 +184,12 @@ export default function Home() {
       </div>
 
       {data.followUps.length ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div className="stack-2">
           <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Follow-ups due</h6>
           {data.followUps.map((f: any) => (
             <div key={f.id} className="row" style={{ fontSize: 13, padding: "4px 0" }}>
               <Icon d={paths.clock} size={17} stroke={f.date === data.today ? "var(--color-accent)" : "var(--color-neutral-500)"} />
-              <span style={{ flex: 1 }}>{f.doctor}</span>
+              <span className="f1">{f.doctor}</span>
               <span className="small" style={{ color: f.date === data.today ? "var(--color-accent-700)" : "var(--color-neutral-500)" }}>
                 {f.date === data.today ? "Today" : `${weekdayShort(f.date)} ${dm(f.date)}`}
               </span>
@@ -200,7 +200,7 @@ export default function Home() {
 
       <DailyBoost date={data.today} name={me.name} />
 
-      <div className="tilegrid" style={{ marginTop: "auto" }}>
+      <div className="tilegrid mt-auto">
         {tiles.map((t) => (
           <Link key={t.href} href={t.href} className="tile">
             <Icon d={paths[t.icon]} size={21} stroke="var(--color-accent)" />

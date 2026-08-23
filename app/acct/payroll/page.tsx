@@ -22,15 +22,15 @@ export default function Payroll() {
 
   return (
     <Screen me={me} wide>
-      <div className="row" style={{ alignItems: "baseline" }}>
-        <h4 style={{ margin: 0, flex: 1 }}>Payroll</h4>
+      <div className="row items-base">
+        <h4 className="m0 f1">Payroll</h4>
         <span className="tag tag-neutral">{monthName(data.period)}</span>
       </div>
       {data.rows.map((r: any) => (
-        <div key={r.userId} className="card" style={{ gap: 8 }}>
-          <div className="row" style={{ gap: 10 }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 500 }}>
+        <div key={r.userId} className="card gap-2">
+          <div className="row gap-3">
+            <div className="f1">
+              <div className="fs-small w-500">
                 {r.name}{roleLabel[r.role] ? ` · ${roleLabel[r.role]}` : ""}
               </div>
               <div className="small muted">
@@ -39,7 +39,7 @@ export default function Payroll() {
                 {data.isQuarterEnd && r.incentiveDue > 0 ? ` + ${money(r.incentiveDue)} quarter incentives` : " · incentives pay at quarter end"}
               </div>
             </div>
-            <span className="hnum" style={{ fontSize: 18 }}>{money(r.total)}</span>
+            <span className="hnum fs-lead">{money(r.total)}</span>
           </div>
           {(() => {
             const flagged = (r.deductions ?? []).filter((d: any) => d.status === "flagged");
@@ -77,17 +77,17 @@ export default function Payroll() {
               {dmy(r.paid.paidAt)} {r.paid.paidAt.slice(11, 16)} · by {r.paid.paidByName}
             </div>
           ) : (
-            <button className="btn btn-primary btn-block" style={{ padding: 10 }} onClick={() => pay(r)}>Mark as paid</button>
+            <button className="btn btn-primary btn-block p-3" onClick={() => pay(r)}>Mark as paid</button>
           )}
         </div>
       ))}
       <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
         <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Quarter-end months add incentives</h6>
-        <div className="small muted" style={{ fontSize: 12 }}>
+        <div className="small muted fs-caption">
           September rows will show base + Q3 incentive due for anyone who qualified.
         </div>
       </div>
-      <div className="hint" style={{ marginTop: "auto" }}>
+      <div className="hint mt-auto">
         Salaries visible to owner and accountant only. Every payment records timestamp + accountant ID.
       </div>
     </Screen>

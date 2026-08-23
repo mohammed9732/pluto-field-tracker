@@ -23,7 +23,7 @@ export default function DailySummary() {
   return (
     <Screen me={me} wide>
       <div className="row" style={{ flexWrap: "wrap", gap: 10 }}>
-        <div style={{ flex: 1 }}>
+        <div className="f1">
           <h4 style={{ margin: "0 0 2px" }}>Day summary</h4>
           <div className="small muted">{weekdayShort(data.date)} {dmy(data.date)}</div>
         </div>
@@ -33,19 +33,19 @@ export default function DailySummary() {
       <div className="kpi-grid">
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">Visits</span>
-          <span className="hnum" style={{ fontSize: 28 }}>{t.visits}<span style={{ fontSize: 15, color: "var(--color-neutral-500)" }}> / {t.target}</span></span>
+          <span className="hnum fs-h2">{t.visits}<span style={{ fontSize: 15, color: "var(--color-neutral-500)" }}> / {t.target}</span></span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">Orders</span>
-          <span className="hnum" style={{ fontSize: 28 }}>{money0(t.orderValue)}</span>
+          <span className="hnum fs-h2">{money0(t.orderValue)}</span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">Collected</span>
-          <span className="hnum" style={{ fontSize: 28 }}>{money0(t.collected)}</span>
+          <span className="hnum fs-h2">{money0(t.collected)}</span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
           <span className="card-kicker">Samples</span>
-          <span className="hnum" style={{ fontSize: 28 }}>{t.samples}</span>
+          <span className="hnum fs-h2">{t.samples}</span>
         </div>
       </div>
 
@@ -69,11 +69,11 @@ export default function DailySummary() {
           <thead>
             <tr>
               <th>Person</th>
-              <th style={{ textAlign: "right" }}>Visits</th>
-              <th style={{ textAlign: "right" }}>Field time</th>
-              <th style={{ textAlign: "right" }}>Orders</th>
-              <th style={{ textAlign: "right" }}>Collected</th>
-              <th style={{ textAlign: "right" }}>Samples</th>
+              <th className="ta-r">Visits</th>
+              <th className="ta-r">Field time</th>
+              <th className="ta-r">Orders</th>
+              <th className="ta-r">Collected</th>
+              <th className="ta-r">Samples</th>
             </tr>
           </thead>
           <tbody>
@@ -88,17 +88,17 @@ export default function DailySummary() {
                 <td style={{ textAlign: "right", fontWeight: 700, color: !r.onLeave && r.visits < r.target ? "var(--c-amber-deep)" : undefined }}>
                   {r.onLeave ? "—" : `${r.visits}/${r.target}`}
                 </td>
-                <td style={{ textAlign: "right" }}>{r.fieldMinutes ? durationHM(r.fieldMinutes) : "—"}</td>
-                <td style={{ textAlign: "right" }}>{r.orderValue ? money0(r.orderValue) : "—"}</td>
-                <td style={{ textAlign: "right" }}>{r.collected ? money0(r.collected) : "—"}</td>
-                <td style={{ textAlign: "right" }}>{r.samples || "—"}</td>
+                <td className="ta-r">{r.fieldMinutes ? durationHM(r.fieldMinutes) : "—"}</td>
+                <td className="ta-r">{r.orderValue ? money0(r.orderValue) : "—"}</td>
+                <td className="ta-r">{r.collected ? money0(r.collected) : "—"}</td>
+                <td className="ta-r">{r.samples || "—"}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <div className="hint" style={{ marginTop: "auto" }}>
+      <div className="hint mt-auto">
         This lands as a notification every evening after {String(data.hour).padStart(2, "0")}:00 — change the hour in the control panel.
       </div>
     </Screen>

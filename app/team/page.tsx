@@ -20,13 +20,13 @@ export default function Team() {
     <Screen me={me}>
       <div>
         <h4 style={{ margin: "0 0 2px" }}>Team today</h4>
-        <div className="small muted" style={{ fontSize: 12 }}>{weekdayShort(data.today)} {dmy(data.today)}</div>
+        <div className="small muted fs-caption">{weekdayShort(data.today)} {dmy(data.today)}</div>
       </div>
       {data.rows.map((r: any) => (
-        <div key={r.userId} className="card" style={{ gap: 10 }}>
-          <div className="row" style={{ gap: 8 }}>
+        <div key={r.userId} className="card gap-3">
+          <div className="row gap-2">
             <span style={{ width: 7, height: 7, borderRadius: 999, background: r.checkedIn ? "var(--color-accent)" : "var(--color-neutral-400)", flex: "none" }} />
-            <div style={{ flex: 1 }}>
+            <div className="f1">
               <div style={{ fontSize: 15, fontWeight: 500 }}>{r.name} · {r.cityLabel}</div>
               <div className="small muted">{r.phone}</div>
               <div className="small muted">
@@ -61,7 +61,7 @@ export default function Team() {
               </div>
               {r.outOfLocationVisits?.length ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 4, alignSelf: "stretch" }}>
-                  <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>
+                  <div className="tag tag-hot self-start">
                     ⚠ {r.outOfLocationVisits.length} out-of-location visit{r.outOfLocationVisits.length === 1 ? "" : "s"} this week
                   </div>
                   {r.outOfLocationVisits.map((v: any) => (
@@ -86,7 +86,7 @@ export default function Team() {
         </div>
         <Meter pct={data.week.plan ? (data.week.visits / data.week.plan) * 100 : 0} />
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+      <div className="two">
         <Link href="/targets" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>Set targets</Link>
         <Link href="/doctors" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>{t.doctorPlural}</Link>
         <Link href="/summary" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>Day summary</Link>

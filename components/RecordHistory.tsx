@@ -19,7 +19,7 @@ export function RecordHistory({ entity, id }: { entity: string; id: number }) {
   }, [open, entries, entity, id]);
 
   return (
-    <details className="card" style={{ gap: 8 }} onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
+    <details className="card gap-2" onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
       <summary style={{ cursor: "pointer", fontSize: 13, fontWeight: 600, listStyle: "revert" }}>
         History
       </summary>
@@ -31,8 +31,8 @@ export function RecordHistory({ entity, id }: { entity: string; id: number }) {
         <div style={{ display: "flex", flexDirection: "column" }}>
           {entries.map((h) => (
             <div key={h.id} className="listrow" style={{ padding: "8px 0", alignItems: "flex-start" }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13 }}>
+              <div className="f1min">
+                <div className="fs-small">
                   <b>{h.byName}</b> — {h.action}
                 </div>
                 {h.detail ? <div className="small muted">{h.detail}</div> : null}

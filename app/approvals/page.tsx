@@ -67,7 +67,7 @@ export default function Approvals() {
 
   return (
     <Screen me={me}>
-      <h4 style={{ margin: 0 }}>Approvals</h4>
+      <h4 className="m0">Approvals</h4>
       {orders.length + pendingPlans.length + pendingLeaves.length > 0 ? (
         <div className="row" style={{ gap: 8, padding: "10px 12px", background: "var(--c-coral-soft)", borderRadius: 14, fontSize: 13, fontWeight: 600, color: "var(--c-coral-deep)" }}>
           ⏱ Waiting on you: {[orders.length ? `${orders.length} order${orders.length === 1 ? "" : "s"}` : "", pendingPlans.length ? `${pendingPlans.length} plan${pendingPlans.length === 1 ? "" : "s"}` : "", pendingLeaves.length ? `${pendingLeaves.length} leave${pendingLeaves.length === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ")}
@@ -88,20 +88,20 @@ export default function Approvals() {
               body="Every order has been dealt with." />
           ) : null}
           {orders.map((o) => (
-            <div key={o.id} className="card" style={{ gap: 10 }}>
-              <div className="row" style={{ gap: 10 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500 }}><DoctorLink id={o.doctor?.id} name={o.doctor?.name ?? "?"} /></div>
+            <div key={o.id} className="card gap-3">
+              <div className="row gap-3">
+                <div className="f1">
+                  <div className="fs-small w-500"><DoctorLink id={o.doctor?.id} name={o.doctor?.name ?? "?"} /></div>
                   <div className="small muted">by {o.createdByName} · {dmy(o.createdAt)} {hm(o.createdAt)}</div>
                 </div>
                 {o.isSample
                   ? <span className="tag" style={{ background: "var(--c-violet-soft)", color: "var(--c-violet-deep)" }}>FREE SAMPLE</span>
-                  : <span className="hnum" style={{ fontSize: 18 }}>{money(o.total)}</span>}
+                  : <span className="hnum fs-lead">{money(o.total)}</span>}
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12 }}>
                 {o.items.map((it: any) => (
-                  <div key={it.productId} className="row" style={{ gap: 6 }}>
-                    <span style={{ flex: 1 }}>{it.qty} × {it.productName}</span>
+                  <div key={it.productId} className="row gap-2">
+                    <span className="f1">{it.qty} × {it.productName}</span>
                     <input
                       className="input"
                       defaultValue={it.price}
@@ -120,13 +120,13 @@ export default function Approvals() {
                     `${it.productName} at ${money(it.price)} (base ${money(it.listPrice)})`).join(" · ")} — quantity tier pricing; you can still adjust.
                 </div>
               ) : null}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <div className="two">
                 <button className="btn btn-primary" style={{ padding: 11 }} onClick={() => decideOrder(o, "approve")}>Approve</button>
                 <button className="btn btn-secondary" style={{ padding: 11 }} onClick={() => decideOrder(o, "reject")}>Reject…</button>
               </div>
             </div>
           ))}
-          <div className="hint" style={{ marginTop: "auto" }}>
+          <div className="hint mt-auto">
             You or the owner approve; approved orders go to the accountant for invoicing. Every price edit is snapshotted.
           </div>
         </>
@@ -136,10 +136,10 @@ export default function Approvals() {
         <>
           {pendingPlans.length === 0 ? <div className="card muted">No plans waiting.</div> : null}
           {pendingPlans.map((p) => (
-            <div key={p.id} className="card" style={{ gap: 10 }}>
-              <div className="row" style={{ gap: 10 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500 }}>{p.userName}</div>
+            <div key={p.id} className="card gap-3">
+              <div className="row gap-3">
+                <div className="f1">
+                  <div className="fs-small w-500">{p.userName}</div>
                   <div className="small muted">week of Sat {dm(p.weekStart)} · {p.totalVisits} visits planned</div>
                 </div>
                 <span className="hnum" style={{ fontSize: 18, color: "var(--color-accent-700)" }}>{p.totalVisits}</span>
@@ -148,7 +148,7 @@ export default function Approvals() {
                 {p.days.map((d: any) => (
                   <div key={d.day} style={{ display: "flex", gap: 8 }}>
                     <b className="hnum" style={{ width: 34, flex: "none" }}>{d.day}</b>
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="f1min">
                       <div>
                         {d.cityLabel || d.area || <span className="muted">—</span>}
                         {d.jointWithName ? <span style={{ color: "var(--color-accent-700)" }}> · with {d.jointWithName}</span> : null}
@@ -161,22 +161,22 @@ export default function Approvals() {
                 ))}
               </div>
               {p.attachment ? <div className="small muted">📎 {p.attachment}</div> : null}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <div className="two">
                 <button className="btn btn-primary" style={{ padding: 11 }} onClick={() => decidePlan(p, "approve")}>Approve</button>
                 <button className="btn btn-secondary" style={{ padding: 11 }} onClick={() => decidePlan(p, "return")}>Return…</button>
               </div>
             </div>
           ))}
           {decidedPlans.map((p) => (
-            <div key={p.id} className="listrow" style={{ padding: "8px 0" }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13 }}>{p.userName} · week of {dm(p.weekStart)}</div>
+            <div key={p.id} className="listrow py-2">
+              <div className="f1">
+                <div className="fs-small">{p.userName} · week of {dm(p.weekStart)}</div>
                 <div className="small muted">{p.totalVisits} visits</div>
               </div>
               <span className={`tag ${p.status === "approved" ? "tag-ok" : "tag-hot"}`}>{p.status === "approved" ? "Approved" : "Returned"}</span>
             </div>
           ))}
-          <div className="hint" style={{ marginTop: "auto" }}>
+          <div className="hint mt-auto">
             Returned plans go back to the rep with your note. Approved plans become their route.
           </div>
         </>
@@ -186,31 +186,31 @@ export default function Approvals() {
         <>
           {pendingLeaves.length === 0 ? <div className="card muted">No leave requests waiting.</div> : null}
           {pendingLeaves.map((l) => (
-            <div key={l.id} className="card" style={{ gap: 10 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 500 }}>{l.userName} · {l.userCity[0]?.toUpperCase()}{l.userCity.slice(1)}</div>
+            <div key={l.id} className="card gap-3">
+              <div className="f1">
+                <div className="fs-small w-500">{l.userName} · {l.userCity[0]?.toUpperCase()}{l.userCity.slice(1)}</div>
                 <div className="small muted">{l.type[0].toUpperCase() + l.type.slice(1)} · {dm(l.start)} → {dm(l.end)}</div>
               </div>
               {l.reason ? <div style={{ fontSize: 12, color: "var(--color-neutral-700)" }}>&quot;{l.reason}&quot;</div> : null}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <div className="two">
                 <button className="btn btn-primary" style={{ padding: 9 }} onClick={() => decideLeave(l, "approve")}>Approve</button>
                 <button className="btn btn-secondary" style={{ padding: 9 }} onClick={() => decideLeave(l, "reject")}>Reject…</button>
               </div>
             </div>
           ))}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div className="stack-2">
             <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Decided recently</h6>
             {leaves.filter((l) => l.status !== "pending").slice(0, 5).map((l) => (
-              <div key={l.id} className="listrow" style={{ padding: "8px 0" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13 }}>{l.userName} · {dm(l.start)} → {dm(l.end)}</div>
+              <div key={l.id} className="listrow py-2">
+                <div className="f1">
+                  <div className="fs-small">{l.userName} · {dm(l.start)} → {dm(l.end)}</div>
                   <div className="small muted">{l.type}</div>
                 </div>
                 <span className={`tag ${l.status === "approved" ? "tag-ok" : "tag-hot"}`}>{l.status}</span>
               </div>
             ))}
           </div>
-          <div className="hint" style={{ marginTop: "auto" }}>
+          <div className="hint mt-auto">
             {me.role === "supervisor" ? "You approve rep leaves; the owner approves yours and the accountant's." : "You approve everyone below you."}
             {" "}Approved days are excluded from visit minimums.
           </div>

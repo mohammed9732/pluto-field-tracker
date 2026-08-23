@@ -125,7 +125,7 @@ function LogVisitInner() {
           {doctor.lat == null ? (
             <label className="soft-accent row" style={{ gap: 10, padding: 12, cursor: "pointer" }}>
               <Icon d={paths.target} size={18} stroke="var(--color-accent-700)" />
-              <div style={{ flex: 1 }}>
+              <div className="f1">
                 <div style={{ fontSize: 13, fontWeight: 500, color: "var(--color-accent-800)" }}>Set clinic location</div>
                 <div className="small" style={{ color: "var(--color-accent-700)" }}>
                   {pos?.lat != null ? "No pin saved — current GPS will be stored with this visit" : "No pin saved — GPS unavailable right now"}
@@ -134,7 +134,7 @@ function LogVisitInner() {
               <input type="checkbox" checked={saveLocation} onChange={(e) => setSaveLocation(e.target.checked)} />
             </label>
           ) : null}
-          <div className="field" style={{ margin: 0 }}>
+          <div className="field m0">
             <label>Outcome</label>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
               {([["order", "Order"], ["follow_up", "Follow-up"], ["payment", "Payment"]] as const).map(([val, label]) => (
@@ -156,7 +156,7 @@ function LogVisitInner() {
             </div>
           </div>
           {outcome ? (
-            <div className="field" style={{ margin: 0 }}>
+            <div className="field m0">
               <label>Next visit {outcome === "follow_up" ? "(required)" : "(optional)"}</label>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
                 {([["1 week", 7], ["10 days", 10], ["1 month", 30]] as [string, number][]).map(([label, days]) => {
@@ -178,7 +178,7 @@ function LogVisitInner() {
               <div className="hint" style={{ marginTop: 4 }}>Saved next-visit dates feed your follow-up list and weekly planning.</div>
             </div>
           ) : null}
-          <div className="field" style={{ margin: 0 }}>
+          <div className="field m0">
             <label>Notes (optional)</label>
             <textarea className="input" value={notes} onChange={(e) => setNotes(e.target.value)} style={{ minHeight: 70 }} />
           </div>
@@ -189,17 +189,17 @@ function LogVisitInner() {
             </span>
             {/* No capture attribute: with it the phone jumps straight to the camera and
                 the gallery is unreachable. Without it the person chooses. */}
-            <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => e.target.files?.[0] && attachPhoto(e.target.files[0])} />
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && attachPhoto(e.target.files[0])} />
           </label>
           {me.role === "rep" ? (
-            <label className="radio" style={{ fontSize: 13 }}>
+            <label className="radio fs-small">
               <input type="checkbox" checked={joint} onChange={(e) => setJoint(e.target.checked)} />
               <span className="dot" />
               Joint visit with supervisor
             </label>
           ) : (
             <>
-              <label className="radio" style={{ fontSize: 13 }}>
+              <label className="radio fs-small">
                 <input type="checkbox" checked={joint} onChange={(e) => setJoint(e.target.checked)} />
                 <span className="dot" />
                 Joint visit with a rep
@@ -220,7 +220,7 @@ function LogVisitInner() {
               </label>
               {compOn ? (
                 <>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  <div className="two">
                     <input className="input" placeholder="Competitor (e.g. Regenovue)" value={comp.competitor}
                       onChange={(e) => setComp({ ...comp, competitor: e.target.value })} style={{ minHeight: 32, fontSize: 13 }} />
                     <input className="input" placeholder="Their product" value={comp.product}
@@ -235,7 +235,7 @@ function LogVisitInner() {
               ) : null}
             </div>
           ) : null}
-          {err ? <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>{err}</div> : null}
+          {err ? <div className="tag tag-hot self-start">{err}</div> : null}
           <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
             <button className="btn btn-primary btn-block" style={{ padding: 13 }} onClick={save} disabled={busy}>
               {busy ? "Saving…" : `Save visit${todayCount != null ? ` — ${todayCount + 1}/${target} today` : ""}`}

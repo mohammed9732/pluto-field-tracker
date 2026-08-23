@@ -94,13 +94,13 @@ function CollectPaymentInner() {
     return (
       <Screen me={me}>
         <div className="row">
-          <h4 style={{ margin: 0, flex: 1 }}>Payment recorded</h4>
+          <h4 className="m0 f1">Payment recorded</h4>
           <span className="tag tag-ok">Saved</span>
         </div>
-        <div className="card" style={{ gap: 8 }}>
-          <div className="row" style={{ alignItems: "baseline" }}>
+        <div className="card gap-2">
+          <div className="row items-base">
             <span style={{ flex: 1, fontSize: 13, color: "var(--color-neutral-600)" }}>Amount collected</span>
-            <span className="hnum" style={{ fontSize: 28 }}>{money(done.amount)}</span>
+            <span className="hnum fs-h2">{money(done.amount)}</span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 5, fontSize: 12 }}>
             <div style={{ display: "flex" }}><span style={{ width: 92, color: "var(--color-neutral-600)" }}>From</span><b>{done.doctorName}</b></div>
@@ -111,7 +111,7 @@ function CollectPaymentInner() {
           </div>
           {done.photo ? <img src={`/api/files?id=${done.photo}`} alt="signed receipt" style={{ maxWidth: "100%", borderRadius: 12, maxHeight: 220, objectFit: "cover" }} /> : null}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div className="two-3">
           <button className="btn btn-secondary" style={{ padding: 11 }} onClick={() => { setDone(null); setDoctor(null); setAmount(""); setNote(""); setPhoto(null); }}>Record another</button>
           <button className="btn btn-primary" style={{ padding: 11 }} onClick={() => router.push("/orders?tab=payments")}>Done</button>
         </div>
@@ -130,12 +130,12 @@ function CollectPaymentInner() {
       ) : (
         <>
           <DoctorCard doctor={doctor} onChange={() => setDoctor(null)} />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <div className="field" style={{ margin: 0 }}>
+          <div className="two-3">
+            <div className="field m0">
               <label>Amount collected (IQD)</label>
-              <input className="input hnum" value={amount} onChange={(e) => setAmount(groupDigits(e.target.value))} inputMode="numeric" placeholder="1,000,000" style={{ fontSize: 18 }} />
+              <input className="input hnum fs-lead" value={amount} onChange={(e) => setAmount(groupDigits(e.target.value))} inputMode="numeric" placeholder="1,000,000" />
             </div>
-            <div className="field" style={{ margin: 0 }}>
+            <div className="field m0">
               <label>Method</label>
               <div className="seg" style={{ width: "100%" }}>
                 <label className="seg-opt" style={{ flex: 1, justifyContent: "center" }}>
@@ -147,7 +147,7 @@ function CollectPaymentInner() {
               </div>
             </div>
           </div>
-          <div className="field" style={{ margin: 0 }}>
+          <div className="field m0">
             <label>Note (optional)</label>
             <input className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. part payment for July supply" />
           </div>
@@ -158,9 +158,9 @@ function CollectPaymentInner() {
             </span>
             {/* No capture attribute: with it the phone jumps straight to the camera and
                 the gallery is unreachable. Without it the person chooses. */}
-            <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => e.target.files?.[0] && attachPhoto(e.target.files[0])} />
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && attachPhoto(e.target.files[0])} />
           </label>
-          {err ? <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>{err}</div> : null}
+          {err ? <div className="tag tag-hot self-start">{err}</div> : null}
           <button className="btn btn-primary btn-block" style={{ padding: 13, marginTop: "auto" }} onClick={record} disabled={busy}>
             {busy ? "Recording…" : "Record payment"}
           </button>

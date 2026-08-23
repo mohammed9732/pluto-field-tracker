@@ -35,7 +35,7 @@ export default function AdminMap() {
   return (
     <Screen me={me} wide>
         <div className="row" style={{ flexWrap: "wrap", gap: 10 }}>
-          <h4 style={{ margin: 0 }}>Daily map view</h4>
+          <h4 className="m0">Daily map view</h4>
           <span className="small muted" style={{ marginLeft: "auto" }}>{inField} in field · {onLeave} on leave · pings every 5 min</span>
         </div>
         <div className="seg" style={{ width: "100%", overflowX: "auto" }}>
@@ -52,13 +52,13 @@ export default function AdminMap() {
             <h6 style={{ margin: "0 0 8px", color: "var(--color-neutral-600)" }}>Timeline — {data.userName}</h6>
             {data.checkins.filter((c: any) => c.type === "in").map((c: any) => (
               <div key={c.id} className="listrow" style={{ padding: "7px 0", fontSize: 12 }}>
-                <b className="hnum" style={{ width: 38 }}>{hm(c.ts)}</b><span style={{ flex: 1 }}>Check-in</span>
+                <b className="hnum" style={{ width: 38 }}>{hm(c.ts)}</b><span className="f1">Check-in</span>
               </div>
             ))}
             {data.visits.map((v: any, i: number) => (
               <div key={v.id} className="listrow" style={{ padding: "7px 0", fontSize: 12 }}>
                 <b className="hnum" style={{ width: 38 }}>{v.time}</b>
-                <span style={{ flex: 1 }}>
+                <span className="f1">
                   Visit {i + 1} · {v.doctor?.name} — {v.outcome === "order" ? "Order" : v.outcome === "payment" ? "Payment" : "Follow-up"}
                   {(() => {
                     const d = data.dwell.find((x: any) => x.doctorId === v.doctorId);
@@ -69,19 +69,19 @@ export default function AdminMap() {
             ))}
             {data.checkins.filter((c: any) => c.type === "out").map((c: any) => (
               <div key={c.id} className="listrow" style={{ padding: "7px 0", fontSize: 12 }}>
-                <b className="hnum" style={{ width: 38 }}>{hm(c.ts)}</b><span style={{ flex: 1 }}>Check-out</span>
+                <b className="hnum" style={{ width: 38 }}>{hm(c.ts)}</b><span className="f1">Check-out</span>
               </div>
             ))}
             {data.fieldTime.checkedIn ? (
               <div style={{ display: "flex", gap: 10, fontSize: 12, padding: "7px 0", color: "var(--color-neutral-600)" }}>
-                <b className="hnum" style={{ width: 38 }}>—</b><span style={{ flex: 1 }}>Check-out pending</span>
+                <b className="hnum" style={{ width: 38 }}>—</b><span className="f1">Check-out pending</span>
               </div>
             ) : null}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div className="stack-2">
             <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Field time</h6>
-            <div className="row" style={{ alignItems: "baseline" }}>
-              <span className="hnum" style={{ fontSize: 34 }}>{durationHM(data.fieldTime.minutes)}</span>
+            <div className="row items-base">
+              <span className="hnum fs-figure">{durationHM(data.fieldTime.minutes)}</span>
               {data.fieldTime.checkedIn ? <span className="small muted">and counting</span> : null}
             </div>
             <div style={{ display: "flex", height: 8, borderRadius: 4, overflow: "hidden" }}>

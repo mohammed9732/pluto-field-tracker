@@ -136,22 +136,22 @@ export default function ControlPanel() {
   return (
     <Screen me={me} wide>
         <div className="row">
-          <h4 style={{ margin: 0, flex: 1 }}>Control panel</h4>
+          <h4 className="m0 f1">Control panel</h4>
           {savedFlash ? <span className="tag tag-ok">Saved</span> : null}
         </div>
 
         <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Company</h6>
-        <div className="two-col" style={{ gap: 10 }}>
-          <div className="field" style={{ margin: 0 }}>
+        <div className="two-col gap-3">
+          <div className="field m0">
             <label>Company name</label>
             <input className="input" defaultValue={settings.companyName} onBlur={(e) => e.target.value !== settings.companyName && patch({ companyName: e.target.value })} />
           </div>
-          <div className="field" style={{ margin: 0 }}>
+          <div className="field m0">
             <label>Currency label</label>
             <input className="input" defaultValue={settings.currency} onBlur={(e) => e.target.value !== settings.currency && patch({ currency: e.target.value })} />
           </div>
         </div>
-        <div className="field" style={{ margin: 0 }}>
+        <div className="field m0">
           <label>Subtitle under the company name</label>
           <input className="input" defaultValue={settings.companySub ?? ""} placeholder="Leave empty to hide"
             onBlur={(e) => e.target.value !== settings.companySub && patch({ companySub: e.target.value })} />
@@ -169,7 +169,7 @@ export default function ControlPanel() {
                   style={{ width: "100%", height: "100%", objectFit: "contain" }} />
               ) : <span className="small muted">None</span>}
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="f1min">
               <div className="small">
                 Shown on the sign-in screen, at the top of the app, and as the icon on
                 your team&apos;s phones. A square PNG around 512&times;512 works best.
@@ -184,7 +184,7 @@ export default function ControlPanel() {
                     onClick={() => patch({ logoId: "" })}>Remove</button>
                 ) : null}
               </div>
-              <input ref={logoRef} type="file" accept="image/png,image/jpeg,image/svg+xml" style={{ display: "none" }}
+              <input ref={logoRef} type="file" accept="image/png,image/jpeg,image/svg+xml" className="hidden"
                 onChange={async (e) => {
                   const f = e.target.files?.[0];
                   e.target.value = "";
@@ -204,8 +204,8 @@ export default function ControlPanel() {
             <input type="color" value={settings.brandColor ?? "#2f6fe0"} aria-label="Brand colour"
               onChange={(e) => patch({ brandColor: e.target.value })}
               style={{ width: 46, height: 34, padding: 2, border: "1px solid var(--color-divider)", borderRadius: 8, background: "none", cursor: "pointer", flex: "none" }} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 500 }}>Brand colour</div>
+            <div className="f1min">
+              <div className="fs-small w-500">Brand colour</div>
               <div className="small muted">
                 Buttons, links and highlights follow this. The lighter and darker shades
                 are worked out for you. Reload to see it everywhere.
@@ -222,7 +222,7 @@ export default function ControlPanel() {
             works best, roughly 600px tall. Leave a slot empty and it falls back to the
             standing pose.
           </div>
-          <div className="two-col" style={{ gap: 10 }}>
+          <div className="two-col gap-3">
             {MASCOT_SLOTS.map(([key, label, hint]) => (
               <div key={key} style={{ display: "flex", gap: 10, alignItems: "center" }}>
                 <div style={{
@@ -233,9 +233,9 @@ export default function ControlPanel() {
                   {settings[key] ? (
                     <img src={`/api/mascot?mood=${hint}&v=${settings[key]}`} alt=""
                       style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
-                  ) : <span className="small muted" style={{ fontSize: 12 }}>Drawn</span>}
+                  ) : <span className="small muted fs-caption">Drawn</span>}
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="f1min">
                   <div style={{ fontSize: 13, fontWeight: 600 }}>{label}</div>
                   <div className="row" style={{ gap: 6, marginTop: 5 }}>
                     <button className="btn btn-secondary" style={{ fontSize: 12, padding: "5px 10px" }}
@@ -252,7 +252,7 @@ export default function ControlPanel() {
               </div>
             ))}
           </div>
-          <input ref={mascotRef} type="file" accept="image/png,image/webp,image/jpeg" style={{ display: "none" }}
+          <input ref={mascotRef} type="file" accept="image/png,image/webp,image/jpeg" className="hidden"
             onChange={async (e) => {
               const f = e.target.files?.[0];
               e.target.value = "";
@@ -268,13 +268,13 @@ export default function ControlPanel() {
         </div>
 
         <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>What you call things</h6>
-        <div className="card" style={{ gap: 10 }}>
+        <div className="card gap-3">
           <div className="small muted">
             Change these and the whole app follows. Leave one empty to go back to the default.
           </div>
-          <div className="two-col" style={{ gap: 10 }}>
+          <div className="two-col gap-3">
             {TERM_FIELDS.map(([key, label, fallback]) => (
-              <div className="field" style={{ margin: 0 }} key={key}>
+              <div className="field m0" key={key}>
                 <label>{label}</label>
                 <input className="input" placeholder={fallback}
                   defaultValue={(settings.terms ?? DEFAULT_TERMS)[key] ?? ""}
@@ -287,13 +287,13 @@ export default function ControlPanel() {
           </div>
         </div>
 
-        <div className="field" style={{ margin: 0 }}>
+        <div className="field m0">
           <label>Sign-in screen footer</label>
           <input className="input" defaultValue={settings.loginFooter ?? ""} placeholder="Leave empty to hide"
             onBlur={(e) => e.target.value !== settings.loginFooter && patch({ loginFooter: e.target.value })} />
         </div>
 
-        <div className="field" style={{ margin: 0 }}>
+        <div className="field m0">
           <label>Supervisor visit label</label>
           <input className="input" defaultValue={settings.supervisorVisitLabel} onBlur={(e) => e.target.value !== settings.supervisorVisitLabel && patch({ supervisorVisitLabel: e.target.value })} />
         </div>
@@ -302,9 +302,9 @@ export default function ControlPanel() {
         <div className="small muted">
           {`Every ${lower(t.doctor)}, ${lower(t.roleRep)} and stock location belongs to a city.`} Districts like Soran are areas inside their city.
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div className="stack-2">
           {(settings.cities ?? []).map((c: any) => (
-            <div key={c.id} className="listrow" style={{ padding: "8px 0" }}>
+            <div key={c.id} className="listrow py-2">
               <input
                 className="input"
                 defaultValue={c.name}
@@ -322,7 +322,7 @@ export default function ControlPanel() {
               </button>
             </div>
           ))}
-          <div className="row" style={{ gap: 8 }}>
+          <div className="row gap-2">
             <input className="input" placeholder="Add a city (e.g. Sulaymaniyah)" value={newCity} onChange={(e) => setNewCity(e.target.value)} />
             <button className="btn btn-primary" style={{ padding: "8px 16px", flex: "none" }}
               onClick={() => {
@@ -334,7 +334,7 @@ export default function ControlPanel() {
               Add
             </button>
           </div>
-          {cityErr ? <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>{cityErr}</div> : null}
+          {cityErr ? <div className="tag tag-hot self-start">{cityErr}</div> : null}
         </div>
 
         <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Product lines</h6>
@@ -343,9 +343,9 @@ export default function ControlPanel() {
           same ${lower(t.doctorPlural)}, but each only sells — and is paid commission on — their own line.
           Leave this empty and everybody sells everything.`}
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div className="stack-2">
           {(settings.productLines ?? []).map((l: string) => (
-            <div key={l} className="listrow" style={{ padding: "8px 0" }}>
+            <div key={l} className="listrow py-2">
               <span style={{ flex: 1, fontSize: 13 }}>{l}</span>
               <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-coral-deep)" }}
                 onClick={() => patchLines((settings.productLines ?? []).filter((x: string) => x !== l))}>
@@ -353,7 +353,7 @@ export default function ControlPanel() {
               </button>
             </div>
           ))}
-          <div className="row" style={{ gap: 8 }}>
+          <div className="row gap-2">
             <input className="input" placeholder="Add a line (e.g. Aesthetics)" value={newLine} onChange={(e) => setNewLine(e.target.value)} />
             <button className="btn btn-primary" style={{ padding: "8px 16px", flex: "none" }}
               onClick={() => {
@@ -365,15 +365,15 @@ export default function ControlPanel() {
               Add
             </button>
           </div>
-          {lineErr ? <div className="tag tag-hot" style={{ alignSelf: "flex-start" }}>{lineErr}</div> : null}
+          {lineErr ? <div className="tag tag-hot self-start">{lineErr}</div> : null}
         </div>
 
         <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Feature switches</h6>
         <div style={{ display: "flex", flexDirection: "column" }}>
           {togglesFor(t).map(([key, label, hint]) => (
             <label key={key} className="listrow" style={{ cursor: "pointer", padding: "10px 0" }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 500 }}>{label}</div>
+              <div className="f1">
+                <div className="fs-small w-500">{label}</div>
                 <div className="small muted">{hint}</div>
               </div>
               <input type="checkbox" checked={!!settings[key]} onChange={(e) => patch({ [key]: e.target.checked })} style={{ width: 20, height: 20, accentColor: "var(--color-accent)" }} />
@@ -382,9 +382,9 @@ export default function ControlPanel() {
         </div>
 
         <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Metrics</h6>
-        <div className="two-col" style={{ gap: 10 }}>
+        <div className="two-col gap-3">
           {metricsFor(t).map(([key, label]) => (
-            <div key={key} className="field" style={{ margin: 0 }}>
+            <div key={key} className="field m0">
               <label>{label}</label>
               <input className="input" inputMode="numeric" defaultValue={settings[key]} onBlur={(e) => Number(e.target.value) !== settings[key] && patch({ [key]: Number(e.target.value) })} />
             </div>
@@ -392,7 +392,7 @@ export default function ControlPanel() {
         </div>
 
         <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Chat</h6>
-        <div className="field" style={{ margin: 0 }}>
+        <div className="field m0">
           <label>Who can reps direct-message?</label>
           <select className="input" value={settings.dmPolicy} onChange={(e) => patch({ dmPolicy: e.target.value })}>
             <option value="management">Supervisor and accountant only</option>
@@ -400,14 +400,14 @@ export default function ControlPanel() {
             <option value="all">Everyone</option>
           </select>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div className="stack-2">
           {groups.map((g) => (
-            <div key={g.id} className="listrow" style={{ padding: "8px 0" }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 500 }}>{g.name}{g.builtin ? <span className="small muted"> · built-in</span> : ""}</div>
+            <div key={g.id} className="listrow py-2">
+              <div className="f1">
+                <div className="fs-small w-500">{g.name}{g.builtin ? <span className="small muted"> · built-in</span> : ""}</div>
                 <div className="small muted">{g.memberIds.map((id: number) => users.find((u) => u.id === id)?.name?.split(" ")[0] ?? "?").join(", ") || "no members"}</div>
               </div>
-              <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={() => setEditGroup({ ...g, memberIds: [...g.memberIds] })}>Edit</button>
+              <button className="btn btn-ghost fs-caption" onClick={() => setEditGroup({ ...g, memberIds: [...g.memberIds] })}>Edit</button>
               {!g.builtin ? (
                 <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-coral-deep)" }}
                   onClick={async () => { if (window.confirm(`Delete group "${g.name}"?`)) { await api("/api/admin", { json: { action: "deleteGroup", id: g.id } }); load(); } }}>
@@ -420,8 +420,8 @@ export default function ControlPanel() {
             onClick={() => setEditGroup({ name: "", memberIds: [] })}>＋ New group</button>
         </div>
         {editGroup ? (
-          <div className="card" style={{ gap: 10 }}>
-            <div className="field" style={{ margin: 0 }}>
+          <div className="card gap-3">
+            <div className="field m0">
               <label>Group name</label>
               <input className="input" value={editGroup.name} disabled={editGroup.builtin} onChange={(e) => setEditGroup({ ...editGroup, name: e.target.value })} />
             </div>
@@ -435,7 +435,7 @@ export default function ControlPanel() {
                 </button>
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <div className="two">
               <button className="btn btn-primary" style={{ padding: 9 }}
                 onClick={async () => { await api("/api/admin", { json: { action: "saveGroup", ...editGroup } }); setEditGroup(null); load(); }}>Save group</button>
               <button className="btn btn-secondary" style={{ padding: 9 }} onClick={() => setEditGroup(null)}>Cancel</button>
@@ -444,20 +444,20 @@ export default function ControlPanel() {
         ) : null}
 
         <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Announcements</h6>
-        <div className="row" style={{ gap: 8 }}>
+        <div className="row gap-2">
           <input className="input" placeholder="Write a pinned announcement…" value={announce} onChange={(e) => setAnnounce(e.target.value)} />
           <button className="btn btn-primary" style={{ padding: "8px 16px", flex: "none" }} onClick={postAnnouncement}>Post</button>
         </div>
         {announcements.map((a) => (
-          <div key={a.id} className="listrow" style={{ padding: "8px 0" }}>
+          <div key={a.id} className="listrow py-2">
             <div style={{ flex: 1, fontSize: 13 }}>{a.body}</div>
             <span className="small muted">{a.seenBy?.length ?? 0} seen</span>
-            <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={async () => { await api("/api/notify", { json: { action: "stopAnnouncement", id: a.id } }); load(); }}>Stop</button>
+            <button className="btn btn-ghost fs-caption" onClick={async () => { await api("/api/notify", { json: { action: "stopAnnouncement", id: a.id } }); load(); }}>Stop</button>
           </div>
         ))}
 
         <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Company data</h6>
-        <div className="card" style={{ gap: 8 }}>
+        <div className="card gap-2">
           <div className="small">
             The server keeps an automatic backup every day and holds the last 14.
             Download a copy now and then so the company keeps its own record too.
@@ -468,7 +468,7 @@ export default function ControlPanel() {
         </div>
 
         <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Closing the month</h6>
-        <div className="card" style={{ gap: 10 }}>
+        <div className="card gap-3">
           <div className="small muted">
             Once a month is closed, nothing dated in it can be added or edited — so payroll
             you have already paid cannot move underneath you. A backup is taken first.
@@ -478,7 +478,7 @@ export default function ControlPanel() {
               {settings.closedThrough ? `Closed through ${settings.closedThrough}` : "Nothing closed yet"}
             </span>
           </div>
-          <div className="row" style={{ gap: 8 }}>
+          <div className="row gap-2">
             <input className="input" placeholder="2026-07" value={closeMonth}
               onChange={(e) => setCloseMonth(e.target.value)} style={{ flex: 1 }} />
             <button className="btn btn-primary" style={{ flex: "none" }} disabled={closeBusy}
@@ -512,13 +512,13 @@ export default function ControlPanel() {
         </div>
 
         <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Sample data</h6>
-        <div className="card" style={{ gap: 10 }}>
+        <div className="card gap-3">
           <div className="small muted">
             Fills the app with a realistic demo company — staff, doctors, visits, orders
             and payments — so you can show it in training. Your logo, colours, wording and
             mascot are kept. Clear it from the danger zone below when you go live.
           </div>
-          <button className="btn btn-secondary" style={{ alignSelf: "flex-start" }}
+          <button className="btn btn-secondary self-start"
             disabled={demoBusy}
             onClick={async () => {
               if (!window.confirm("Load sample data? Anything currently in the app is replaced. A backup is saved first, and you may need to sign in again.")) return;
@@ -542,7 +542,7 @@ export default function ControlPanel() {
             practice records. A backup is saved on the server first, every time.
           </div>
           <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-            <button className="btn btn-secondary" style={{ fontSize: 13 }}
+            <button className="btn btn-secondary fs-small"
               onClick={() => setWipe("records")}>Clear practice records</button>
             <button className="btn btn-secondary" style={{ fontSize: 13, color: "var(--c-coral-deep)" }}
               onClick={() => setWipe("everything")}>Start completely fresh</button>
@@ -567,8 +567,8 @@ export default function ControlPanel() {
             <input className="input" value={wipeWord} placeholder="DELETE"
               onChange={(e) => setWipeWord(e.target.value)} />
             {wipeMsg ? <div className="small" style={{ fontWeight: 600 }}>{wipeMsg}</div> : null}
-            <div className="row" style={{ gap: 8 }}>
-              <button className="btn btn-coral" style={{ flex: 1 }} disabled={wipeBusy}
+            <div className="row gap-2">
+              <button className="btn btn-coral f1" disabled={wipeBusy}
                 onClick={async () => {
                   setWipeBusy(true);
                   setWipeMsg("");
@@ -589,7 +589,7 @@ export default function ControlPanel() {
           </div>
         ) : null}
 
-        <div className="hint" style={{ marginTop: "auto" }}>
+        <div className="hint mt-auto">
           Every change applies immediately for everyone. Metrics affect new calculations, never historical records.
         </div>
     </Screen>
