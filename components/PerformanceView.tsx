@@ -1,10 +1,12 @@
 "use client";
 import { Meter } from "@/components/Shell";
+import { useT } from "@/lib/i18n";
 import { DoctorLink } from "@/components/DoctorLink";
 import { durationHM, money, monthName } from "@/lib/fmt";
 
 // Shared by the rep's Progress tab and the manager's team view.
 export function PerformanceView({ data }: { data: any }) {
+  const tx = useT();
   const v = data.visits;
   const hitRate = v.required > 0 ? Math.round((v.total / v.required) * 100) : 0;
   return (
@@ -12,7 +14,7 @@ export function PerformanceView({ data }: { data: any }) {
       {/* Visits — spelled out so the numbers explain themselves. */}
       <div className="card gap-2">
         <div className="row" style={{ alignItems: "baseline", gap: 8 }}>
-          <h6 className="m0 f1">Visits this month</h6>
+          <h6 className="m0 f1">{tx("pv.visitsThisMonth", "Visits this month")}</h6>
           <span className="hnum fs-h2">{v.total}</span>
           <span className="small muted">of {v.required} expected</span>
         </div>
@@ -22,14 +24,14 @@ export function PerformanceView({ data }: { data: any }) {
           {v.leaveDays > 0 ? ` (${v.leaveDays} leave day${v.leaveDays === 1 ? "" : "s"} excluded)` : ""} · {hitRate}% of expected
         </div>
         <div className="row" style={{ gap: 14, fontSize: 12, color: "var(--color-neutral-600)", flexWrap: "wrap" }}>
-          <span>Average <b style={{ color: "var(--color-text)" }}>{v.perDayAvg}/day</b></span>
-          <span>Joint visits <b style={{ color: "var(--color-text)" }}>{v.joint}</b></span>
+          <span>{tx("pv.average", "Average")} <b style={{ color: "var(--color-text)" }}>{v.perDayAvg}/day</b></span>
+          <span>{tx("pv.jointVisits", "Joint visits")} <b style={{ color: "var(--color-text)" }}>{v.joint}</b></span>
         </div>
       </div>
 
       <div className="two-3">
         <div className="blueprint" style={{ padding: 12 }}>
-          <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-coral-deep)" }}>Field time</div>
+          <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-coral-deep)" }}>{tx("pv.fieldTime", "Field time")}</div>
           <div className="hnum" style={{ fontSize: 22 }}>{durationHM(data.field.avgMinutes)}</div>
           <div className="small muted">average per day worked</div>
           {data.field.missedDays > 0 ? (
@@ -37,7 +39,7 @@ export function PerformanceView({ data }: { data: any }) {
           ) : null}
         </div>
         <div className="blueprint" style={{ padding: 12 }}>
-          <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-green-deep)" }}>Collected</div>
+          <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-green-deep)" }}>{tx("pv.collected", "Collected")}</div>
           <div className="hnum fs-lead">{money(data.collected)}</div>
           <div className="small muted">this month</div>
         </div>
@@ -46,7 +48,7 @@ export function PerformanceView({ data }: { data: any }) {
       {/* Coverage — explained in words, not a bar. */}
       <div className="card gap-2">
         <div className="row" style={{ alignItems: "baseline", gap: 8 }}>
-          <h6 className="m0 f1">Doctors reached</h6>
+          <h6 className="m0 f1">{tx("pv.doctorsReached", "Doctors reached")}</h6>
           <span className="hnum" style={{ fontSize: 22 }}>{data.coverage.visited}</span>
           <span className="small muted">of {data.coverage.total}{data.cityLabel ? ` in ${data.cityLabel}` : ""}</span>
         </div>
@@ -56,7 +58,7 @@ export function PerformanceView({ data }: { data: any }) {
         {data.byClass.length ? (
           <table className="table" style={{ fontSize: 12, marginTop: 4 }}>
             <thead>
-              <tr><th>Class</th><th className="ta-r">Reached</th><th className="ta-r">Visits</th></tr>
+              <tr><th>{tx("pv.class", "Class")}</th><th className="ta-r">{tx("pv.reached", "Reached")}</th><th className="ta-r">{tx("pv.visits", "Visits")}</th></tr>
             </thead>
             <tbody>
               {data.byClass.map((c: any) => (
@@ -76,7 +78,7 @@ export function PerformanceView({ data }: { data: any }) {
 
       {data.cityDays?.length ? (
         <div className="card gap-2">
-          <h6 className="m0">Days per city</h6>
+          <h6 className="m0">{tx("pv.daysPerCity", "Days per city")}</h6>
           {data.cityDays.map((c: any) => (
             <div key={c.city} className="row fs-small">
               <span className="f1">{c.label}</span>
@@ -88,7 +90,7 @@ export function PerformanceView({ data }: { data: any }) {
 
       {data.accrual.length ? (
         <div className="stack-2">
-          <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Product targets</h6>
+          <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("pv.productTargets", "Product targets")}</h6>
           {data.accrual.map((r: any) => (
             <div key={r.productId} className="row fs-caption">
               <span style={{ width: 108, flex: "none" }}>{r.productName}</span>
@@ -103,7 +105,7 @@ export function PerformanceView({ data }: { data: any }) {
 
       <div className="two-col" style={{ gap: 14 }}>
         <div className="stack-2">
-          <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Most visited</h6>
+          <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("pv.mostVisited", "Most visited")}</h6>
           {data.mostVisited.map((d: any) => (
             <div key={d.name} className="row fs-caption">
               <span className="f1"><DoctorLink id={d.id} name={d.name} /></span>
@@ -111,17 +113,17 @@ export function PerformanceView({ data }: { data: any }) {
               <b className="hnum">×{d.n}</b>
             </div>
           ))}
-          {data.mostVisited.length === 0 ? <div className="small muted">No visits yet this month.</div> : null}
+          {data.mostVisited.length === 0 ? <div className="small muted">{tx("pv.noVisitsYetThis", "No visits yet this month.")}</div> : null}
         </div>
         <div className="stack-2">
-          <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Not visited yet</h6>
+          <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("pv.notVisitedYet", "Not visited yet")}</h6>
           {data.leastVisited.map((d: any) => (
             <div key={d.name} className="row" style={{ fontSize: 12, color: "var(--color-neutral-600)" }}>
               <span className="f1"><DoctorLink id={d.id} name={d.name} /></span>
               <span className={`tag ${d.class === "A" ? "tag-accent" : "tag-neutral"}`}>{d.class}</span>
             </div>
           ))}
-          {data.leastVisited.length === 0 ? <div className="small muted">Everyone has been reached.</div> : null}
+          {data.leastVisited.length === 0 ? <div className="small muted">{tx("pv.everyoneHasBeenReached", "Everyone has been reached.")}</div> : null}
         </div>
       </div>
 

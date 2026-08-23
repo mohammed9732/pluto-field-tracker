@@ -1,5 +1,6 @@
 "use client";
 import { useTerms } from "@/lib/terms";
+import { useT } from "@/lib/i18n";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Screen, useMe, Spinner } from "@/components/Shell";
@@ -13,6 +14,7 @@ const EMPTY_DOC = { name: "", clinic: "", city: "", area: "", address: "", speci
 const TEMPLATE_HEADERS = ["Doctor Name", "Clinic Name", "City", "Area", "Specialty", "Class (A/B/C)", "Phone"];
 
 export default function Doctors() {
+  const tx = useT();
   const me = useMe();
   const t = useTerms();
   const [doctors, setDoctors] = useState<any[] | null>(null);
@@ -96,7 +98,7 @@ export default function Doctors() {
         <h4 className="m0 f1">{t.doctorPlural}</h4>
         {canEdit ? (
           <>
-            <button className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 10px" }} onClick={() => fileRef.current?.click()}>Import .xlsx</button>
+            <button className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 10px" }} onClick={() => fileRef.current?.click()}>{tx("docs.importXlsx", "Import .xlsx")}</button>
             <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={onFile} />
           </>
         ) : null}
@@ -104,37 +106,37 @@ export default function Doctors() {
       </div>
       {adding ? (
         <div className="card gap-3">
-          <h6 className="m0">New doctor</h6>
-          <div className="field m0"><label>Doctor name</label><input className="input" value={newDoc.name} onChange={(e) => setNewDoc({ ...newDoc, name: e.target.value })} /></div>
-          <div className="field m0"><label>Center / clinic name</label><input className="input" value={newDoc.clinic} onChange={(e) => setNewDoc({ ...newDoc, clinic: e.target.value })} /></div>
+          <h6 className="m0">{tx("docs.newDoctor", "New doctor")}</h6>
+          <div className="field m0"><label>{tx("docs.doctorName", "Doctor name")}</label><input className="input" value={newDoc.name} onChange={(e) => setNewDoc({ ...newDoc, name: e.target.value })} /></div>
+          <div className="field m0"><label>{tx("docs.centerClinicName", "Center / clinic name")}</label><input className="input" value={newDoc.clinic} onChange={(e) => setNewDoc({ ...newDoc, clinic: e.target.value })} /></div>
           <div className="two-3">
-            <div className="field m0"><label>City</label>
+            <div className="field m0"><label>{tx("docs.city", "City")}</label>
               <select className="input" value={newDoc.city} disabled={!!scoped} onChange={(e) => setNewDoc({ ...newDoc, city: e.target.value })}>
                 {cities.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
-            <div className="field m0"><label>Area</label><input className="input" value={newDoc.area} onChange={(e) => setNewDoc({ ...newDoc, area: e.target.value })} /></div>
+            <div className="field m0"><label>{tx("docs.area", "Area")}</label><input className="input" value={newDoc.area} onChange={(e) => setNewDoc({ ...newDoc, area: e.target.value })} /></div>
           </div>
-          <div className="field m0"><label>Address</label><input className="input" value={newDoc.address} onChange={(e) => setNewDoc({ ...newDoc, address: e.target.value })} placeholder="Street, building, floor…" /></div>
+          <div className="field m0"><label>{tx("docs.address", "Address")}</label><input className="input" value={newDoc.address} onChange={(e) => setNewDoc({ ...newDoc, address: e.target.value })} placeholder={tx("docs.streetBuildingFloorPh", "Street, building, floor…")} /></div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-            <div className="field m0"><label>Specialty</label>
+            <div className="field m0"><label>{tx("docs.specialty", "Specialty")}</label>
               <select className="input" value={newDoc.specialty} onChange={(e) => setNewDoc({ ...newDoc, specialty: e.target.value })}>
-                <option>Dermatologist</option><option>Plastic surgeon</option><option>GP</option><option>Dentist</option><option>Other</option>
+                <option>{tx("docs.dermatologist", "Dermatologist")}</option><option>{tx("docs.plasticSurgeon", "Plastic surgeon")}</option><option>GP</option><option>{tx("docs.dentist", "Dentist")}</option><option>{tx("docs.other", "Other")}</option>
               </select>
             </div>
-            <div className="field m0"><label>Class</label>
+            <div className="field m0"><label>{tx("docs.class", "Class")}</label>
               <select className="input" value={newDoc.class} onChange={(e) => setNewDoc({ ...newDoc, class: e.target.value })}>
                 <option>A</option><option>B</option><option>C</option>
               </select>
             </div>
-            <div className="field m0"><label>Phone</label><input className="input" value={newDoc.phone} onChange={(e) => setNewDoc({ ...newDoc, phone: e.target.value })} /></div>
+            <div className="field m0"><label>{tx("docs.phone", "Phone")}</label><input className="input" value={newDoc.phone} onChange={(e) => setNewDoc({ ...newDoc, phone: e.target.value })} /></div>
           </div>
           <div className="field m0">
-            <label>Monthly potential (IQD, optional)</label>
-            <input className="input" inputMode="numeric" placeholder="What this doctor should buy per month"
+            <label>{tx("docs.monthlyPotentialIqdOptional", "Monthly potential (IQD, optional)")}</label>
+            <input className="input" inputMode="numeric" placeholder={tx("docs.whatThisDoctorShouldPh", "What this doctor should buy per month")}
               value={newDoc.potentialMonthly} onChange={(e) => setNewDoc({ ...newDoc, potentialMonthly: e.target.value })} />
             <div className="field">
-              <label>Secretary phone (optional)</label>
+              <label>{tx("docs.secretaryPhoneOptional", "Secretary phone (optional)")}</label>
               <input className="input hnum" inputMode="tel" placeholder="0750 000 0000"
                 value={newDoc.secretaryPhone} onChange={(e) => setNewDoc({ ...newDoc, secretaryPhone: e.target.value })} />
             </div>
@@ -142,7 +144,7 @@ export default function Doctors() {
           <label className="row" style={{ gap: 8, fontSize: 13, cursor: "pointer" }}>
             <input type="checkbox" checked={useGps} onChange={(e) => setUseGps(e.target.checked)} />
             <Icon d={paths.target} size={15} stroke="var(--color-accent-700)" />
-            <span style={{ color: "var(--color-accent-800)" }}>Set clinic location from my current GPS</span>
+            <span style={{ color: "var(--color-accent-800)" }}>{tx("docs.setClinicLocationFrom", "Set clinic location from my current GPS")}</span>
           </label>
           {addErr ? <div className="tag tag-hot self-start">{addErr}</div> : null}
           <div className="two">
@@ -156,8 +158,8 @@ export default function Doctors() {
                 setAdding(false);
                 load();
               } catch (e: any) { setAddErr(e.message); }
-            }}>Save doctor</button>
-            <button className="btn btn-secondary p-3" onClick={() => setAdding(false)}>Cancel</button>
+            }}>{tx("docs.saveDoctor", "Save doctor")}</button>
+            <button className="btn btn-secondary p-3" onClick={() => setAdding(false)}>{tx("docs.cancel", "Cancel")}</button>
           </div>
         </div>
       ) : null}
@@ -179,8 +181,8 @@ export default function Doctors() {
             {preview.rows.length > 20 ? <div className="muted">…and {preview.rows.length - 20} more</div> : null}
           </div>
           <div className="two">
-            <button className="btn btn-primary" style={{ padding: 9 }} onClick={confirmImport}>Confirm import</button>
-            <button className="btn btn-secondary" style={{ padding: 9 }} onClick={() => setPreview(null)}>Cancel</button>
+            <button className="btn btn-primary" style={{ padding: 9 }} onClick={confirmImport}>{tx("docs.confirmImport", "Confirm import")}</button>
+            <button className="btn btn-secondary" style={{ padding: 9 }} onClick={() => setPreview(null)}>{tx("docs.cancel", "Cancel")}</button>
           </div>
         </div>
       ) : null}
@@ -215,7 +217,7 @@ export default function Doctors() {
       </div>
       <div className="hint mt-auto">
         {scoped ? "You see the doctors in your city. " : ""}Grey pin = no clinic location yet — captured by the rep on first visit.{" "}
-        {canEdit ? <>Import template: Name | Clinic | City | Area | Specialty | Class | Phone. <a href="#" onClick={(e) => { e.preventDefault(); downloadTemplate(); }}>Download blank template</a>.</> : null}
+        {canEdit ? <>Import template: Name | Clinic | City | Area | Specialty | Class | Phone. <a href="#" onClick={(e) => { e.preventDefault(); downloadTemplate(); }}>{tx("docs.downloadBlankTemplate", "Download blank template")}</a>.</> : null}
       </div>
     </Screen>
   );

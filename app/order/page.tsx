@@ -1,5 +1,6 @@
 "use client";
 import { enqueue, isOffline, newRef } from "@/lib/outbox";
+import { useT } from "@/lib/i18n";
 import { useTerms, lower } from "@/lib/terms";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -17,6 +18,7 @@ function tierPrice(l: Line, qty: number): number {
 }
 
 function NewOrderInner() {
+  const tx = useT();
   const me = useMe();
   const t = useTerms();
   const router = useRouter();
@@ -94,7 +96,7 @@ function NewOrderInner() {
 
   return (
     <Screen me={me}>
-      <PageHead title="New order" back="back" />
+      <PageHead title={tx("neworder.newOrderPh", "New order")} back="back" />
       {!doctor ? (
         <DoctorPicker onPick={setDoctor} allowAdd />
       ) : (
@@ -108,7 +110,7 @@ function NewOrderInner() {
             }}>
               <input type="checkbox" checked={isSample} onChange={(e) => setIsSample(e.target.checked)} style={{ width: 18, height: 18, accentColor: "var(--c-violet)" }} />
               <div className="f1">
-                <div style={{ fontSize: 13, fontWeight: 500, color: isSample ? "var(--c-violet-deep)" : undefined }}>Free sample</div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: isSample ? "var(--c-violet-deep)" : undefined }}>{tx("neworder.freeSample", "Free sample")}</div>
                 <div className="small" style={{ color: isSample ? "var(--c-violet-deep)" : "var(--color-neutral-600)" }}>
                   Price is 0 · stock still leaves the warehouse · does not count toward targets
                 </div>

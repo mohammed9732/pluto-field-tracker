@@ -1,11 +1,13 @@
 "use client";
 import { MascotNote } from "@/components/MascotNote";
+import { useT } from "@/lib/i18n";
 import { useCallback, useEffect, useState } from "react";
 import { Screen, useMe, Spinner, Meter } from "@/components/Shell";
 import { PerformanceView } from "@/components/PerformanceView";
 import { api, money, monthName } from "@/lib/fmt";
 
 export default function Progress() {
+  const tx = useT();
   const me = useMe();
   const [data, setData] = useState<any>(null);
   const [perf, setPerf] = useState<any>(null);
@@ -24,7 +26,7 @@ export default function Progress() {
   return (
     <Screen me={me}>
       <div>
-        <h4 style={{ margin: "0 0 2px" }}>Progress</h4>
+        <h4 style={{ margin: "0 0 2px" }}>{tx("prog.progress", "Progress")}</h4>
         <div className="small muted fs-caption">{monthName(period)} · approved + invoiced orders count</div>
       </div>
 
@@ -34,7 +36,7 @@ export default function Progress() {
             <input type="radio" name="ptab" checked={tab === "targets"} onChange={() => setTab("targets")} />Targets &amp; pay
           </label>
           <label className="seg-opt" style={{ flex: 1, justifyContent: "center" }}>
-            <input type="radio" name="ptab" checked={tab === "performance"} onChange={() => setTab("performance")} />Performance
+            <input type="radio" name="ptab" checked={tab === "performance"} onChange={() => setTab("performance")} />{tx("prog.performance", "Performance")}
           </label>
         </div>
       ) : null}
@@ -44,7 +46,7 @@ export default function Progress() {
       ) : (
         <>
           {data.accrual.length === 0 ? (
-            <MascotNote title="No targets this month"
+            <MascotNote title={tx("prog.noTargetsThisMonthPh", "No targets this month")}
               body="Your manager has not set targets yet. Keep visiting — the numbers still count once they do." />
           ) : null}
 
@@ -84,7 +86,7 @@ export default function Progress() {
             </div>
             <div className="row items-base">
               <span className="hnum fs-figure">{money(data.quarter.total)}</span>
-              <span className="tag tag-outline">Accrued</span>
+              <span className="tag tag-outline">{tx("prog.accrued", "Accrued")}</span>
             </div>
             <div className="small muted">
               {data.quarter.months.map((m: any) => `${monthName(m.period).split(" ")[0].slice(0, 3)} ${money(m.amount + (m.commission ?? 0))}`).join(" · ")}
@@ -94,7 +96,7 @@ export default function Progress() {
                 Target incentives {money(data.quarter.incentives)} + sales commission {money(data.quarter.commission)} — paid quarterly, read-only
               </div>
             ) : (
-              <div className="small muted">Paid quarterly, read-only</div>
+              <div className="small muted">{tx("prog.paidQuarterlyReadOnly", "Paid quarterly, read-only")}</div>
             )}
           </div>
         </>

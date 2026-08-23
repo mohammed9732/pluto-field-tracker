@@ -1,10 +1,12 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { api, durationHM, hm } from "@/lib/fmt";
 import { GeoMap } from "@/components/GeoMap";
 
 export default function AdminMap() {
+  const tx = useT();
   const me = useMe();
   const [team, setTeam] = useState<any[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
@@ -35,7 +37,7 @@ export default function AdminMap() {
   return (
     <Screen me={me} wide>
         <div className="row" style={{ flexWrap: "wrap", gap: 10 }}>
-          <h4 className="m0">Daily map view</h4>
+          <h4 className="m0">{tx("amap.dailyMapView", "Daily map view")}</h4>
           <span className="small muted" style={{ marginLeft: "auto" }}>{inField} in field · {onLeave} on leave · pings every 5 min</span>
         </div>
         <div className="seg" style={{ width: "100%", overflowX: "auto" }}>
@@ -52,7 +54,7 @@ export default function AdminMap() {
             <h6 style={{ margin: "0 0 8px", color: "var(--color-neutral-600)" }}>Timeline — {data.userName}</h6>
             {data.checkins.filter((c: any) => c.type === "in").map((c: any) => (
               <div key={c.id} className="listrow" style={{ padding: "7px 0", fontSize: 12 }}>
-                <b className="hnum" style={{ width: 38 }}>{hm(c.ts)}</b><span className="f1">Check-in</span>
+                <b className="hnum" style={{ width: 38 }}>{hm(c.ts)}</b><span className="f1">{tx("amap.checkIn", "Check-in")}</span>
               </div>
             ))}
             {data.visits.map((v: any, i: number) => (
@@ -69,17 +71,17 @@ export default function AdminMap() {
             ))}
             {data.checkins.filter((c: any) => c.type === "out").map((c: any) => (
               <div key={c.id} className="listrow" style={{ padding: "7px 0", fontSize: 12 }}>
-                <b className="hnum" style={{ width: 38 }}>{hm(c.ts)}</b><span className="f1">Check-out</span>
+                <b className="hnum" style={{ width: 38 }}>{hm(c.ts)}</b><span className="f1">{tx("amap.checkOut", "Check-out")}</span>
               </div>
             ))}
             {data.fieldTime.checkedIn ? (
               <div style={{ display: "flex", gap: 10, fontSize: 12, padding: "7px 0", color: "var(--color-neutral-600)" }}>
-                <b className="hnum" style={{ width: 38 }}>—</b><span className="f1">Check-out pending</span>
+                <b className="hnum" style={{ width: 38 }}>—</b><span className="f1">{tx("amap.checkOutPending", "Check-out pending")}</span>
               </div>
             ) : null}
           </div>
           <div className="stack-2">
-            <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Field time</h6>
+            <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("amap.fieldTime", "Field time")}</h6>
             <div className="row items-base">
               <span className="hnum fs-figure">{durationHM(data.fieldTime.minutes)}</span>
               {data.fieldTime.checkedIn ? <span className="small muted">and counting</span> : null}
@@ -97,7 +99,7 @@ export default function AdminMap() {
               })()}
             </div>
             <div className="small muted">
-              At clinics <b style={{ color: "var(--color-text)" }}>{durationHM(data.atClinicsMinutes)}</b> · travel{" "}
+              {tx("amap.atClinics", "At clinics")} <b style={{ color: "var(--color-text)" }}>{durationHM(data.atClinicsMinutes)}</b> · travel{" "}
               <b style={{ color: "var(--color-text)" }}>{durationHM(data.travelMinutes)}</b> · outside clinic areas{" "}
               <b style={{ color: "var(--color-accent-700)" }}>{durationHM(data.outsideMinutes)}</b>
             </div>

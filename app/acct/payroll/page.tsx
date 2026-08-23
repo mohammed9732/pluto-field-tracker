@@ -1,9 +1,11 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { api, dmy, money, monthName } from "@/lib/fmt";
 
 export default function Payroll() {
+  const tx = useT();
   const me = useMe();
   const [data, setData] = useState<any>(null);
   const load = useCallback(() => {
@@ -23,7 +25,7 @@ export default function Payroll() {
   return (
     <Screen me={me} wide>
       <div className="row items-base">
-        <h4 className="m0 f1">Payroll</h4>
+        <h4 className="m0 f1">{tx("payroll.payroll", "Payroll")}</h4>
         <span className="tag tag-neutral">{monthName(data.period)}</span>
       </div>
       {data.rows.map((r: any) => (
@@ -54,9 +56,9 @@ export default function Payroll() {
                     <div key={d.id} className="row" style={{ gap: 6, fontSize: 12 }}>
                       <span style={{ flex: 1, color: "var(--c-amber-deep)" }}>{dmy(d.date)} — {money(d.amount)}</span>
                       <button className="btn" style={{ fontSize: 12, padding: "3px 10px", background: "var(--c-amber)", border: "none", color: "#fff" }}
-                        onClick={async () => { await api("/api/money", { json: { action: "deduction", id: d.id, decision: "confirm" } }); load(); }}>Deduct</button>
+                        onClick={async () => { await api("/api/money", { json: { action: "deduction", id: d.id, decision: "confirm" } }); load(); }}>{tx("payroll.deduct", "Deduct")}</button>
                       <button className="btn btn-secondary" style={{ fontSize: 12, padding: "3px 10px" }}
-                        onClick={async () => { await api("/api/money", { json: { action: "deduction", id: d.id, decision: "waive" } }); load(); }}>Excuse</button>
+                        onClick={async () => { await api("/api/money", { json: { action: "deduction", id: d.id, decision: "waive" } }); load(); }}>{tx("payroll.excuse", "Excuse")}</button>
                     </div>
                   ))}
                 </div>
@@ -66,23 +68,23 @@ export default function Payroll() {
           {r.deducted > 0 ? <div className="small" style={{ color: "var(--c-coral-deep)" }}>Deducted {money(r.deducted)} for missed days</div> : null}
           {r.spendingsDue > 0 ? (
             <div className="row" style={{ gap: 6, fontSize: 12 }}>
-              <span style={{ flex: 1, color: "var(--c-green-deep)" }}>Spendings to pay back: <b>{money(r.spendingsDue)}</b></span>
+              <span style={{ flex: 1, color: "var(--c-green-deep)" }}>{tx("payroll.spendingsToPayBack", "Spendings to pay back:")} <b>{money(r.spendingsDue)}</b></span>
               <button className="btn btn-green" style={{ fontSize: 12, padding: "3px 10px" }}
-                onClick={async () => { await api("/api/spendings", { json: { action: "payMonth", userId: r.userId, period: data.period } }); load(); }}>Pay back</button>
+                onClick={async () => { await api("/api/spendings", { json: { action: "payMonth", userId: r.userId, period: data.period } }); load(); }}>{tx("payroll.payBack", "Pay back")}</button>
             </div>
           ) : null}
           {r.paid ? (
             <div className="row" style={{ gap: 8, fontSize: 12, color: "var(--color-neutral-600)" }}>
-              <span className="tag tag-ok">Paid</span>
+              <span className="tag tag-ok">{tx("payroll.paid", "Paid")}</span>
               {dmy(r.paid.paidAt)} {r.paid.paidAt.slice(11, 16)} · by {r.paid.paidByName}
             </div>
           ) : (
-            <button className="btn btn-primary btn-block p-3" onClick={() => pay(r)}>Mark as paid</button>
+            <button className="btn btn-primary btn-block p-3" onClick={() => pay(r)}>{tx("payroll.markAsPaid", "Mark as paid")}</button>
           )}
         </div>
       ))}
       <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
-        <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Quarter-end months add incentives</h6>
+        <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("payroll.quarterEndMonthsAdd", "Quarter-end months add incentives")}</h6>
         <div className="small muted fs-caption">
           September rows will show base + Q3 incentive due for anyone who qualified.
         </div>

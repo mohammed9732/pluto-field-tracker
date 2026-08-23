@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { Icon, paths } from "@/components/Icons";
 import { api, dmy, groupDigits, money, ungroup } from "@/lib/fmt";
@@ -14,6 +15,7 @@ const STATUS_TAG: Record<string, [string, string]> = {
 };
 
 export default function Spendings() {
+  const tx = useT();
   const me = useMe();
   const [data, setData] = useState<any>(null);
   const [approvals, setApprovals] = useState<any[]>([]);
@@ -33,7 +35,7 @@ export default function Spendings() {
   useEffect(load, [load]);
 
   if (!me || !data) return <Spinner />;
-  if (!data.enabled) return <Screen me={me}><div className="card muted">Spendings are switched off by the admin.</div></Screen>;
+  if (!data.enabled) return <Screen me={me}><div className="card muted">{tx("spend.spendingsAreSwitchedOff", "Spendings are switched off by the admin.")}</div></Screen>;
 
   async function attachReceipt(file: File) {
     const fd = new FormData();
@@ -68,24 +70,24 @@ export default function Spendings() {
 
   return (
     <Screen me={me}>
-      <h4 className="m0">Spendings</h4>
+      <h4 className="m0">{tx("spend.spendings", "Spendings")}</h4>
 
       <div className="card gap-3">
         <div className="two-3">
           <div className="field m0">
-            <label>Amount (IQD)</label>
+            <label>{tx("spend.amountIqd", "Amount (IQD)")}</label>
             <input className="input hnum" inputMode="numeric" placeholder="25,000" value={amount} onChange={(e) => setAmount(groupDigits(e.target.value))} style={{ fontSize: 16 }} />
           </div>
           <div className="field m0">
-            <label>Type</label>
+            <label>{tx("spend.type", "Type")}</label>
             <select className="input" value={type} onChange={(e) => setType(e.target.value)}>
               {TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </div>
         </div>
         <div className="field m0">
-          <label>Note</label>
-          <input className="input" placeholder="e.g. fuel for the Soran circuit" value={note} onChange={(e) => setNote(e.target.value)} />
+          <label>{tx("spend.note", "Note")}</label>
+          <input className="input" placeholder={tx("spend.eGFuelForPh", "e.g. fuel for the Soran circuit")} value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
         <label className="row" style={{ gap: 8, fontSize: 13, cursor: "pointer" }}>
           <Icon d={paths.file} size={15} stroke={receipt ? "var(--c-green-deep)" : "var(--color-neutral-500)"} />
@@ -98,12 +100,12 @@ export default function Spendings() {
         <button className="btn btn-primary btn-block" style={{ padding: 11 }} onClick={submit} disabled={busy}>
           {busy ? "Saving…" : "Log spending"}
         </button>
-        <div className="hint">Approved spendings are paid back at the end of the month.</div>
+        <div className="hint">{tx("spend.approvedSpendingsArePaid", "Approved spendings are paid back at the end of the month.")}</div>
       </div>
 
       {isApprover && mineApprovals.length ? (
         <div className="stack-2">
-          <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Waiting for your decision</h6>
+          <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("spend.waitingForYourDecision", "Waiting for your decision")}</h6>
           {mineApprovals.map((s: any) => (
             <div key={s.id} className="card" style={{ gap: 8, padding: 12 }}>
               <div className="row gap-2">
@@ -113,10 +115,10 @@ export default function Spendings() {
                 </div>
                 <span className="hnum fs-body">{money(s.amount)}</span>
               </div>
-              {s.receipt ? <a className="small" href={`/api/files?id=${s.receipt}`} target="_blank">View receipt</a> : <span className="small" style={{ color: "var(--c-amber-deep)" }}>No receipt attached</span>}
+              {s.receipt ? <a className="small" href={`/api/files?id=${s.receipt}`} target="_blank">{tx("spend.viewReceipt", "View receipt")}</a> : <span className="small" style={{ color: "var(--c-amber-deep)" }}>{tx("spend.noReceiptAttached", "No receipt attached")}</span>}
               <div className="two">
-                <button className="btn btn-primary" style={{ padding: 8 }} onClick={() => decide(s.id, "approve")}>Approve</button>
-                <button className="btn btn-secondary" style={{ padding: 8 }} onClick={() => decide(s.id, "reject")}>Reject…</button>
+                <button className="btn btn-primary" style={{ padding: 8 }} onClick={() => decide(s.id, "approve")}>{tx("spend.approve", "Approve")}</button>
+                <button className="btn btn-secondary" style={{ padding: 8 }} onClick={() => decide(s.id, "reject")}>{tx("spend.reject", "Reject…")}</button>
               </div>
             </div>
           ))}
@@ -124,8 +126,8 @@ export default function Spendings() {
       ) : null}
 
       <div className="stack-2">
-        <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>My spendings</h6>
-        {data.spendings.length === 0 ? <div className="small muted">Nothing logged yet.</div> : null}
+        <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("spend.mySpendings", "My spendings")}</h6>
+        {data.spendings.length === 0 ? <div className="small muted">{tx("spend.nothingLoggedYet", "Nothing logged yet.")}</div> : null}
         {data.spendings.map((s: any) => (
           <div key={s.id} className="listrow py-2">
             <div className="f1min">

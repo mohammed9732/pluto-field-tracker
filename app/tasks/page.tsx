@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { api, dmy } from "@/lib/fmt";
 
@@ -12,6 +13,7 @@ const ROLE_COLOR: Record<string, { bg: string; text: string; label: string }> = 
 };
 
 export default function Tasks() {
+  const tx = useT();
   const me = useMe();
   const [data, setData] = useState<any>(null);
   const [created, setCreated] = useState<any[]>([]);
@@ -35,7 +37,7 @@ export default function Tasks() {
   useEffect(load, [load]);
 
   if (!me || !data) return <Spinner />;
-  if (!data.enabled) return <Screen me={me}><div className="card muted">Tasks are switched off by the admin.</div></Screen>;
+  if (!data.enabled) return <Screen me={me}><div className="card muted">{tx("task.tasksAreSwitchedOff", "Tasks are switched off by the admin.")}</div></Screen>;
 
   async function create() {
     setErr("");
@@ -76,14 +78,14 @@ export default function Tasks() {
         ) : null}
         {mineToDo && !t.myDone && t.status === "open" ? (
           <button className="btn btn-primary btn-block" style={{ padding: 9 }} onClick={async () => { await api("/api/tasks", { json: { action: "done", id: t.id } }); load(); }}>
-            Mark done
+            {tx("task.markDone", "Mark done")}
           </button>
         ) : null}
-        {mineToDo && t.myDone && t.status === "open" ? <div className="small" style={{ color: "var(--c-green-deep)" }}>Your part is done — waiting for the others</div> : null}
+        {mineToDo && t.myDone && t.status === "open" ? <div className="small" style={{ color: "var(--c-green-deep)" }}>{tx("task.yourPartIsDone", "Your part is done — waiting for the others")}</div> : null}
         {t.status === "done" ? <div className="small" style={{ color: "var(--c-green-deep)" }}>Done {t.doneAt ? dmy(t.doneAt) : ""}</div> : null}
         {!mineToDo && t.status === "done" ? (
           <button className="btn btn-secondary btn-block" style={{ padding: 8, fontSize: 12 }} onClick={async () => { await api("/api/tasks", { json: { action: "close", id: t.id } }); load(); }}>
-            Verified — close it
+            {tx("task.verifiedCloseIt", "Verified — close it")}
           </button>
         ) : null}
       </div>
@@ -97,23 +99,23 @@ export default function Tasks() {
   return (
     <Screen me={me}>
       <div className="row">
-        <h4 className="m0 f1">Tasks</h4>
+        <h4 className="m0 f1">{tx("task.tasks", "Tasks")}</h4>
         {canCreate ? <button className="btn btn-primary" style={{ fontSize: 12, padding: "6px 12px" }} onClick={() => setShowNew((s) => !s)}>＋ Assign task</button> : null}
       </div>
 
       {showNew ? (
         <div className="card gap-3">
-          <div className="field m0"><label>Task</label><input className="input" placeholder="e.g. Collect payment from Dr. Rebin" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-          <div className="field m0"><label>Details</label><textarea className="input" style={{ minHeight: 50 }} value={form.details} onChange={(e) => setForm({ ...form, details: e.target.value })} /></div>
+          <div className="field m0"><label>{tx("task.task", "Task")}</label><input className="input" placeholder={tx("task.eGCollectPaymentPh", "e.g. Collect payment from Dr. Rebin")} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+          <div className="field m0"><label>{tx("task.details", "Details")}</label><textarea className="input" style={{ minHeight: 50 }} value={form.details} onChange={(e) => setForm({ ...form, details: e.target.value })} /></div>
           <div className="field m0">
-            <label>Who — pick one or many</label>
+            <label>{tx("task.whoPickOneOr", "Who — pick one or many")}</label>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
               <button type="button" className="tag tag-outline" style={{ cursor: "pointer", background: "transparent" }}
-                onClick={() => setForm((f) => ({ ...f, assigneeIds: data.users.filter((u: any) => u.role === "rep").map((u: any) => u.id) }))}>All reps</button>
+                onClick={() => setForm((f) => ({ ...f, assigneeIds: data.users.filter((u: any) => u.role === "rep").map((u: any) => u.id) }))}>{tx("task.allReps", "All reps")}</button>
               <button type="button" className="tag tag-outline" style={{ cursor: "pointer", background: "transparent" }}
-                onClick={() => setForm((f) => ({ ...f, assigneeIds: data.users.filter((u: any) => u.id !== me.id).map((u: any) => u.id) }))}>Everyone</button>
+                onClick={() => setForm((f) => ({ ...f, assigneeIds: data.users.filter((u: any) => u.id !== me.id).map((u: any) => u.id) }))}>{tx("task.everyone", "Everyone")}</button>
               <button type="button" className="tag tag-neutral" style={{ cursor: "pointer", border: "none" }}
-                onClick={() => setForm((f) => ({ ...f, assigneeIds: [] }))}>Clear</button>
+                onClick={() => setForm((f) => ({ ...f, assigneeIds: [] }))}>{tx("task.clear", "Clear")}</button>
             </div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {data.users.filter((u: any) => u.id !== me.id).map((u: any) => (
@@ -127,24 +129,24 @@ export default function Tasks() {
           </div>
           <div className="field m0"><label>Due</label><input className="input" type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /></div>
           {err ? <div className="tag tag-hot self-start">{err}</div> : null}
-          <button className="btn btn-primary btn-block p-3" onClick={create}>Assign</button>
+          <button className="btn btn-primary btn-block p-3" onClick={create}>{tx("task.assign", "Assign")}</button>
         </div>
       ) : null}
 
-      {openMine.length ? <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>My tasks</h6> : null}
+      {openMine.length ? <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("task.myTasks", "My tasks")}</h6> : null}
       {openMine.map((t: any) => <TaskCard key={t.id} t={t} mineToDo />)}
-      {openMine.length === 0 ? <div className="card muted">No open tasks for you — nice.</div> : null}
+      {openMine.length === 0 ? <div className="card muted">{tx("task.noOpenTasksFor", "No open tasks for you — nice.")}</div> : null}
 
       {openCreated.length ? (
         <>
-          <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Assigned by me</h6>
+          <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("task.assignedByMe", "Assigned by me")}</h6>
           {openCreated.map((t: any) => <TaskCard key={t.id} t={t} mineToDo={false} />)}
         </>
       ) : null}
 
       {doneMine.length ? (
         <>
-          <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Recently finished</h6>
+          <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("task.recentlyFinished", "Recently finished")}</h6>
           {doneMine.map((t: any) => <TaskCard key={t.id} t={t} mineToDo />)}
         </>
       ) : null}
@@ -154,7 +156,7 @@ export default function Tasks() {
         if (!others.length) return null;
         return (
           <div className="stack-2">
-            <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Assigned by others</h6>
+            <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("task.assignedByOthers", "Assigned by others")}</h6>
             {others.map((t: any) => <TaskCard key={t.id} t={t} mineToDo={false} />)}
           </div>
         );
@@ -172,13 +174,13 @@ export default function Tasks() {
                 <div className="small muted">{t.createdByName} → {t.assigneeNames.join(", ")}{t.dueDate ? ` · due ${dmy(t.dueDate)}` : ""}</div>
               </div>
               {t.status === "open" && t.dueDate && t.dueDate < new Date().toISOString().slice(0, 10)
-                ? <span className="tag tag-hot">Overdue</span>
+                ? <span className="tag tag-hot">{tx("task.overdue", "Overdue")}</span>
                 : t.status === "open"
                   ? <span className="tag tag-warn">{t.doneCount}/{t.totalCount}</span>
-                  : <span className="tag tag-ok">Done</span>}
+                  : <span className="tag tag-ok">{tx("task.done", "Done")}</span>}
             </div>
           ))}
-          {review.length === 0 ? <div className="small muted">No tasks dated this month.</div> : null}
+          {review.length === 0 ? <div className="small muted">{tx("task.noTasksDatedThis", "No tasks dated this month.")}</div> : null}
         </div>
       ) : null}
 

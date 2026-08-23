@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useT } from "@/lib/i18n";
 import { useCallback, useEffect, useState } from "react";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { MascotNote } from "@/components/MascotNote";
@@ -12,6 +13,7 @@ import { api, dmy, money, monthName } from "@/lib/fmt";
  * figure you paid was never the real one.
  */
 export default function MonthEnd() {
+  const tx = useT();
   const me = useMe();
   const [data, setData] = useState<any>(null);
   const [period, setPeriod] = useState("");
@@ -51,30 +53,30 @@ export default function MonthEnd() {
   return (
     <Screen me={me} wide>
       <div className="row" style={{ alignItems: "baseline", flexWrap: "wrap" }}>
-        <h4 className="m0 f1">Month-end pack</h4>
+        <h4 className="m0 f1">{tx("monthend.monthEndPack", "Month-end pack")}</h4>
         <button className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 11px" }} onClick={() => shiftMonth(-1)}>
           ← Earlier
         </button>
         <span className="tag tag-neutral">{monthName(data.period)}</span>
         <button className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 11px" }} onClick={() => shiftMonth(1)}>
-          Later →
+          {tx("monthend.later", "Later →")}
         </button>
       </div>
 
       {data.isClosedAlready ? (
         <div className="tag tag-ok self-start">
-          Closed — these figures can no longer change
+          {tx("monthend.closedTheseFiguresCan", "Closed — these figures can no longer change")}
         </div>
       ) : null}
 
       {data.blockers.length === 0 ? (
         <MascotNote mood="cheer" tone="win" size={60}
-          title="Nothing is waiting on a decision"
+          title={tx("monthend.nothingIsWaitingOnPh", "Nothing is waiting on a decision")}
           body="Every missed day, spending and order for this month has been dealt with. Safe to pay." />
       ) : (
         <div className="card" style={{ gap: 8, borderColor: "var(--c-amber)" }}>
           <div className="row gap-2">
-            <span style={{ fontWeight: 700, flex: 1 }}>Deal with these first</span>
+            <span style={{ fontWeight: 700, flex: 1 }}>{tx("monthend.dealWithTheseFirst", "Deal with these first")}</span>
             <span className="tag tag-warn">{data.blockers.length}</span>
           </div>
           <div className="small muted">
@@ -84,7 +86,7 @@ export default function MonthEnd() {
             <Link key={b.key} href={b.href} className="listrow" style={{ textDecoration: "none", color: "inherit" }}>
               <span className="hnum" style={{ fontSize: 18, width: 34 }}>{b.count}</span>
               <span style={{ flex: 1, fontSize: 13 }}>{b.label}</span>
-              <span className="small" style={{ color: "var(--color-accent)" }}>Open →</span>
+              <span className="small" style={{ color: "var(--color-accent)" }}>{tx("monthend.open", "Open →")}</span>
             </Link>
           ))}
         </div>
@@ -92,24 +94,24 @@ export default function MonthEnd() {
 
       <div className="kpi-grid">
         <div className="card" style={{ gap: 2, padding: 12 }}>
-          <span className="card-kicker">To hand over</span>
+          <span className="card-kicker">{tx("monthend.toHandOver", "To hand over")}</span>
           <span className="hnum fs-h2">{money(t.handOver)}</span>
           <span className="small muted fs-caption">
             wages {money(t.netPay)} + expenses {money(t.reimburse)}
           </span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
-          <span className="card-kicker">Sales this month</span>
+          <span className="card-kicker">{tx("monthend.salesThisMonth", "Sales this month")}</span>
           <span className="hnum fs-h2">{money(t.sales)}</span>
           <span className="small muted fs-caption">approved and invoiced orders</span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
-          <span className="card-kicker">Cash collected</span>
+          <span className="card-kicker">{tx("monthend.cashCollected", "Cash collected")}</span>
           <span className="hnum fs-h2">{money(t.collected)}</span>
           <span className="small muted fs-caption">commission {money(t.commission)}</span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
-          <span className="card-kicker">Deductions</span>
+          <span className="card-kicker">{tx("monthend.deductions", "Deductions")}</span>
           <span className="hnum" style={{ fontSize: 28, color: t.deducted ? "var(--c-coral-deep)" : undefined }}>
             {money(t.deducted)}
           </span>
@@ -125,25 +127,25 @@ export default function MonthEnd() {
             Quarter end — {data.quarter.replace("-", " ")}
           </span>
           <div className="small">
-            This is the third month of the quarter, so accrued sales incentives of <b>{money(t.incentiveDue)}</b> fall
+            {tx("monthend.thisIsTheThird", "This is the third month of the quarter, so accrued sales incentives of")} <b>{money(t.incentiveDue)}</b> fall
             due with this payroll. They are already included in each total below.
           </div>
         </div>
       ) : null}
 
-      <h6 style={{ margin: "6px 0 0", color: "var(--color-neutral-600)" }}>Person by person</h6>
+      <h6 style={{ margin: "6px 0 0", color: "var(--color-neutral-600)" }}>{tx("monthend.personByPerson", "Person by person")}</h6>
       <div className="tscroll">
         <table className="table">
           <thead>
             <tr>
-              <th>Person</th>
-              <th className="ta-r">Base</th>
-              <th className="ta-r">Commission</th>
-              {data.isQuarterEnd ? <th className="ta-r">Quarter</th> : null}
-              <th className="ta-r">Deducted</th>
-              <th className="ta-r">Wages</th>
-              <th className="ta-r">Expenses</th>
-              <th className="ta-r">Hand over</th>
+              <th>{tx("monthend.person", "Person")}</th>
+              <th className="ta-r">{tx("monthend.base", "Base")}</th>
+              <th className="ta-r">{tx("monthend.commission", "Commission")}</th>
+              {data.isQuarterEnd ? <th className="ta-r">{tx("monthend.quarter", "Quarter")}</th> : null}
+              <th className="ta-r">{tx("monthend.deducted", "Deducted")}</th>
+              <th className="ta-r">{tx("monthend.wages", "Wages")}</th>
+              <th className="ta-r">{tx("monthend.expenses", "Expenses")}</th>
+              <th className="ta-r">{tx("monthend.handOver", "Hand over")}</th>
               <th></th>
             </tr>
           </thead>
@@ -197,12 +199,12 @@ export default function MonthEnd() {
 
       {!data.isClosedAlready && data.blockers.length === 0 && t.paidCount === data.people.length ? (
         <div className="card" style={{ gap: 8, borderColor: "var(--c-green)" }}>
-          <span style={{ fontWeight: 700 }}>Everyone is paid and nothing is outstanding</span>
+          <span style={{ fontWeight: 700 }}>{tx("monthend.everyoneIsPaidAnd", "Everyone is paid and nothing is outstanding")}</span>
           <div className="small muted">
             This month can be closed in the control panel, which locks the figures so they cannot move afterwards.
           </div>
           <Link className="btn btn-secondary" href="/admin/settings" style={{ alignSelf: "flex-start", fontSize: 12 }}>
-            Go and close it
+            {tx("monthend.goAndCloseIt", "Go and close it")}
           </Link>
         </div>
       ) : null}

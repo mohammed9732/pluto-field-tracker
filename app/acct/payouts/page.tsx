@@ -1,9 +1,11 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { api, dmy, money, monthName } from "@/lib/fmt";
 
 export default function Payouts() {
+  const tx = useT();
   const me = useMe();
   const [data, setData] = useState<any>(null);
   const load = useCallback(() => {
@@ -21,7 +23,7 @@ export default function Payouts() {
   return (
     <Screen me={me} wide>
       <div className="row items-base">
-        <h4 className="m0 f1">Payouts</h4>
+        <h4 className="m0 f1">{tx("payouts.payouts", "Payouts")}</h4>
         <span className="tag tag-neutral">{data.quarter.replace("-", " ")}</span>
       </div>
       {data.rows.map((r: any) => (
@@ -40,7 +42,7 @@ export default function Payouts() {
           </div>
           {r.paid ? (
             <div className="row" style={{ gap: 8, fontSize: 12, color: "var(--color-neutral-600)" }}>
-              <span className="tag tag-ok">Paid</span>
+              <span className="tag tag-ok">{tx("payouts.paid", "Paid")}</span>
               {dmy(r.paid.paidAt)} {r.paid.paidAt.slice(11, 16)} · by {r.paid.paidByName}
             </div>
           ) : r.paidWithWages ? (
@@ -49,14 +51,14 @@ export default function Payouts() {
             </div>
           ) : (
             <button className="btn btn-primary btn-block p-3" onClick={() => pay(r.userId)} disabled={r.total <= 0}>
-              Mark as paid
+              {tx("payouts.markAsPaid", "Mark as paid")}
             </button>
           )}
         </div>
       ))}
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
-        <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Paid</h6>
-        {data.history.length === 0 ? <div className="small muted">No payout history yet.</div> : null}
+        <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("payouts.paid", "Paid")}</h6>
+        {data.history.length === 0 ? <div className="small muted">{tx("payouts.noPayoutHistoryYet", "No payout history yet.")}</div> : null}
         {data.history.map((p: any) => (
           <div key={p.id} className="listrow py-2">
             <div className="f1">

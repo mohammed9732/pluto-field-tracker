@@ -1,9 +1,11 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { api, money, monthName } from "@/lib/fmt";
 
 export default function Targets() {
+  const tx = useT();
   const me = useMe();
   const [users, setUsers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
@@ -80,8 +82,8 @@ export default function Targets() {
   return (
     <Screen me={me}>
       <div>
-        <h4 style={{ margin: "0 0 2px" }}>Set targets</h4>
-        <div className="small muted fs-caption">Quantities per product per month</div>
+        <h4 style={{ margin: "0 0 2px" }}>{tx("tgt.setTargets", "Set targets")}</h4>
+        <div className="small muted fs-caption">{tx("tgt.quantitiesPerProductPer", "Quantities per product per month")}</div>
       </div>
       <div className="two-3">
         <div className="field m0">
@@ -91,7 +93,7 @@ export default function Targets() {
           </select>
         </div>
         <div className="field m0">
-          <label>Month</label>
+          <label>{tx("tgt.month", "Month")}</label>
           <select className="input" value={period} onChange={(e) => setPeriod(e.target.value)}>
             {monthOptions.map((m) => <option key={m} value={m}>{monthName(m)}</option>)}
           </select>
@@ -104,22 +106,22 @@ export default function Targets() {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
             <div className="field m0">
-              <label>Target qty</label>
+              <label>{tx("tgt.targetQty", "Target qty")}</label>
               <input className="input" inputMode="numeric" value={rows[p.id]?.targetQty ?? ""} onChange={(e) => setRows((r) => ({ ...r, [p.id]: { ...r[p.id], targetQty: e.target.value } }))} />
             </div>
             <div className="field m0">
-              <label>Min %</label>
+              <label>{tx("tgt.min", "Min %")}</label>
               <input className="input" inputMode="numeric" value={rows[p.id]?.minPct ?? ""} onChange={(e) => setRows((r) => ({ ...r, [p.id]: { ...r[p.id], minPct: e.target.value } }))} />
             </div>
             <div className="field m0">
-              <label>Incentive %</label>
+              <label>{tx("tgt.incentive", "Incentive %")}</label>
               <input className="input" inputMode="decimal" value={rows[p.id]?.incentivePct ?? ""} onChange={(e) => setRows((r) => ({ ...r, [p.id]: { ...r[p.id], incentivePct: e.target.value } }))} />
             </div>
           </div>
         </div>
       ))}
       <div className="hint">Below the minimum → incentive is $0 for that product that month. Achieved value uses price snapshots. Leave qty empty to remove a target.</div>
-      {saved ? <div className="tag tag-ok self-start">Targets saved</div> : null}
+      {saved ? <div className="tag tag-ok self-start">{tx("tgt.targetsSaved", "Targets saved")}</div> : null}
       <button className="btn btn-primary btn-block" style={{ padding: 13, marginTop: "auto" }} onClick={save} disabled={busy || !userId}>
         {busy ? "Saving…" : `Save ${monthName(period)} targets`}
       </button>

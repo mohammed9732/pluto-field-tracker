@@ -1,11 +1,13 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { Icon, paths } from "@/components/Icons";
 import { api, dmy, money } from "@/lib/fmt";
 
 // The rep's product catalog: photo, price tiers, and a brochure to show a doctor.
 export default function Catalog() {
+  const tx = useT();
   const me = useMe();
   const [products, setProducts] = useState<any[] | null>(null);
   const [canEdit, setCanEdit] = useState(false);
@@ -62,8 +64,8 @@ export default function Catalog() {
   return (
     <Screen me={me} wide>
       <div className="row">
-        <h4 className="m0 f1">Products</h4>
-        {isAdmin ? <span className="hint">You can add a photo and a brochure to each product</span> : null}
+        <h4 className="m0 f1">{tx("cat.products", "Products")}</h4>
+        {isAdmin ? <span className="hint">{tx("cat.youCanAddA", "You can add a photo and a brochure to each product")}</span> : null}
       </div>
       <input ref={imgRef} type="file" accept="image/*" className="hidden"
         onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ""; }} />
@@ -100,7 +102,7 @@ export default function Catalog() {
                 <a className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 12px" }} href={`/api/files?id=${p.brochureId}`} target="_blank">
                   <Icon d={paths.file} size={13} /> {p.brochureName ?? "Brochure"}
                 </a>
-              ) : <span className="small muted">No brochure yet</span>}
+              ) : <span className="small muted">{tx("cat.noBrochureYet", "No brochure yet")}</span>}
               {isAdmin ? (
                 <>
                   <button className="btn btn-ghost fs-caption" disabled={busyFor === p.id}
@@ -134,7 +136,7 @@ export default function Catalog() {
         Material that is not tied to one product — price lists, campaign sheets, certificates.
       </div>
       {brochures.length === 0 ? (
-        <div className="card muted">Nothing uploaded yet.</div>
+        <div className="card muted">{tx("cat.nothingUploadedYet", "Nothing uploaded yet.")}</div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column" }}>
           {brochures.map((b: any) => (
@@ -151,7 +153,7 @@ export default function Catalog() {
                     await api("/api/brochures", { json: { action: "delete", id: b.id } });
                     load();
                   }}>
-                  Remove
+                  {tx("cat.remove", "Remove")}
                 </button>
               ) : null}
             </div>
@@ -160,7 +162,7 @@ export default function Catalog() {
       )}
 
       <div className="hint mt-auto">
-        Open a photo or brochure to show a doctor, or share it from the chat.
+        {tx("cat.openAPhotoOr", "Open a photo or brochure to show a doctor, or share it from the chat.")}
       </div>
     </Screen>
   );

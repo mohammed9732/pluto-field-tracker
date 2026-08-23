@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { drop, flush, startOutboxWatcher, useOutbox } from "@/lib/outbox";
 
 /* What is still sitting on this phone.
@@ -8,6 +9,7 @@ import { drop, flush, startOutboxWatcher, useOutbox } from "@/lib/outbox";
  * supervisor who cannot see it, is worse than an error at the time.
  */
 export function OutboxBar() {
+  const tx = useT();
   const items = useOutbox();
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
@@ -43,7 +45,7 @@ export function OutboxBar() {
               </div>
               {i.error ? (
                 <button className="btn btn-ghost fs-caption" onClick={() => drop(i.ref)}>
-                  Discard
+                  {tx("out.discard", "Discard")}
                 </button>
               ) : null}
             </div>

@@ -1,5 +1,6 @@
 "use client";
 import { useTerms } from "@/lib/terms";
+import { useT } from "@/lib/i18n";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Screen, useMe, Spinner, Pips, Meter } from "@/components/Shell";
@@ -8,6 +9,7 @@ import { Icon, paths } from "@/components/Icons";
 import { DoctorLink, CallButton } from "@/components/DoctorLink";
 
 export default function Team() {
+  const tx = useT();
   const me = useMe();
   const t = useTerms();
   const [data, setData] = useState<any>(null);
@@ -19,7 +21,7 @@ export default function Team() {
   return (
     <Screen me={me}>
       <div>
-        <h4 style={{ margin: "0 0 2px" }}>Team today</h4>
+        <h4 style={{ margin: "0 0 2px" }}>{tx("team.teamToday", "Team today")}</h4>
         <div className="small muted fs-caption">{weekdayShort(data.today)} {dmy(data.today)}</div>
       </div>
       {data.rows.map((r: any) => (
@@ -57,7 +59,7 @@ export default function Team() {
                 {r.products.map((p: any) => (
                   <span key={p.name}>{p.name} <b style={{ color: p.pct >= 70 ? "var(--color-accent-700)" : undefined }}>{p.pct}%</b></span>
                 ))}
-                <Link href={`/map?userId=${r.userId}`} className="small" style={{ marginLeft: "auto" }}>Map view</Link>
+                <Link href={`/map?userId=${r.userId}`} className="small" style={{ marginLeft: "auto" }}>{tx("team.mapView", "Map view")}</Link>
               </div>
               {r.outOfLocationVisits?.length ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 4, alignSelf: "stretch" }}>
@@ -78,19 +80,19 @@ export default function Team() {
         </div>
       ))}
       <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: "auto" }}>
-        <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>This week vs plan</h6>
+        <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("team.thisWeekVsPlan", "This week vs plan")}</h6>
         <div className="row" style={{ gap: 10, fontSize: 12, color: "var(--color-neutral-600)" }}>
-          <span>Team visits <b style={{ color: "var(--color-text)" }}>{data.week.visits}/{data.week.plan}</b></span>
-          <span>Joint visits <b style={{ color: "var(--color-text)" }}>{data.week.joint}</b></span>
+          <span>{tx("team.teamVisits", "Team visits")} <b style={{ color: "var(--color-text)" }}>{data.week.visits}/{data.week.plan}</b></span>
+          <span>{tx("team.jointVisits", "Joint visits")} <b style={{ color: "var(--color-text)" }}>{data.week.joint}</b></span>
 
         </div>
         <Meter pct={data.week.plan ? (data.week.visits / data.week.plan) * 100 : 0} />
       </div>
       <div className="two">
-        <Link href="/targets" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>Set targets</Link>
+        <Link href="/targets" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>{tx("team.setTargets", "Set targets")}</Link>
         <Link href="/doctors" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>{t.doctorPlural}</Link>
-        <Link href="/summary" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>Day summary</Link>
-        <Link href="/competitors" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>Market intel</Link>
+        <Link href="/summary" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>{tx("team.daySummary", "Day summary")}</Link>
+        <Link href="/competitors" className="btn btn-secondary" style={{ padding: 10, fontSize: 13 }}>{tx("team.marketIntel", "Market intel")}</Link>
       </div>
     </Screen>
   );

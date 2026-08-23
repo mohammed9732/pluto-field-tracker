@@ -1,5 +1,5 @@
 "use client";
-import { tr } from "@/lib/i18n";
+import { tr, useT } from "@/lib/i18n";
 import { DailyBoost } from "@/components/DailyBoost";
 import { useTerms, roleLabel } from "@/lib/terms";
 import Link from "next/link";
@@ -18,6 +18,7 @@ const OUTCOME_TAG: Record<string, [string, string]> = {
 };
 
 export default function Home() {
+  const tx = useT();
   const me = useMe();
   const t = useTerms();
   const router = useRouter();
@@ -97,7 +98,7 @@ export default function Home() {
         <Link href="/map" className="tag" style={{ textDecoration: "none", background: checkedIn ? "var(--c-coral-soft)" : "var(--color-neutral-200)", color: checkedIn ? "var(--c-coral-deep)" : "var(--color-neutral-600)", padding: "6px 12px", fontWeight: 600 }}>
           {checkedIn ? `● ${durationHM(data.fieldTime.minutes)}` : "Not checked in"}
         </Link>
-        <button className="btn btn-secondary btn-icon" style={{ }} onClick={logout} title="Sign out">
+        <button className="btn btn-secondary btn-icon" style={{ }} onClick={logout} title={tx("home.signOutPh", "Sign out")}>
           <Icon d={paths.logout} size={17} />
         </button>
       </div>
@@ -106,7 +107,7 @@ export default function Home() {
         <Link href="/map" className="card" style={{ gap: 6, padding: 14, textDecoration: "none", color: "inherit", borderColor: "var(--color-accent)" }}>
           <div className="row gap-2">
             <Icon d={paths.pin} size={16} stroke="var(--color-accent)" />
-            <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: "var(--color-accent-800)" }}>Start your day — check in on the Map tab</span>
+            <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: "var(--color-accent-800)" }}>{tx("home.startYourDayCheck", "Start your day — check in on the Map tab")}</span>
             <span style={{ color: "var(--color-neutral-400)" }}>→</span>
           </div>
         </Link>
@@ -172,20 +173,20 @@ export default function Home() {
             </div>
           ))}
           {data.settings?.plannerEnabled ? (
-            <Link href="/plan" className="hint" style={{ textDecoration: "none" }}>No approved plan for today — build your weekly plan →</Link>
+            <Link href="/plan" className="hint" style={{ textDecoration: "none" }}>{tx("home.noApprovedPlanFor", "No approved plan for today — build your weekly plan →")}</Link>
           ) : null}
         </div>
       )}
 
       <div style={{ display: "grid", gridTemplateColumns: data.settings?.paymentsEnabled ? "1fr 1fr 1fr" : "1fr 1fr", gap: 8 }}>
         <Link href="/visit" className="btn btn-primary" style={{ padding: "12px 6px", fontSize: 13 }}>＋ {visitWord}</Link>
-        <Link href="/order" className="btn btn-secondary" style={{ padding: "12px 6px", fontSize: 13 }}>Order</Link>
-        {data.settings?.paymentsEnabled ? <Link href="/pay" className="btn btn-secondary" style={{ padding: "12px 6px", fontSize: 13 }}>Payment</Link> : null}
+        <Link href="/order" className="btn btn-secondary" style={{ padding: "12px 6px", fontSize: 13 }}>{tx("home.order", "Order")}</Link>
+        {data.settings?.paymentsEnabled ? <Link href="/pay" className="btn btn-secondary" style={{ padding: "12px 6px", fontSize: 13 }}>{tx("home.payment", "Payment")}</Link> : null}
       </div>
 
       {data.followUps.length ? (
         <div className="stack-2">
-          <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Follow-ups due</h6>
+          <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("home.followUpsDue", "Follow-ups due")}</h6>
           {data.followUps.map((f: any) => (
             <div key={f.id} className="row" style={{ fontSize: 13, padding: "4px 0" }}>
               <Icon d={paths.clock} size={17} stroke={f.date === data.today ? "var(--color-accent)" : "var(--color-neutral-500)"} />

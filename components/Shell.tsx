@@ -2,7 +2,7 @@
 import { LangToggle } from "./LangToggle";
 import { OutboxBar } from "./OutboxBar";
 import { setTerms, setBrand, useBrand, useTerms } from "@/lib/terms";
-import { setLang, useLang, useT, tr } from "@/lib/i18n";
+import { setLang, tr, useLang, useT } from "@/lib/i18n";
 import { DEFAULT_TERMS } from "@/lib/types";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -261,6 +261,7 @@ function useAlerts() {
 }
 
 export function AlertsBar() {
+  const tx = useT();
   const [data, setData] = useAlerts();
   const [open, setOpen] = useState(false);
   const [pushMsg, setPushMsg] = useState("");
@@ -279,7 +280,7 @@ export function AlertsBar() {
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
       <button
         onClick={openBell}
-        aria-label="Notifications"
+        aria-label={tx("shell.notificationsPh", "Notifications")}
         style={{ position: "relative", zIndex: 30, background: "var(--color-surface)", border: "1px solid var(--color-divider)", borderRadius: 999, width: 44, height: 44, display: "grid", placeItems: "center", cursor: "pointer", boxShadow: "var(--elev-1)" }}
       >
         <Icon d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0" size={20} />
@@ -306,7 +307,7 @@ export function AlertsBar() {
             {tr("help.open", "How to use the app")}
           </Link>
           {pushMsg ? <div className="small" style={{ padding: "2px 4px", color: "var(--color-neutral-600)" }}>{pushMsg}</div> : null}
-          {data.notifications.length === 0 ? <div className="small muted" style={{ padding: 8 }}>Nothing yet.</div> : null}
+          {data.notifications.length === 0 ? <div className="small muted" style={{ padding: 8 }}>{tx("shell.nothingYet", "Nothing yet.")}</div> : null}
           {data.notifications.map((n: any) => (
             <a key={n.id} href={n.href ?? "#"} style={{ textDecoration: "none", color: "inherit", padding: "7px 8px", borderRadius: 10, background: n.read ? "transparent" : "var(--color-accent-100)" }}>
               <div className="fs-caption">{n.body}</div>
@@ -400,9 +401,10 @@ export function Pips({ done, total }: { done: number; total: number }) {
 }
 
 export function Spinner() {
+  const tx = useT();
   return (
     <div className="screen" style={{ alignItems: "center", justifyContent: "center", display: "flex" }}>
-      <div className="muted" style={{ padding: 40, textAlign: "center" }}>Loading…</div>
+      <div className="muted" style={{ padding: 40, textAlign: "center" }}>{tx("shell.loading", "Loading…")}</div>
     </div>
   );
 }

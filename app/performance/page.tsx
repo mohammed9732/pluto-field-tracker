@@ -1,10 +1,12 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { PerformanceView } from "@/components/PerformanceView";
 import { api, monthName } from "@/lib/fmt";
 
 export default function Performance() {
+  const tx = useT();
   const me = useMe();
   const [team, setTeam] = useState<any[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
@@ -25,13 +27,13 @@ export default function Performance() {
 
   if (!me || !data) return <Spinner />;
   if (!data.enabled) {
-    return <Screen me={me}><div className="card muted">Performance is switched off by the admin.</div></Screen>;
+    return <Screen me={me}><div className="card muted">{tx("perf.performanceIsSwitchedOff", "Performance is switched off by the admin.")}</div></Screen>;
   }
 
   return (
     <Screen me={me} wide={me.role === "admin"}>
       <div>
-        <h4 style={{ margin: "0 0 2px" }}>Performance</h4>
+        <h4 style={{ margin: "0 0 2px" }}>{tx("perf.performance", "Performance")}</h4>
         <div className="small muted fs-caption">{data.name} · {monthName(data.period)}</div>
       </div>
       {me.role === "supervisor" || me.role === "admin" ? (

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { api } from "@/lib/fmt";
-import { setLang, useLang } from "@/lib/i18n";
+import { setLang, useLang, useT } from "@/lib/i18n";
 
 /* English / عربي.
  *
@@ -10,6 +10,7 @@ import { setLang, useLang } from "@/lib/i18n";
  * the save fails the worst case is it reverts on next sign-in.
  */
 export function LangToggle({ compact = false }: { compact?: boolean }) {
+  const tx = useT();
   const lang = useLang();
   const [busy, setBusy] = useState(false);
 
@@ -23,7 +24,7 @@ export function LangToggle({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <div className="seg" style={{ opacity: busy ? 0.6 : 1 }} aria-label="Language">
+    <div className="seg" style={{ opacity: busy ? 0.6 : 1 }} aria-label={tx("lang.languagePh", "Language")}>
       <label className="seg-opt">
         <input type="radio" name={`lang-${compact ? "c" : "f"}`} checked={lang === "en"}
           onChange={() => choose("en")} />

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { api } from "@/lib/fmt";
 import { Icon, paths } from "./Icons";
 
@@ -9,18 +10,20 @@ export interface Doc {
 }
 
 export function DoctorCard({ doctor, onChange }: { doctor: Doc; onChange: () => void }) {
+  const tx = useT();
   return (
     <div className="card" style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 12 }}>
       <div className="f1">
         <div style={{ fontSize: 15, fontWeight: 500 }}>{doctor.name}</div>
         <div className="small muted">{doctor.clinic} · {doctor.specialty} · Class {doctor.class}</div>
       </div>
-      <button className="btn btn-ghost fs-caption" onClick={onChange}>Change</button>
+      <button className="btn btn-ghost fs-caption" onClick={onChange}>{tx("pick.change", "Change")}</button>
     </div>
   );
 }
 
 export function DoctorPicker({ onPick, allowAdd }: { onPick: (d: Doc) => void; allowAdd?: boolean }) {
+  const tx = useT();
   const [doctors, setDoctors] = useState<Doc[]>([]);
   const [cities, setCities] = useState<{ id: string; name: string }[]>([]);
   const [scoped, setScoped] = useState<string | null>(null);
@@ -57,31 +60,31 @@ export function DoctorPicker({ onPick, allowAdd }: { onPick: (d: Doc) => void; a
   if (adding) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <div className="row"><h5 className="m0 f1">New doctor</h5><button className="btn btn-ghost fs-caption" onClick={() => setAdding(false)}>Back to search</button></div>
-        <div className="field"><label>Doctor name</label><input className="input" value={newDoc.name} onChange={(e) => setNewDoc({ ...newDoc, name: e.target.value })} /></div>
-        <div className="field"><label>Clinic</label><input className="input" value={newDoc.clinic} onChange={(e) => setNewDoc({ ...newDoc, clinic: e.target.value })} /></div>
+        <div className="row"><h5 className="m0 f1">{tx("pick.newDoctor", "New doctor")}</h5><button className="btn btn-ghost fs-caption" onClick={() => setAdding(false)}>{tx("pick.backToSearch", "Back to search")}</button></div>
+        <div className="field"><label>{tx("pick.doctorName", "Doctor name")}</label><input className="input" value={newDoc.name} onChange={(e) => setNewDoc({ ...newDoc, name: e.target.value })} /></div>
+        <div className="field"><label>{tx("pick.clinic", "Clinic")}</label><input className="input" value={newDoc.clinic} onChange={(e) => setNewDoc({ ...newDoc, clinic: e.target.value })} /></div>
         <div className="two-3">
-          <div className="field"><label>City</label>
+          <div className="field"><label>{tx("pick.city", "City")}</label>
             <select className="input" value={newDoc.city} disabled={!!scoped} onChange={(e) => setNewDoc({ ...newDoc, city: e.target.value })}>
               {cities.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
-          <div className="field"><label>Area</label><input className="input" value={newDoc.area} onChange={(e) => setNewDoc({ ...newDoc, area: e.target.value })} /></div>
+          <div className="field"><label>{tx("pick.area", "Area")}</label><input className="input" value={newDoc.area} onChange={(e) => setNewDoc({ ...newDoc, area: e.target.value })} /></div>
         </div>
         <div className="two-3">
-          <div className="field"><label>Specialty</label>
+          <div className="field"><label>{tx("pick.specialty", "Specialty")}</label>
             <select className="input" value={newDoc.specialty} onChange={(e) => setNewDoc({ ...newDoc, specialty: e.target.value })}>
-              <option>Dermatologist</option><option>Plastic surgeon</option><option>GP</option><option>Dentist</option><option>Other</option>
+              <option>{tx("pick.dermatologist", "Dermatologist")}</option><option>{tx("pick.plasticSurgeon", "Plastic surgeon")}</option><option>GP</option><option>{tx("pick.dentist", "Dentist")}</option><option>{tx("pick.other", "Other")}</option>
             </select>
           </div>
-          <div className="field"><label>Class</label>
+          <div className="field"><label>{tx("pick.class", "Class")}</label>
             <select className="input" value={newDoc.class} onChange={(e) => setNewDoc({ ...newDoc, class: e.target.value })}>
               <option>A</option><option>B</option><option>C</option>
             </select>
           </div>
         </div>
-        <div className="field"><label>Phone</label><input className="input" value={newDoc.phone} onChange={(e) => setNewDoc({ ...newDoc, phone: e.target.value })} /></div>
-        <button className="btn btn-primary btn-block" style={{ padding: 11 }} onClick={addDoctor}>Save & select</button>
+        <div className="field"><label>{tx("pick.phone", "Phone")}</label><input className="input" value={newDoc.phone} onChange={(e) => setNewDoc({ ...newDoc, phone: e.target.value })} /></div>
+        <button className="btn btn-primary btn-block" style={{ padding: 11 }} onClick={addDoctor}>{tx("pick.saveSelect", "Save & select")}</button>
       </div>
     );
   }
@@ -110,7 +113,7 @@ export function DoctorPicker({ onPick, allowAdd }: { onPick: (d: Doc) => void; a
             <span className={`tag ${d.class === "A" ? "tag-accent" : "tag-neutral"}`}>{d.class}</span>
           </button>
         ))}
-        {filtered.length === 0 ? <div className="small muted" style={{ padding: "10px 0" }}>No doctors match.</div> : null}
+        {filtered.length === 0 ? <div className="small muted" style={{ padding: "10px 0" }}>{tx("pick.noDoctorsMatch", "No doctors match.")}</div> : null}
       </div>
     </div>
   );

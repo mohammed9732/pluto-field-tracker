@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/lib/i18n";
 // Tokens, not literals — the first colour must follow whatever brand colour the
 // company picked, and the rest must match the tags sitting beside the chart.
 const PALETTE = [
@@ -13,8 +14,9 @@ const PALETTE = [
 ];
 
 export function PieChart({ data, size = 150 }: { data: { label: string; value: number }[]; size?: number }) {
+  const tx = useT();
   const total = data.reduce((s, d) => s + d.value, 0);
-  if (total <= 0) return <div className="small muted">No data yet.</div>;
+  if (total <= 0) return <div className="small muted">{tx("chart.noDataYet", "No data yet.")}</div>;
   let angle = -90;
   const cx = size / 2, cy = size / 2, r = size / 2 - 4;
   const slices = data.filter((d) => d.value > 0).map((d, i) => {

@@ -1,5 +1,6 @@
 "use client";
 import { MascotNote } from "@/components/MascotNote";
+import { useT } from "@/lib/i18n";
 import { useCallback, useEffect, useState } from "react";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { api, dm, dmy, hm, money } from "@/lib/fmt";
@@ -8,6 +9,7 @@ import { DoctorLink, CallButton } from "@/components/DoctorLink";
 type Tab = "orders" | "plans" | "leaves";
 
 export default function Approvals() {
+  const tx = useT();
   const me = useMe();
   const [tab, setTab] = useState<Tab>("orders");
   const [orders, setOrders] = useState<any[]>([]);
@@ -67,7 +69,7 @@ export default function Approvals() {
 
   return (
     <Screen me={me}>
-      <h4 className="m0">Approvals</h4>
+      <h4 className="m0">{tx("appr.approvals", "Approvals")}</h4>
       {orders.length + pendingPlans.length + pendingLeaves.length > 0 ? (
         <div className="row" style={{ gap: 8, padding: "10px 12px", background: "var(--c-coral-soft)", borderRadius: 14, fontSize: 13, fontWeight: 600, color: "var(--c-coral-deep)" }}>
           ⏱ Waiting on you: {[orders.length ? `${orders.length} order${orders.length === 1 ? "" : "s"}` : "", pendingPlans.length ? `${pendingPlans.length} plan${pendingPlans.length === 1 ? "" : "s"}` : "", pendingLeaves.length ? `${pendingLeaves.length} leave${pendingLeaves.length === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ")}
@@ -84,7 +86,7 @@ export default function Approvals() {
       {tab === "orders" ? (
         <>
           {orders.length === 0 ? (
-            <MascotNote mood="cheer" tone="win" size={62} title="Nothing waiting on you"
+            <MascotNote mood="cheer" tone="win" size={62} title={tx("appr.nothingWaitingOnYouPh", "Nothing waiting on you")}
               body="Every order has been dealt with." />
           ) : null}
           {orders.map((o) => (
@@ -121,8 +123,8 @@ export default function Approvals() {
                 </div>
               ) : null}
               <div className="two">
-                <button className="btn btn-primary" style={{ padding: 11 }} onClick={() => decideOrder(o, "approve")}>Approve</button>
-                <button className="btn btn-secondary" style={{ padding: 11 }} onClick={() => decideOrder(o, "reject")}>Reject…</button>
+                <button className="btn btn-primary" style={{ padding: 11 }} onClick={() => decideOrder(o, "approve")}>{tx("appr.approve", "Approve")}</button>
+                <button className="btn btn-secondary" style={{ padding: 11 }} onClick={() => decideOrder(o, "reject")}>{tx("appr.reject", "Reject…")}</button>
               </div>
             </div>
           ))}
@@ -134,7 +136,7 @@ export default function Approvals() {
 
       {tab === "plans" ? (
         <>
-          {pendingPlans.length === 0 ? <div className="card muted">No plans waiting.</div> : null}
+          {pendingPlans.length === 0 ? <div className="card muted">{tx("appr.noPlansWaiting", "No plans waiting.")}</div> : null}
           {pendingPlans.map((p) => (
             <div key={p.id} className="card gap-3">
               <div className="row gap-3">
@@ -162,8 +164,8 @@ export default function Approvals() {
               </div>
               {p.attachment ? <div className="small muted">📎 {p.attachment}</div> : null}
               <div className="two">
-                <button className="btn btn-primary" style={{ padding: 11 }} onClick={() => decidePlan(p, "approve")}>Approve</button>
-                <button className="btn btn-secondary" style={{ padding: 11 }} onClick={() => decidePlan(p, "return")}>Return…</button>
+                <button className="btn btn-primary" style={{ padding: 11 }} onClick={() => decidePlan(p, "approve")}>{tx("appr.approve", "Approve")}</button>
+                <button className="btn btn-secondary" style={{ padding: 11 }} onClick={() => decidePlan(p, "return")}>{tx("appr.return", "Return…")}</button>
               </div>
             </div>
           ))}
@@ -184,7 +186,7 @@ export default function Approvals() {
 
       {tab === "leaves" ? (
         <>
-          {pendingLeaves.length === 0 ? <div className="card muted">No leave requests waiting.</div> : null}
+          {pendingLeaves.length === 0 ? <div className="card muted">{tx("appr.noLeaveRequestsWaiting", "No leave requests waiting.")}</div> : null}
           {pendingLeaves.map((l) => (
             <div key={l.id} className="card gap-3">
               <div className="f1">
@@ -193,13 +195,13 @@ export default function Approvals() {
               </div>
               {l.reason ? <div style={{ fontSize: 12, color: "var(--color-neutral-700)" }}>&quot;{l.reason}&quot;</div> : null}
               <div className="two">
-                <button className="btn btn-primary" style={{ padding: 9 }} onClick={() => decideLeave(l, "approve")}>Approve</button>
-                <button className="btn btn-secondary" style={{ padding: 9 }} onClick={() => decideLeave(l, "reject")}>Reject…</button>
+                <button className="btn btn-primary" style={{ padding: 9 }} onClick={() => decideLeave(l, "approve")}>{tx("appr.approve", "Approve")}</button>
+                <button className="btn btn-secondary" style={{ padding: 9 }} onClick={() => decideLeave(l, "reject")}>{tx("appr.reject", "Reject…")}</button>
               </div>
             </div>
           ))}
           <div className="stack-2">
-            <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Decided recently</h6>
+            <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("appr.decidedRecently", "Decided recently")}</h6>
             {leaves.filter((l) => l.status !== "pending").slice(0, 5).map((l) => (
               <div key={l.id} className="listrow py-2">
                 <div className="f1">

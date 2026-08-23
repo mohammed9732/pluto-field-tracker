@@ -1,8 +1,10 @@
 "use client";
 import { hm } from "@/lib/fmt";
 
+import { useT } from "@/lib/i18n";
 // Schematic map — geo tiles come later; pins are projected into the box.
 export function SchematicMap({ checkins, visits, pings, height = 270 }: { checkins: any[]; visits: any[]; pings: any[]; height?: number }) {
+  const tx = useT();
   const pts: { lat: number; lng: number }[] = [
     ...checkins.filter((c) => c.lat != null),
     ...visits.filter((v) => v.lat != null),
@@ -11,7 +13,7 @@ export function SchematicMap({ checkins, visits, pings, height = 270 }: { checki
   if (pts.length === 0) {
     return (
       <div className="mapgrid" style={{ height, display: "grid", placeItems: "center" }}>
-        <span className="small muted">No GPS points yet today</span>
+        <span className="small muted">{tx("smap.noGpsPointsYet", "No GPS points yet today")}</span>
       </div>
     );
   }
@@ -53,9 +55,9 @@ export function SchematicMap({ checkins, visits, pings, height = 270 }: { checki
         </div>
       ) : null}
       <div style={{ position: "absolute", left: 10, bottom: 8, display: "flex", flexWrap: "wrap", gap: 8, fontSize: 12, color: "var(--color-neutral-600)", background: "var(--color-neutral-100)", padding: "5px 7px", border: "1px solid var(--color-divider)" }}>
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 9, height: 9, background: "var(--color-accent)", display: "inline-block" }} />Check-in/out</span>
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 9, height: 9, border: "1.5px solid var(--color-accent)", display: "inline-block" }} />Clinic visit</span>
-        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, borderTop: "1.5px dashed var(--color-accent)", display: "inline-block" }} />Movement</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 9, height: 9, background: "var(--color-accent)", display: "inline-block" }} />{tx("smap.checkInOut", "Check-in/out")}</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 9, height: 9, border: "1.5px solid var(--color-accent)", display: "inline-block" }} />{tx("smap.clinicVisit", "Clinic visit")}</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, borderTop: "1.5px dashed var(--color-accent)", display: "inline-block" }} />{tx("smap.movement", "Movement")}</span>
       </div>
       <div style={{ position: "absolute", right: 12, top: 8, fontSize: 12, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--color-neutral-500)" }}>Schematic</div>
     </div>

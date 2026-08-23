@@ -1,5 +1,6 @@
 "use client";
 import { MascotNote } from "@/components/MascotNote";
+import { useT } from "@/lib/i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { Icon, paths } from "@/components/Icons";
@@ -8,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { DoctorLink, CallButton } from "@/components/DoctorLink";
 
 export default function AcctQueue() {
+  const tx = useT();
   const me = useMe();
   const router = useRouter();
   const [orders, setOrders] = useState<any[] | null>(null);
@@ -82,9 +84,9 @@ export default function AcctQueue() {
   return (
     <Screen me={me} wide>
       <div className="row items-base">
-        <h4 className="m0 f1">Invoicing queue</h4>
+        <h4 className="m0 f1">{tx("queue.invoicingQueue", "Invoicing queue")}</h4>
         <span className="tag tag-accent">{orders.length} approved</span>
-        <button className="btn btn-secondary btn-icon" style={{ }} onClick={logout} title="Sign out">
+        <button className="btn btn-secondary btn-icon" style={{ }} onClick={logout} title={tx("queue.signOutPh", "Sign out")}>
           <Icon d={paths.logout} size={17} />
         </button>
       </div>
@@ -100,7 +102,7 @@ export default function AcctQueue() {
         </div>
       ))}
       {orders.length === 0 ? (
-        <MascotNote mood="cheer" tone="win" size={62} title="Queue is clear"
+        <MascotNote mood="cheer" tone="win" size={62} title={tx("queue.queueIsClearPh", "Queue is clear")}
           body="Nothing approved is waiting for an invoice." />
       ) : null}
       {orders.map((o) => {
@@ -134,14 +136,14 @@ export default function AcctQueue() {
               </button>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 8 }}>
-              <button className="btn btn-primary p-3" onClick={() => invoice(o)}>Confirm & invoice</button>
+              <button className="btn btn-primary p-3" onClick={() => invoice(o)}>{tx("queue.confirmInvoice", "Confirm & invoice")}</button>
             </div>
           </div>
         );
       })}
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: "auto" }}>
-        <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Cash collected today</h6>
-        {payments.length === 0 ? <div className="small muted">Nothing collected yet today.</div> : null}
+        <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("queue.cashCollectedToday", "Cash collected today")}</h6>
+        {payments.length === 0 ? <div className="small muted">{tx("queue.nothingCollectedYetToday", "Nothing collected yet today.")}</div> : null}
         {payments.map((p) => (
           <div key={p.id} className="listrow py-2">
             <div className="f1">

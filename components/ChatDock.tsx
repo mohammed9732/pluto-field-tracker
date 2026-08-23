@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useT } from "@/lib/i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon, paths } from "./Icons";
 import { CallButton } from "./DoctorLink";
@@ -7,6 +8,7 @@ import { api, hm } from "@/lib/fmt";
 
 // Messenger-style chat that floats bottom-right on the PC screens.
 export function ChatDock() {
+  const tx = useT();
   const [open, setOpen] = useState(false);
   const [channels, setChannels] = useState<any[]>([]);
   const [channel, setChannel] = useState("");
@@ -110,11 +112,11 @@ export function ChatDock() {
               {current?.label ?? "Chat"}
             </span>
             {current?.phone ? <CallButton phone={current.phone} name={current.label} size={26} /> : null}
-            <Link href="/chat" title="Open full chat" aria-label="Open full chat"
+            <Link href="/chat" title={tx("dock.openFullChatPh", "Open full chat")} aria-label={tx("dock.openFullChatPh", "Open full chat")}
               style={{ color: "var(--c-violet-deep)", display: "grid", placeItems: "center", width: 36, height: 36 }}>
               <Icon d="M15 3h6v6 M10 14 21 3 M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" size={15} />
             </Link>
-            <button onClick={() => setOpen(false)} aria-label="Close chat"
+            <button onClick={() => setOpen(false)} aria-label={tx("dock.closeChatPh", "Close chat")}
               style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, lineHeight: 1, color: "var(--c-violet-deep)" }}>✕</button>
           </div>
 
@@ -145,14 +147,14 @@ export function ChatDock() {
                 )}
               </div>
             ))}
-            {messages.length === 0 ? <div className="small muted">No messages yet.</div> : null}
+            {messages.length === 0 ? <div className="small muted">{tx("dock.noMessagesYet", "No messages yet.")}</div> : null}
             <div ref={bottomRef} />
           </div>
 
           {recording ? (
             <div className="row" style={{ gap: 8, margin: "0 10px", padding: "6px 10px", borderRadius: 999, background: "var(--c-coral-soft)" }}>
               <span style={{ width: 8, height: 8, borderRadius: 999, background: "var(--c-coral)", flex: "none" }} />
-              <span style={{ flex: 1, fontSize: 12, color: "var(--c-coral-deep)" }}>Recording… tap the mic to send</span>
+              <span style={{ flex: 1, fontSize: 12, color: "var(--c-coral-deep)" }}>{tx("dock.recordingTapTheMic", "Recording… tap the mic to send")}</span>
             </div>
           ) : null}
           <div className="chatdock-foot">
@@ -163,26 +165,26 @@ export function ChatDock() {
             {attachOn ? (
               <>
                 <button className="btn btn-secondary btn-icon" style={{ flex: "none", }}
-                  onClick={() => imgRef.current?.click()} aria-label="Send a picture" title="Picture">
+                  onClick={() => imgRef.current?.click()} aria-label={tx("dock.sendAPicturePh", "Send a picture")} title="Picture">
                   <Icon d="M21 15l-5-5L5 21M3 5h18v14H3Z" size={17} />
                 </button>
                 <button className="btn btn-secondary btn-icon" style={{ flex: "none", }}
-                  onClick={() => fileRef.current?.click()} aria-label="Send a file" title="File">
+                  onClick={() => fileRef.current?.click()} aria-label={tx("dock.sendAFilePh", "Send a file")} title="File">
                   <Icon d="M21 12.5 12.5 21a4.95 4.95 0 0 1-7-7l8.5-8.5a3.5 3.5 0 0 1 5 5L10 19" size={17} />
                 </button>
               </>
             ) : null}
-            <input className="input" placeholder="Message…" value={text}
+            <input className="input" placeholder={tx("dock.messagePh", "Message…")} value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && send()}
               style={{ minHeight: 32, fontSize: 12 }} />
             {text.trim() || !attachOn ? (
-              <button className="btn btn-icon" onClick={send} aria-label="Send"
+              <button className="btn btn-icon" onClick={send} aria-label={tx("dock.sendPh", "Send")}
                 style={{ flex: "none", background: "var(--c-violet)", border: "none" }}>
                 <Icon d={paths.send} size={17} stroke="#fff" />
               </button>
             ) : (
-              <button className="btn btn-icon" onClick={toggleRecord} aria-label="Voice message" title="Hold a voice note"
+              <button className="btn btn-icon" onClick={toggleRecord} aria-label={tx("dock.voiceMessagePh", "Voice message")} title={tx("dock.holdAVoiceNotePh", "Hold a voice note")}
                 style={{ flex: "none", background: recording ? "var(--c-coral)" : "var(--c-violet)", border: "none" }}>
                 <Icon d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z M19 10v2a7 7 0 0 1-14 0v-2 M12 19v3" size={17} stroke="#fff" />
               </button>
@@ -191,7 +193,7 @@ export function ChatDock() {
         </div>
       ) : null}
 
-      <button className="chatdock-bubble" onClick={() => { setOpen(true); setUnread(0); }} aria-label="Open chat">
+      <button className="chatdock-bubble" onClick={() => { setOpen(true); setUnread(0); }} aria-label={tx("dock.openChatPh", "Open chat")}>
         <Icon d={paths.chat} size={24} stroke="#fff" />
         {unread > 0 ? <span className="chat-badge" style={{ top: 2, right: 2 }}>{unread}</span> : null}
       </button>

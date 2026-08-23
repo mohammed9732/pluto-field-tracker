@@ -1,5 +1,6 @@
 "use client";
 import { MascotNote } from "@/components/MascotNote";
+import { useT } from "@/lib/i18n";
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -15,6 +16,7 @@ const STATUS_TAG: Record<string, [string, string]> = {
 };
 
 function OrdersInner() {
+  const tx = useT();
   const me = useMe();
   const params = useSearchParams();
   const [tab, setTab] = useState<"orders" | "payments">(params.get("tab") === "payments" ? "payments" : "orders");
@@ -40,17 +42,17 @@ function OrdersInner() {
       </div>
       <div className="seg" style={{ width: "100%" }}>
         <label className="seg-opt" style={{ flex: 1, justifyContent: "center" }}>
-          <input type="radio" name="otab" checked={tab === "orders"} onChange={() => setTab("orders")} />Orders
+          <input type="radio" name="otab" checked={tab === "orders"} onChange={() => setTab("orders")} />{tx("orders.orders", "Orders")}
         </label>
         <label className="seg-opt" style={{ flex: 1, justifyContent: "center" }}>
-          <input type="radio" name="otab" checked={tab === "payments"} onChange={() => setTab("payments")} />Payments
+          <input type="radio" name="otab" checked={tab === "payments"} onChange={() => setTab("payments")} />{tx("orders.payments", "Payments")}
         </label>
       </div>
 
       {tab === "orders" ? (
         <>
           {orders.length === 0 ? (
-            <MascotNote title="No orders yet"
+            <MascotNote title={tx("orders.noOrdersYetPh", "No orders yet")}
               body="Log a visit first, then turn it into an order. Rafi will let you know the moment it is approved."
               action={{ href: "/order", label: "Start an order" }} />
           ) : null}
@@ -92,7 +94,7 @@ function OrdersInner() {
               {o.status === "invoiced" && o.invoicePdfId ? (
                 <a className="small" href={"/api/files?id=" + o.invoicePdfId} target="_blank"
                    style={{ borderTop: "1px solid var(--color-divider)", paddingTop: 6 }}>
-                  Invoice attached — open
+                  {tx("orders.invoiceAttachedOpen", "Invoice attached — open")}
                 </a>
               ) : null}
             </div>
@@ -105,13 +107,13 @@ function OrdersInner() {
         <>
           {today.length ? (
             <div className="blueprint" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 2 }}>
-              <div style={{ fontSize: 12, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--c-green-deep)" }}>Collected today</div>
+              <div style={{ fontSize: 12, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--c-green-deep)" }}>{tx("orders.collectedToday", "Collected today")}</div>
               <span className="hnum fs-figure">{money(todayTotal)}</span>
               <span className="small muted">{today.length} receipt{today.length === 1 ? "" : "s"}</span>
             </div>
           ) : null}
           {(payments ?? []).length === 0 ? (
-            <MascotNote title="Nothing collected yet"
+            <MascotNote title={tx("orders.nothingCollectedYetPh", "Nothing collected yet")}
               body="Record a payment while you are still with the doctor — photograph the signed receipt and it is done."
               action={{ href: "/pay", label: "Record a payment" }} />
           ) : null}

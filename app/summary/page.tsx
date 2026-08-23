@@ -1,10 +1,12 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { api, dmy, durationHM, money, money0, weekdayShort } from "@/lib/fmt";
 
 // End-of-day picture for the owner and supervisor.
 export default function DailySummary() {
+  const tx = useT();
   const me = useMe();
   const [date, setDate] = useState("");
   const [data, setData] = useState<any>(null);
@@ -24,7 +26,7 @@ export default function DailySummary() {
     <Screen me={me} wide>
       <div className="row" style={{ flexWrap: "wrap", gap: 10 }}>
         <div className="f1">
-          <h4 style={{ margin: "0 0 2px" }}>Day summary</h4>
+          <h4 style={{ margin: "0 0 2px" }}>{tx("sum.daySummary", "Day summary")}</h4>
           <div className="small muted">{weekdayShort(data.date)} {dmy(data.date)}</div>
         </div>
         <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ width: "auto" }} />
@@ -32,26 +34,26 @@ export default function DailySummary() {
 
       <div className="kpi-grid">
         <div className="card" style={{ gap: 2, padding: 12 }}>
-          <span className="card-kicker">Visits</span>
+          <span className="card-kicker">{tx("sum.visits", "Visits")}</span>
           <span className="hnum fs-h2">{t.visits}<span style={{ fontSize: 15, color: "var(--color-neutral-500)" }}> / {t.target}</span></span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
-          <span className="card-kicker">Orders</span>
+          <span className="card-kicker">{tx("sum.orders", "Orders")}</span>
           <span className="hnum fs-h2">{money0(t.orderValue)}</span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
-          <span className="card-kicker">Collected</span>
+          <span className="card-kicker">{tx("sum.collected", "Collected")}</span>
           <span className="hnum fs-h2">{money0(t.collected)}</span>
         </div>
         <div className="card" style={{ gap: 2, padding: 12 }}>
-          <span className="card-kicker">Samples</span>
+          <span className="card-kicker">{tx("sum.samples", "Samples")}</span>
           <span className="hnum fs-h2">{t.samples}</span>
         </div>
       </div>
 
       {(t.notStarted.length || t.belowTarget.length || t.outOfLocation || data.pendingOrders || data.pendingInvoices) ? (
         <div className="card" style={{ gap: 5, borderColor: "var(--c-amber)" }}>
-          <h6 style={{ margin: 0, color: "var(--c-amber-deep)" }}>Needs attention</h6>
+          <h6 style={{ margin: 0, color: "var(--c-amber-deep)" }}>{tx("sum.needsAttention", "Needs attention")}</h6>
           {t.notStarted.length ? <div className="small" style={{ color: "var(--c-coral-deep)" }}>Never started the day: {t.notStarted.join(", ")}</div> : null}
           {t.belowTarget.length ? <div className="small" style={{ color: "var(--c-amber-deep)" }}>Below visit target: {t.belowTarget.join(", ")}</div> : null}
           {t.outOfLocation ? <div className="small" style={{ color: "var(--c-coral-deep)" }}>{t.outOfLocation} out-of-location visit(s)</div> : null}
@@ -60,7 +62,7 @@ export default function DailySummary() {
         </div>
       ) : (
         <div className="card" style={{ borderColor: "var(--c-green)" }}>
-          <span className="small" style={{ color: "var(--c-green-deep)" }}>Nothing needs your attention today.</span>
+          <span className="small" style={{ color: "var(--c-green-deep)" }}>{tx("sum.nothingNeedsYourAttention", "Nothing needs your attention today.")}</span>
         </div>
       )}
 
@@ -68,12 +70,12 @@ export default function DailySummary() {
         <table className="table" style={{ fontSize: 12, minWidth: 520 }}>
           <thead>
             <tr>
-              <th>Person</th>
-              <th className="ta-r">Visits</th>
-              <th className="ta-r">Field time</th>
-              <th className="ta-r">Orders</th>
-              <th className="ta-r">Collected</th>
-              <th className="ta-r">Samples</th>
+              <th>{tx("sum.person", "Person")}</th>
+              <th className="ta-r">{tx("sum.visits", "Visits")}</th>
+              <th className="ta-r">{tx("sum.fieldTime", "Field time")}</th>
+              <th className="ta-r">{tx("sum.orders", "Orders")}</th>
+              <th className="ta-r">{tx("sum.collected", "Collected")}</th>
+              <th className="ta-r">{tx("sum.samples", "Samples")}</th>
             </tr>
           </thead>
           <tbody>

@@ -1,11 +1,13 @@
 "use client";
 import { Mascot } from "@/components/Mascot";
+import { useT } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/fmt";
 import { Icon, paths } from "@/components/Icons";
 
 export default function Login() {
+  const tx = useT();
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
@@ -35,7 +37,7 @@ export default function Login() {
     <div className="screen" style={{ position: "relative", overflow: "hidden" }}>
       <div className="aurora" aria-hidden="true" />
       <div className="login-greeter" aria-hidden="true">
-        <span className="login-bubble">Hello</span>
+        <span className="login-bubble">{tx("login.hello", "Hello")}</span>
         <Mascot size={88} mood="hello" />
       </div>
       <div className="screen-pad" style={{ paddingBottom: 20, position: "relative", zIndex: 1 }}>
@@ -58,11 +60,11 @@ export default function Login() {
           </div>
           <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div className="field">
-              <label>Phone number or name</label>
+              <label>{tx("login.phoneNumberOrName", "Phone number or name")}</label>
               <input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+964 750 123 4567" autoFocus />
             </div>
             <div className="field">
-              <label>Password</label>
+              <label>{tx("login.password", "Password")}</label>
               <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             {err ? <div className="tag tag-hot self-start">{err}</div> : null}
@@ -72,7 +74,7 @@ export default function Login() {
           </form>
           {brand?.demo ? (
             <div className="hint" style={{ textAlign: "center" }}>
-              Demo sign-ins (password: <b>password</b>): Mo · Dr. Alan · Sami Kareem · Dara Mustafa · Aland Talabani · Zhilan Omar
+              {tx("login.demoSignInsPassword", "Demo sign-ins (password:")} <b>password</b>): Mo · Dr. Alan · Sami Kareem · Dara Mustafa · Aland Talabani · Zhilan Omar
             </div>
           ) : null}
         </div>

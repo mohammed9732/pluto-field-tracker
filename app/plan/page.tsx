@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { api, dm } from "@/lib/fmt";
 import { Icon, paths } from "@/components/Icons";
@@ -13,6 +14,7 @@ const emptyDays = (): DayState[] =>
   DAYS.map((d) => ({ day: d, area: "", note: "", doctorIds: [], backupIds: [], city: null, jointWith: null }));
 
 export default function MyPlan() {
+  const tx = useT();
   const me = useMe();
   const [data, setData] = useState<any>(null);
   const [doctors, setDoctors] = useState<any[]>([]);
@@ -88,10 +90,10 @@ export default function MyPlan() {
   }
 
   const statusTag = plan
-    ? plan.status === "approved" ? <span className="tag tag-ok">Approved</span>
-      : plan.status === "returned" ? <span className="tag tag-hot">Returned</span>
-      : <span className="tag tag-warn">Awaiting approval</span>
-    : <span className="tag tag-neutral">Not submitted</span>;
+    ? plan.status === "approved" ? <span className="tag tag-ok">{tx("plan.approved", "Approved")}</span>
+      : plan.status === "returned" ? <span className="tag tag-hot">{tx("plan.returned", "Returned")}</span>
+      : <span className="tag tag-warn">{tx("plan.awaitingApproval", "Awaiting approval")}</span>
+    : <span className="tag tag-neutral">{tx("plan.notSubmitted", "Not submitted")}</span>;
 
   const pickList = picker
     ? doctors
@@ -103,7 +105,7 @@ export default function MyPlan() {
   return (
     <Screen me={me}>
       <div className="row items-base">
-        <h4 className="m0 f1">My weekly plan</h4>
+        <h4 className="m0 f1">{tx("plan.myWeeklyPlan", "My weekly plan")}</h4>
         {statusTag}
       </div>
       <div className="small muted fs-caption">
@@ -113,7 +115,7 @@ export default function MyPlan() {
 
       {!isSup && data.dueFollowUps?.length ? (
         <div className="soft-accent" style={{ padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
-          <div className="small" style={{ fontWeight: 600, color: "var(--color-accent-800)" }}>Follow-ups due that week — tap to slot them in:</div>
+          <div className="small" style={{ fontWeight: 600, color: "var(--color-accent-800)" }}>{tx("plan.followUpsDueThat", "Follow-ups due that week — tap to slot them in:")}</div>
           {data.dueFollowUps.map((f: any) => {
             const dayIdx = [6, 0, 1, 2, 3, 4].indexOf(new Date(f.date + "T12:00:00").getDay());
             const already = days.some((d) => d.doctorIds.includes(f.doctorId) || d.backupIds.includes(f.doctorId));
@@ -136,7 +138,7 @@ export default function MyPlan() {
 
       {plan?.status === "returned" && plan.note ? (
         <div className="card" style={{ borderColor: "var(--c-coral)", gap: 4 }}>
-          <div className="small" style={{ color: "var(--c-coral-deep)", fontWeight: 600 }}>Returned with a note</div>
+          <div className="small" style={{ color: "var(--c-coral-deep)", fontWeight: 600 }}>{tx("plan.returnedWithANote", "Returned with a note")}</div>
           <div className="fs-small">&quot;{plan.note}&quot;</div>
         </div>
       ) : null}
@@ -160,11 +162,11 @@ export default function MyPlan() {
             </div>
             {d.city ? (
               <div className="row" style={{ gap: 8, fontSize: 12 }}>
-                <span className="muted">Double visits with:</span>
+                <span className="muted">{tx("plan.doubleVisitsWith", "Double visits with:")}</span>
                 <select className="input" style={{ minHeight: 30, fontSize: 12, flex: 1 }}
                   value={d.jointWith ?? ""}
                   onChange={(e) => setDays((ds) => ds.map((x, j) => (j === i ? { ...x, jointWith: e.target.value ? Number(e.target.value) : null } : x)))}>
-                  <option value="">Nobody — solo day</option>
+                  <option value="">{tx("plan.nobodySoloDay", "Nobody — solo day")}</option>
                   {(data.reps ?? []).filter((r: any) => r.city === d.city).map((r: any) => (
                     <option key={r.id} value={r.id}>{r.name}</option>
                   ))}
@@ -175,7 +177,7 @@ export default function MyPlan() {
               <div style={{ display: "flex", flexDirection: "column", gap: 6, borderTop: "1px solid var(--color-divider)", paddingTop: 8 }}>
                 <div className="row gap-2">
                   <span className="small" style={{ flex: 1, color: d.doctorIds.length >= tVisit ? "var(--c-green-deep)" : "var(--c-amber-deep)", fontWeight: 600 }}>
-                    Solo day — pick the doctors you will see
+                    {tx("plan.soloDayPickThe", "Solo day — pick the doctors you will see")}
                   </span>
                   <span className={`tag ${d.doctorIds.length >= tVisit ? "tag-ok" : "tag-warn"}`}>{d.doctorIds.length}/{tVisit}</span>
                 </div>
@@ -192,8 +194,8 @@ export default function MyPlan() {
                 {picker?.dayIdx === i ? (
                   <div className="stack-2">
                     <div className="row gap-2">
-                      <input className="input" autoFocus placeholder="Search doctors in this city…" value={q} onChange={(e) => setQ(e.target.value)} style={{ minHeight: 32, fontSize: 13 }} />
-                      <button className="btn btn-ghost fs-caption" onClick={() => setPicker(null)}>Done</button>
+                      <input className="input" autoFocus placeholder={tx("plan.searchDoctorsInThisPh", "Search doctors in this city…")} value={q} onChange={(e) => setQ(e.target.value)} style={{ minHeight: 32, fontSize: 13 }} />
+                      <button className="btn btn-ghost fs-caption" onClick={() => setPicker(null)}>{tx("plan.done", "Done")}</button>
                     </div>
                     {doctors
                       .filter((doc) => doc.city === d.city && !d.doctorIds.includes(doc.id))
@@ -211,7 +213,7 @@ export default function MyPlan() {
               </div>
             ) : null}
             {d.city ? (
-              <input className="input" placeholder="Note (optional)" value={d.note} style={{ minHeight: 32, fontSize: 13 }}
+              <input className="input" placeholder={tx("plan.noteOptionalPh", "Note (optional)")} value={d.note} style={{ minHeight: 32, fontSize: 13 }}
                 onChange={(e) => setDays((ds) => ds.map((x, j) => (j === i ? { ...x, note: e.target.value } : x)))} />
             ) : null}
           </div>
@@ -224,7 +226,7 @@ export default function MyPlan() {
             <div key={d.day} className="card gap-2">
               <div className="row gap-2">
                 <span className="hnum" style={{ fontSize: 15, width: 34, color: "var(--color-neutral-500)" }}>{d.day}</span>
-                <input className="input" placeholder="Area / route" value={d.area}
+                <input className="input" placeholder={tx("plan.areaRoutePh", "Area / route")} value={d.area}
                   onChange={(e) => setDays((ds) => ds.map((x, j) => (j === i ? { ...x, area: e.target.value } : x)))}
                   style={{ minHeight: 32, fontSize: 13 }} />
                 <span className={`tag ${d.doctorIds.length >= tVisit ? "tag-ok" : "tag-warn"}`}>{d.doctorIds.length}/{tVisit}</span>
@@ -239,7 +241,7 @@ export default function MyPlan() {
                 <button className="tag tag-outline" style={{ cursor: "pointer", background: "transparent" }} onClick={() => { setPicker({ dayIdx: i, kind: "visit" }); setQ(""); }}>＋ doctor</button>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
-                <span className="small muted">Backup:</span>
+                <span className="small muted">{tx("plan.backup", "Backup:")}</span>
                 {d.backupIds.map((id) => (
                   <span key={id} className="tag tag-neutral" style={{ gap: 5 }}>
                     {docById.get(id)?.name ?? "?"}
@@ -253,7 +255,7 @@ export default function MyPlan() {
                 <div style={{ borderTop: "1px solid var(--color-divider)", paddingTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
                   <div className="row gap-2">
                     <input className="input" autoFocus placeholder={`Add ${picker.kind === "visit" ? "visit" : "backup"} doctor…`} value={q} onChange={(e) => setQ(e.target.value)} style={{ minHeight: 32, fontSize: 13 }} />
-                    <button className="btn btn-ghost fs-caption" onClick={() => setPicker(null)}>Done</button>
+                    <button className="btn btn-ghost fs-caption" onClick={() => setPicker(null)}>{tx("plan.done", "Done")}</button>
                   </div>
                   {pickList.map((doc) => (
                     <button key={doc.id} onClick={() => addDoctor(doc.id)} className="row" style={{ gap: 8, background: "none", border: "none", cursor: "pointer", font: "inherit", textAlign: "left", padding: "4px 0" }}>
@@ -262,7 +264,7 @@ export default function MyPlan() {
                       <span className={`tag ${doc.class === "A" ? "tag-accent" : "tag-neutral"}`}>{doc.class}</span>
                     </button>
                   ))}
-                  {pickList.length === 0 ? <div className="small muted">No more doctors match.</div> : null}
+                  {pickList.length === 0 ? <div className="small muted">{tx("plan.noMoreDoctorsMatch", "No more doctors match.")}</div> : null}
                 </div>
               ) : null}
             </div>

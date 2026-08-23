@@ -1,5 +1,6 @@
 "use client";
 import { enqueue, isOffline, newRef } from "@/lib/outbox";
+import { useT } from "@/lib/i18n";
 import { useTerms, lower } from "@/lib/terms";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -10,6 +11,7 @@ import { api, dmy, groupDigits, money, ungroup } from "@/lib/fmt";
 import { getPosition } from "@/lib/geo";
 
 function CollectPaymentInner() {
+  const tx = useT();
   const me = useMe();
   const t = useTerms();
   const router = useRouter();
@@ -94,26 +96,26 @@ function CollectPaymentInner() {
     return (
       <Screen me={me}>
         <div className="row">
-          <h4 className="m0 f1">Payment recorded</h4>
-          <span className="tag tag-ok">Saved</span>
+          <h4 className="m0 f1">{tx("pay.paymentRecorded", "Payment recorded")}</h4>
+          <span className="tag tag-ok">{tx("pay.saved", "Saved")}</span>
         </div>
         <div className="card gap-2">
           <div className="row items-base">
-            <span style={{ flex: 1, fontSize: 13, color: "var(--color-neutral-600)" }}>Amount collected</span>
+            <span style={{ flex: 1, fontSize: 13, color: "var(--color-neutral-600)" }}>{tx("pay.amountCollected", "Amount collected")}</span>
             <span className="hnum fs-h2">{money(done.amount)}</span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 5, fontSize: 12 }}>
-            <div style={{ display: "flex" }}><span style={{ width: 92, color: "var(--color-neutral-600)" }}>From</span><b>{done.doctorName}</b></div>
-            <div style={{ display: "flex" }}><span style={{ width: 92, color: "var(--color-neutral-600)" }}>Clinic</span><span>{done.clinic}</span></div>
-            <div style={{ display: "flex" }}><span style={{ width: 92, color: "var(--color-neutral-600)" }}>Method</span><span>{done.method === "cash" ? "Cash" : "Transfer"}</span></div>
-            <div style={{ display: "flex" }}><span style={{ width: 92, color: "var(--color-neutral-600)" }}>Collected by</span><span>{done.collectedByName} · {dmy(done.ts)} {done.ts.slice(11, 16)}</span></div>
-            <div style={{ display: "flex" }}><span style={{ width: 92, color: "var(--color-neutral-600)" }}>Reference</span><span>{done.ref}</span></div>
+            <div style={{ display: "flex" }}><span style={{ width: 92, color: "var(--color-neutral-600)" }}>{tx("pay.from", "From")}</span><b>{done.doctorName}</b></div>
+            <div style={{ display: "flex" }}><span style={{ width: 92, color: "var(--color-neutral-600)" }}>{tx("pay.clinic", "Clinic")}</span><span>{done.clinic}</span></div>
+            <div style={{ display: "flex" }}><span style={{ width: 92, color: "var(--color-neutral-600)" }}>{tx("pay.method", "Method")}</span><span>{done.method === "cash" ? "Cash" : "Transfer"}</span></div>
+            <div style={{ display: "flex" }}><span style={{ width: 92, color: "var(--color-neutral-600)" }}>{tx("pay.collectedBy", "Collected by")}</span><span>{done.collectedByName} · {dmy(done.ts)} {done.ts.slice(11, 16)}</span></div>
+            <div style={{ display: "flex" }}><span style={{ width: 92, color: "var(--color-neutral-600)" }}>{tx("pay.reference", "Reference")}</span><span>{done.ref}</span></div>
           </div>
-          {done.photo ? <img src={`/api/files?id=${done.photo}`} alt="signed receipt" style={{ maxWidth: "100%", borderRadius: 12, maxHeight: 220, objectFit: "cover" }} /> : null}
+          {done.photo ? <img src={`/api/files?id=${done.photo}`} alt={tx("pay.signedReceiptPh", "signed receipt")} style={{ maxWidth: "100%", borderRadius: 12, maxHeight: 220, objectFit: "cover" }} /> : null}
         </div>
         <div className="two-3">
-          <button className="btn btn-secondary" style={{ padding: 11 }} onClick={() => { setDone(null); setDoctor(null); setAmount(""); setNote(""); setPhoto(null); }}>Record another</button>
-          <button className="btn btn-primary" style={{ padding: 11 }} onClick={() => router.push("/orders?tab=payments")}>Done</button>
+          <button className="btn btn-secondary" style={{ padding: 11 }} onClick={() => { setDone(null); setDoctor(null); setAmount(""); setNote(""); setPhoto(null); }}>{tx("pay.recordAnother", "Record another")}</button>
+          <button className="btn btn-primary" style={{ padding: 11 }} onClick={() => router.push("/orders?tab=payments")}>{tx("pay.done", "Done")}</button>
         </div>
         <div className="hint" style={{ textAlign: "center", marginTop: "auto" }}>
           The accountant sees this immediately and enters it in the accounting system. Balances stay in the ERP — the app only records what was collected.
@@ -124,7 +126,7 @@ function CollectPaymentInner() {
 
   return (
     <Screen me={me}>
-      <PageHead title="Record payment" back="back" right={<span className="hint">GPS pinned</span>} />
+      <PageHead title={tx("pay.recordPaymentPh", "Record payment")} back="back" right={<span className="hint">{tx("pay.gpsPinned", "GPS pinned")}</span>} />
       {!doctor ? (
         <DoctorPicker onPick={setDoctor} />
       ) : (
@@ -132,24 +134,24 @@ function CollectPaymentInner() {
           <DoctorCard doctor={doctor} onChange={() => setDoctor(null)} />
           <div className="two-3">
             <div className="field m0">
-              <label>Amount collected (IQD)</label>
+              <label>{tx("pay.amountCollectedIqd", "Amount collected (IQD)")}</label>
               <input className="input hnum fs-lead" value={amount} onChange={(e) => setAmount(groupDigits(e.target.value))} inputMode="numeric" placeholder="1,000,000" />
             </div>
             <div className="field m0">
-              <label>Method</label>
+              <label>{tx("pay.method", "Method")}</label>
               <div className="seg" style={{ width: "100%" }}>
                 <label className="seg-opt" style={{ flex: 1, justifyContent: "center" }}>
-                  <input type="radio" name="pm" checked={method === "cash"} onChange={() => setMethod("cash")} />Cash
+                  <input type="radio" name="pm" checked={method === "cash"} onChange={() => setMethod("cash")} />{tx("pay.cash", "Cash")}
                 </label>
                 <label className="seg-opt" style={{ flex: 1, justifyContent: "center" }}>
-                  <input type="radio" name="pm" checked={method === "transfer"} onChange={() => setMethod("transfer")} />Transfer
+                  <input type="radio" name="pm" checked={method === "transfer"} onChange={() => setMethod("transfer")} />{tx("pay.transfer", "Transfer")}
                 </label>
               </div>
             </div>
           </div>
           <div className="field m0">
-            <label>Note (optional)</label>
-            <input className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. part payment for July supply" />
+            <label>{tx("pay.noteOptional", "Note (optional)")}</label>
+            <input className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder={tx("pay.eGPartPaymentPh", "e.g. part payment for July supply")} />
           </div>
           <label className="row" style={{ gap: 8, fontSize: 13, cursor: "pointer", border: `1px solid ${photo ? "var(--c-green)" : "var(--color-divider)"}`, borderRadius: 14, padding: "10px 12px" }}>
             <Icon d="M21 15l-5-5L5 21M3 5h18v14H3Z" size={16} stroke={photo ? "var(--c-green-deep)" : "var(--color-neutral-500)"} />

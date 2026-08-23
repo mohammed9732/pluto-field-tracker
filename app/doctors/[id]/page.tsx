@@ -29,6 +29,7 @@ function waNumber(raw: string): string {
  * control with its own 44px box: putting it inside the dial target would mean
  * a mis-tap costs you a phone call to a doctor. */
 function ContactRow({ label, number }: { label: string; number: string }) {
+  const tx = useT();
   return (
     <div className="row" style={{ gap: "var(--sp-2)", alignItems: "center" }}>
       <a className="rowlink f1min" href={`tel:${number.replace(/\s/g, "")}`}>
@@ -52,6 +53,7 @@ function ContactRow({ label, number }: { label: string; number: string }) {
 const OUTCOME: Record<string, string> = { order: "Order", follow_up: "Follow-up", payment: "Payment" };
 
 export default function DoctorProfile() {
+  const tx = useT();
   const me = useMe();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -78,13 +80,13 @@ export default function DoctorProfile() {
     return (
       <Screen me={me}>
         <div className="card gap-3">
-          <h4 className="m0">Doctor not available</h4>
+          <h4 className="m0">{tx("docp.doctorNotAvailable", "Doctor not available")}</h4>
           <div className="small muted">
             This doctor is not on your list. Reps only see doctors in their own city —
             ask your supervisor if you think that is wrong.
           </div>
           <Link className="btn btn-secondary" href="/doctors" style={{ padding: 9, textAlign: "center" }}>
-            Back to my doctors
+            {tx("docp.backToMyDoctors", "Back to my doctors")}
           </Link>
         </div>
       </Screen>
@@ -211,7 +213,7 @@ export default function DoctorProfile() {
       {data.potentialMonthly > 0 ? (
         <div className="card gap-2">
           <div className="row" style={{ alignItems: "baseline", gap: 8 }}>
-            <h6 className="m0 f1">This month vs potential</h6>
+            <h6 className="m0 f1">{tx("docp.thisMonthVsPotential", "This month vs potential")}</h6>
             <span className="hnum fs-lead">{money(data.monthValue)}</span>
             <span className="small muted">of {money(data.potentialMonthly)}</span>
           </div>
@@ -229,11 +231,11 @@ export default function DoctorProfile() {
 
       <div className="two-3">
         <div className="blueprint" style={{ padding: 12 }}>
-          <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--color-accent-700)" }}>Lifetime sales</div>
+          <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--color-accent-700)" }}>{tx("docp.lifetimeSales", "Lifetime sales")}</div>
           <div className="hnum" style={{ fontSize: 22 }}>{money(data.lifetimeValue)}</div>
         </div>
         <div className="blueprint" style={{ padding: 12 }}>
-          <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-green-deep)" }}>Collected</div>
+          <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-green-deep)" }}>{tx("docp.collected", "Collected")}</div>
           <div className="hnum" style={{ fontSize: 22 }}>{money(data.totalCollected)}</div>
         </div>
       </div>
@@ -241,13 +243,13 @@ export default function DoctorProfile() {
       <div style={{ display: "grid", gridTemplateColumns: data.lastOrderItems ? "1fr 1fr" : "1fr", gap: 8 }}>
         <Link href={`/visit?doctorId=${d.id}`} className="btn btn-primary" style={{ padding: 11, fontSize: 13 }}>＋ Log visit</Link>
         {data.lastOrderItems ? (
-          <Link href={`/order?doctorId=${d.id}&reorder=1`} className="btn btn-secondary" style={{ padding: 11, fontSize: 13 }}>Reorder last</Link>
+          <Link href={`/order?doctorId=${d.id}&reorder=1`} className="btn btn-secondary" style={{ padding: 11, fontSize: 13 }}>{tx("docp.reorderLast", "Reorder last")}</Link>
         ) : null}
       </div>
 
       {data.competitors?.length ? (
         <div className="card gap-2">
-          <h6 className="m0">Competitors at this clinic</h6>
+          <h6 className="m0">{tx("docp.competitorsAtThisClinic", "Competitors at this clinic")}</h6>
           {data.competitors.slice(0, 4).map((c: any) => (
             <div key={c.id} className="small" style={{ color: "var(--color-neutral-700)" }}>
               <b>{c.competitor}</b>{c.product ? ` · ${c.product}` : ""}{c.price ? ` · ${money(c.price)}` : ""}
@@ -306,11 +308,11 @@ export default function DoctorProfile() {
               <div className="f1min">
                 <div className="fs-small">{OUTCOME[v.outcome] ?? v.outcome} · <span className="muted">{v.byName}</span></div>
                 {v.notes ? <div className="small muted">{v.notes}</div> : null}
-                {v.photo ? <img src={`/api/files?id=${v.photo}`} alt="visit" style={{ maxWidth: "100%", borderRadius: 10, marginTop: 4, maxHeight: 140, objectFit: "cover" }} /> : null}
+                {v.photo ? <img src={`/api/files?id=${v.photo}`} alt={tx("docp.visitPh", "visit")} style={{ maxWidth: "100%", borderRadius: 10, marginTop: 4, maxHeight: 140, objectFit: "cover" }} /> : null}
               </div>
             </div>
           ))}
-          {data.visits.length === 0 ? <div className="small muted">No visits yet.</div> : null}
+          {data.visits.length === 0 ? <div className="small muted">{tx("docp.noVisitsYet", "No visits yet.")}</div> : null}
         </>
       ) : null}
 
@@ -328,7 +330,7 @@ export default function DoctorProfile() {
               </div>
             </div>
           ))}
-          {data.orders.length === 0 ? <div className="small muted">No orders yet.</div> : null}
+          {data.orders.length === 0 ? <div className="small muted">{tx("docp.noOrdersYet", "No orders yet.")}</div> : null}
         </>
       ) : null}
 
@@ -343,7 +345,7 @@ export default function DoctorProfile() {
               <span className="hnum fs-body">{money(p.amount)}</span>
             </div>
           ))}
-          {data.payments.length === 0 ? <div className="small muted">No payments recorded.</div> : null}
+          {data.payments.length === 0 ? <div className="small muted">{tx("docp.noPaymentsRecorded", "No payments recorded.")}</div> : null}
         </>
       ) : null}
       <RecordHistory entity="doctor" id={d.id} />

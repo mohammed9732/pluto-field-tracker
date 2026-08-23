@@ -1,5 +1,6 @@
 "use client";
 import { MascotNote } from "@/components/MascotNote";
+import { useT } from "@/lib/i18n";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Screen, useMe, Spinner } from "@/components/Shell";
@@ -9,6 +10,7 @@ import { GeoMap } from "@/components/GeoMap";
 import { DoctorLink, CallButton } from "@/components/DoctorLink";
 
 function MapInner() {
+  const tx = useT();
   const me = useMe();
   const params = useSearchParams();
   const [team, setTeam] = useState<any[]>([]);
@@ -87,7 +89,7 @@ function MapInner() {
           <div className="card" style={{ gap: 8, padding: 14, borderColor: "var(--c-coral)" }}>
             <div className="row gap-2">
               <span style={{ width: 9, height: 9, borderRadius: 999, background: "var(--c-coral)", flex: "none" }} />
-              <span className="small" style={{ letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-coral-deep)", flex: 1 }}>In the field</span>
+              <span className="small" style={{ letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-coral-deep)", flex: 1 }}>{tx("map.inTheField", "In the field")}</span>
               <span className="hnum fs-lead">{durationHM(data.fieldTime.minutes)}</span>
             </div>
             <button className="btn btn-coral btn-block" style={{ padding: 13, fontSize: 15 }} onClick={toggleCheck} disabled={busy}>
@@ -97,7 +99,7 @@ function MapInner() {
         ) : data.hasStarted ? (
           <div className="card" style={{ gap: 10, padding: 14, borderColor: "var(--c-green)" }}>
             <MascotNote mood="cheer" tone="win" size={64}
-              title="That's the day done"
+              title={tx("map.thatSTheDayPh", "That's the day done")}
               body={`${durationHM(data.fieldTime.minutes)} in the field. Everything you logged is already with the office.`} />
             <button className="btn btn-secondary btn-block" style={{ padding: 10, fontSize: 13 }} onClick={toggleCheck} disabled={busy}>
               {busy ? "Getting GPS…" : "Resume day (ended by mistake?)"}
@@ -132,17 +134,17 @@ function MapInner() {
             </div>
           );
         })}
-        {data.visits.length === 0 ? <div className="small muted">No visits logged yet today.</div> : null}
+        {data.visits.length === 0 ? <div className="small muted">{tx("map.noVisitsLoggedYet", "No visits logged yet today.")}</div> : null}
         {data.travelMinutes > 0 ? (
           <div className="listrow" style={{ padding: "8px 0", fontSize: 12, color: "var(--color-neutral-600)" }}>
             <span style={{ width: 60 }}>travel</span>
-            <span className="f1">Between clinics</span>
+            <span className="f1">{tx("map.betweenClinics", "Between clinics")}</span>
             <b className="hnum" style={{ fontSize: 15, color: "var(--color-text)" }}>{durationHM(data.travelMinutes)}</b>
           </div>
         ) : null}
         {data.outsideMinutes > 15 ? (
           <div className="soft-accent row" style={{ gap: 8, padding: "9px 10px", fontSize: 12 }}>
-            <span style={{ flex: 1, color: "var(--color-accent-800)" }}>Outside clinic areas</span>
+            <span style={{ flex: 1, color: "var(--color-accent-800)" }}>{tx("map.outsideClinicAreas", "Outside clinic areas")}</span>
             <b className="hnum" style={{ fontSize: 15, color: "var(--color-accent-800)" }}>{durationHM(data.outsideMinutes)}</b>
           </div>
         ) : null}

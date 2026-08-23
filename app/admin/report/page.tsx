@@ -1,11 +1,13 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { api, dmy, money, money0, monthName } from "@/lib/fmt";
 import { PieChart, BarChart } from "@/components/Charts";
 import * as XLSX from "xlsx";
 
 export default function MonthlyReport() {
+  const tx = useT();
   const me = useMe();
   const [period, setPeriod] = useState("");
   const [data, setData] = useState<any>(null);
@@ -72,22 +74,22 @@ export default function MonthlyReport() {
   return (
     <Screen me={me} wide>
         <div className="row no-print" style={{ flexWrap: "wrap", gap: 10 }}>
-          <h4 className="m0">Monthly report</h4>
+          <h4 className="m0">{tx("report.monthlyReport", "Monthly report")}</h4>
           <select className="input" style={{ width: "auto" }} value={period} onChange={(e) => setPeriod(e.target.value)}>
             {monthOptions.map((m) => <option key={m} value={m}>{monthName(m)}</option>)}
           </select>
           <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-            <button className="btn btn-primary" style={{ padding: "9px 16px" }} onClick={() => window.print()}>Export PDF</button>
-            <button className="btn btn-secondary" style={{ padding: "9px 16px" }} onClick={exportExcel}>Export Excel</button>
+            <button className="btn btn-primary" style={{ padding: "9px 16px" }} onClick={() => window.print()}>{tx("report.exportPdf", "Export PDF")}</button>
+            <button className="btn btn-secondary" style={{ padding: "9px 16px" }} onClick={exportExcel}>{tx("report.exportExcel", "Export Excel")}</button>
           </div>
         </div>
         <div className="print-title hidden">
           <h3>Pluto Field Tracker — {monthName(period)}</h3>
         </div>
 
-        <S letter="a" title="Visits vs plan (incl. joint visits)">
+        <S letter="a" title={tx("report.visitsVsPlanInclPh", "Visits vs plan (incl. joint visits)")}>
           <table className="table fs-caption">
-            <thead><tr><th>Person</th><th className="ta-r">Visits</th><th className="ta-r">Plan</th><th className="ta-r">Joint</th><th className="ta-r">Samples</th></tr></thead>
+            <thead><tr><th>{tx("report.person", "Person")}</th><th className="ta-r">{tx("report.visits", "Visits")}</th><th className="ta-r">{tx("report.plan", "Plan")}</th><th className="ta-r">{tx("report.joint", "Joint")}</th><th className="ta-r">{tx("report.samples", "Samples")}</th></tr></thead>
             <tbody>
               {data.visitRows.map((r: any) => (
                 <tr key={r.name}><td>{r.name}</td><td style={{ textAlign: "right", fontWeight: 700 }}>{r.visits}</td><td className="ta-r">{r.plan}</td><td className="ta-r">{r.joint}</td><td style={{ textAlign: "right", color: "var(--c-violet-deep)" }}>{r.samples || "—"}</td></tr>
@@ -96,10 +98,10 @@ export default function MonthlyReport() {
           </table>
         </S>
 
-        <S letter="b" title="Sales — qty & value per product × rep">
+        <S letter="b" title={tx("report.salesQtyValuePerPh", "Sales — qty & value per product × rep")}>
           <div className="two-col" style={{ gap: 20, marginBottom: 6 }}>
             <div>
-              <div className="small muted" style={{ marginBottom: 4 }}>Sales value by product</div>
+              <div className="small muted" style={{ marginBottom: 4 }}>{tx("report.salesValueByProduct", "Sales value by product")}</div>
               <PieChart data={Object.values(
                 data.salesRows.reduce((acc: any, r: any) => {
                   acc[r.product] = acc[r.product] ?? { label: r.product, value: 0 };
@@ -109,7 +111,7 @@ export default function MonthlyReport() {
               )} />
             </div>
             <div>
-              <div className="small muted" style={{ marginBottom: 4 }}>Sales value by rep</div>
+              <div className="small muted" style={{ marginBottom: 4 }}>{tx("report.salesValueByRep", "Sales value by rep")}</div>
               <BarChart format={(v) => money0(v).replace(" IQD", "")} data={Object.values(
                 data.salesRows.reduce((acc: any, r: any) => {
                   acc[r.rep] = acc[r.rep] ?? { label: r.rep.split(" ")[0], value: 0 };
@@ -120,19 +122,19 @@ export default function MonthlyReport() {
             </div>
           </div>
           <table className="table fs-caption">
-            <thead><tr><th>Product</th><th>City</th><th>Rep</th><th className="ta-r">Qty</th><th className="ta-r">Value</th></tr></thead>
+            <thead><tr><th>{tx("report.product", "Product")}</th><th>{tx("report.city", "City")}</th><th>Rep</th><th className="ta-r">Qty</th><th className="ta-r">{tx("report.value", "Value")}</th></tr></thead>
             <tbody>
               {data.salesRows.map((r: any, i: number) => (
                 <tr key={i}><td>{r.product}</td><td>{r.city}</td><td>{r.rep}</td><td className="ta-r">{r.qty}</td><td style={{ textAlign: "right", fontWeight: 700 }}>{money(r.value)}</td></tr>
               ))}
-              {data.salesRows.length === 0 ? <tr><td colSpan={5} className="muted">No approved sales this month.</td></tr> : null}
+              {data.salesRows.length === 0 ? <tr><td colSpan={5} className="muted">{tx("report.noApprovedSalesThis", "No approved sales this month.")}</td></tr> : null}
             </tbody>
           </table>
         </S>
 
-        <S letter="c" title="Target achievement %">
+        <S letter="c" title={tx("report.targetAchievementPh", "Target achievement %")}>
           <table className="table fs-caption">
-            <thead><tr><th>Person</th><th>Product</th><th className="ta-r">Achieved</th><th className="ta-r">%</th><th className="ta-r">Min</th></tr></thead>
+            <thead><tr><th>{tx("report.person", "Person")}</th><th>{tx("report.product", "Product")}</th><th className="ta-r">{tx("report.achieved", "Achieved")}</th><th className="ta-r">%</th><th className="ta-r">Min</th></tr></thead>
             <tbody>
               {data.achievementRows.map((r: any, i: number) => (
                 <tr key={i}>
@@ -146,14 +148,14 @@ export default function MonthlyReport() {
           </table>
         </S>
 
-        <S letter="d" title="Incentives accrued">
+        <S letter="d" title={tx("report.incentivesAccruedPh", "Incentives accrued")}>
           <div className="row items-base">
             <span className="hnum fs-h2">{money(data.incentivesTotal)}</span>
             <span className="small muted">across {new Set(data.achievementRows.filter((r: any) => r.incentiveAmount > 0).map((r: any) => r.name)).size} people · collected in month: {money(data.collected)}</span>
           </div>
         </S>
 
-        <S letter="e" title="Orders funnel">
+        <S letter="e" title={tx("report.ordersFunnelPh", "Orders funnel")}>
           <div className="two-col" style={{ gap: 20, marginBottom: 6 }}>
             <PieChart data={[
               { label: "Invoiced", value: data.funnel.invoiced },
@@ -173,9 +175,9 @@ export default function MonthlyReport() {
           </div>
         </S>
 
-        <S letter="f" title="Stock position & expiry alerts">
+        <S letter="f" title={tx("report.stockPositionExpiryAlertsPh", "Stock position & expiry alerts")}>
           <table className="table fs-caption">
-            <thead><tr><th>Product</th><th className="ta-r">Qty</th><th className="ta-r">Expiry</th></tr></thead>
+            <thead><tr><th>{tx("report.product", "Product")}</th><th className="ta-r">Qty</th><th className="ta-r">{tx("report.expiry", "Expiry")}</th></tr></thead>
             <tbody>
               {data.stock.map((s: any) => (
                 <tr key={s.product}>
@@ -189,9 +191,9 @@ export default function MonthlyReport() {
         </S>
 
         {data.competitors?.length ? (
-          <S letter="h" title="Competitor activity seen in the field">
+          <S letter="h" title={tx("report.competitorActivitySeenInPh", "Competitor activity seen in the field")}>
             <table className="table fs-caption">
-              <thead><tr><th>Competitor</th><th>Product</th><th>Doctor</th><th className="ta-r">Their price</th><th>Seen by</th></tr></thead>
+              <thead><tr><th>{tx("report.competitor", "Competitor")}</th><th>{tx("report.product", "Product")}</th><th>{tx("report.doctor", "Doctor")}</th><th className="ta-r">{tx("report.theirPrice", "Their price")}</th><th>{tx("report.seenBy", "Seen by")}</th></tr></thead>
               <tbody>
                 {data.competitors.map((c: any, i: number) => (
                   <tr key={i}>
@@ -205,10 +207,10 @@ export default function MonthlyReport() {
           </S>
         ) : null}
 
-        <S letter="g" title="Leaves taken">
-          {data.leaves.length === 0 ? <div className="small muted">No approved leave this month.</div> : (
+        <S letter="g" title={tx("report.leavesTakenPh", "Leaves taken")}>
+          {data.leaves.length === 0 ? <div className="small muted">{tx("report.noApprovedLeaveThis", "No approved leave this month.")}</div> : (
             <table className="table fs-caption">
-              <thead><tr><th>Person</th><th>From</th><th>To</th><th>Type</th></tr></thead>
+              <thead><tr><th>{tx("report.person", "Person")}</th><th>{tx("report.from", "From")}</th><th>To</th><th>{tx("report.type", "Type")}</th></tr></thead>
               <tbody>
                 {data.leaves.map((l: any, i: number) => (
                   <tr key={i}><td>{l.name}</td><td>{dmy(l.start)}</td><td>{dmy(l.end)}</td><td>{l.type}</td></tr>

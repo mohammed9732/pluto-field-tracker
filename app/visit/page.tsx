@@ -1,5 +1,6 @@
 "use client";
 import { enqueue, isOffline, newRef } from "@/lib/outbox";
+import { useT } from "@/lib/i18n";
 import { useTerms, lower } from "@/lib/terms";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -10,6 +11,7 @@ import { api } from "@/lib/fmt";
 import { getPosition, GeoPoint } from "@/lib/geo";
 
 function LogVisitInner() {
+  const tx = useT();
   const me = useMe();
   const t = useTerms();
   const router = useRouter();
@@ -116,7 +118,7 @@ function LogVisitInner() {
 
   return (
     <Screen me={me}>
-      <PageHead title="Log visit" back="/home" right={<span className="hint">{pos?.lat != null ? "GPS pinned" : "No GPS"}</span>} />
+      <PageHead title={tx("visit.logVisitPh", "Log visit")} back="/home" right={<span className="hint">{pos?.lat != null ? "GPS pinned" : "No GPS"}</span>} />
       {!doctor ? (
         <DoctorPicker onPick={setDoctor} allowAdd />
       ) : (
@@ -126,7 +128,7 @@ function LogVisitInner() {
             <label className="soft-accent row" style={{ gap: 10, padding: 12, cursor: "pointer" }}>
               <Icon d={paths.target} size={18} stroke="var(--color-accent-700)" />
               <div className="f1">
-                <div style={{ fontSize: 13, fontWeight: 500, color: "var(--color-accent-800)" }}>Set clinic location</div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "var(--color-accent-800)" }}>{tx("visit.setClinicLocation", "Set clinic location")}</div>
                 <div className="small" style={{ color: "var(--color-accent-700)" }}>
                   {pos?.lat != null ? "No pin saved — current GPS will be stored with this visit" : "No pin saved — GPS unavailable right now"}
                 </div>
@@ -135,7 +137,7 @@ function LogVisitInner() {
             </label>
           ) : null}
           <div className="field m0">
-            <label>Outcome</label>
+            <label>{tx("visit.outcome", "Outcome")}</label>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
               {([["order", "Order"], ["follow_up", "Follow-up"], ["payment", "Payment"]] as const).map(([val, label]) => (
                 <button
@@ -171,15 +173,15 @@ function LogVisitInner() {
                   );
                 })}
                 {outcome !== "follow_up" && followUpDate ? (
-                  <button type="button" onClick={() => nextVisitIn(null)} className="tag tag-neutral" style={{ border: "none", cursor: "pointer", padding: "5px 12px" }}>None</button>
+                  <button type="button" onClick={() => nextVisitIn(null)} className="tag tag-neutral" style={{ border: "none", cursor: "pointer", padding: "5px 12px" }}>{tx("visit.none", "None")}</button>
                 ) : null}
               </div>
               <input className="input" type="date" value={followUpDate} onChange={(e) => setFollowUpDate(e.target.value)} />
-              <div className="hint" style={{ marginTop: 4 }}>Saved next-visit dates feed your follow-up list and weekly planning.</div>
+              <div className="hint" style={{ marginTop: 4 }}>{tx("visit.savedNextVisitDates", "Saved next-visit dates feed your follow-up list and weekly planning.")}</div>
             </div>
           ) : null}
           <div className="field m0">
-            <label>Notes (optional)</label>
+            <label>{tx("visit.notesOptional", "Notes (optional)")}</label>
             <textarea className="input" value={notes} onChange={(e) => setNotes(e.target.value)} style={{ minHeight: 70 }} />
           </div>
           <label className="row" style={{ gap: 8, fontSize: 13, cursor: "pointer" }}>
@@ -195,18 +197,18 @@ function LogVisitInner() {
             <label className="radio fs-small">
               <input type="checkbox" checked={joint} onChange={(e) => setJoint(e.target.checked)} />
               <span className="dot" />
-              Joint visit with supervisor
+              {tx("visit.jointVisitWithSupervisor", "Joint visit with supervisor")}
             </label>
           ) : (
             <>
               <label className="radio fs-small">
                 <input type="checkbox" checked={joint} onChange={(e) => setJoint(e.target.checked)} />
                 <span className="dot" />
-                Joint visit with a rep
+                {tx("visit.jointVisitWithA", "Joint visit with a rep")}
               </label>
               {joint ? (
                 <select className="input" value={jointWith} onChange={(e) => setJointWith(e.target.value)}>
-                  <option value="">Which rep?</option>
+                  <option value="">{tx("visit.whichRep", "Which rep?")}</option>
                   {reps.map((r) => <option key={r.userId} value={r.userId}>{r.name}</option>)}
                 </select>
               ) : null}
@@ -216,21 +218,21 @@ function LogVisitInner() {
             <div className="card" style={{ gap: 8, padding: 12 }}>
               <label className="row" style={{ gap: 8, cursor: "pointer" }}>
                 <input type="checkbox" checked={compOn} onChange={(e) => setCompOn(e.target.checked)} style={{ width: 17, height: 17 }} />
-                <span style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>Competitor seen at this clinic</span>
+                <span style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{tx("visit.competitorSeenAtThis", "Competitor seen at this clinic")}</span>
               </label>
               {compOn ? (
                 <>
                   <div className="two">
-                    <input className="input" placeholder="Competitor (e.g. Regenovue)" value={comp.competitor}
+                    <input className="input" placeholder={tx("visit.competitorEGRegenovuePh", "Competitor (e.g. Regenovue)")} value={comp.competitor}
                       onChange={(e) => setComp({ ...comp, competitor: e.target.value })} style={{ minHeight: 32, fontSize: 13 }} />
-                    <input className="input" placeholder="Their product" value={comp.product}
+                    <input className="input" placeholder={tx("visit.theirProductPh", "Their product")} value={comp.product}
                       onChange={(e) => setComp({ ...comp, product: e.target.value })} style={{ minHeight: 32, fontSize: 13 }} />
                   </div>
-                  <input className="input" placeholder="Their price (IQD, optional)" inputMode="numeric" value={comp.price}
+                  <input className="input" placeholder={tx("visit.theirPriceIqdOptionalPh", "Their price (IQD, optional)")} inputMode="numeric" value={comp.price}
                     onChange={(e) => setComp({ ...comp, price: e.target.value })} style={{ minHeight: 32, fontSize: 13 }} />
-                  <input className="input" placeholder="Note (optional)" value={comp.note}
+                  <input className="input" placeholder={tx("visit.noteOptionalPh", "Note (optional)")} value={comp.note}
                     onChange={(e) => setComp({ ...comp, note: e.target.value })} style={{ minHeight: 32, fontSize: 13 }} />
-                  <div className="hint">Goes to the market report — the owner and supervisor see it.</div>
+                  <div className="hint">{tx("visit.goesToTheMarket", "Goes to the market report — the owner and supervisor see it.")}</div>
                 </>
               ) : null}
             </div>

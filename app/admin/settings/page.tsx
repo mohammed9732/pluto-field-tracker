@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { api } from "@/lib/fmt";
 import { DEFAULT_TERMS } from "@/lib/types";
@@ -63,6 +64,7 @@ const metricsFor = (t: typeof DEFAULT_TERMS): [string, string][] => [
 ];
 
 export default function ControlPanel() {
+  const tx = useT();
   const me = useMe();
   const [settings, setSettings] = useState<any>(null);
   const [announce, setAnnounce] = useState("");
@@ -136,24 +138,24 @@ export default function ControlPanel() {
   return (
     <Screen me={me} wide>
         <div className="row">
-          <h4 className="m0 f1">Control panel</h4>
-          {savedFlash ? <span className="tag tag-ok">Saved</span> : null}
+          <h4 className="m0 f1">{tx("settings.controlPanel", "Control panel")}</h4>
+          {savedFlash ? <span className="tag tag-ok">{tx("settings.saved", "Saved")}</span> : null}
         </div>
 
-        <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Company</h6>
+        <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("settings.company", "Company")}</h6>
         <div className="two-col gap-3">
           <div className="field m0">
-            <label>Company name</label>
+            <label>{tx("settings.companyName", "Company name")}</label>
             <input className="input" defaultValue={settings.companyName} onBlur={(e) => e.target.value !== settings.companyName && patch({ companyName: e.target.value })} />
           </div>
           <div className="field m0">
-            <label>Currency label</label>
+            <label>{tx("settings.currencyLabel", "Currency label")}</label>
             <input className="input" defaultValue={settings.currency} onBlur={(e) => e.target.value !== settings.currency && patch({ currency: e.target.value })} />
           </div>
         </div>
         <div className="field m0">
-          <label>Subtitle under the company name</label>
-          <input className="input" defaultValue={settings.companySub ?? ""} placeholder="Leave empty to hide"
+          <label>{tx("settings.subtitleUnderTheCompany", "Subtitle under the company name")}</label>
+          <input className="input" defaultValue={settings.companySub ?? ""} placeholder={tx("settings.leaveEmptyToHidePh", "Leave empty to hide")}
             onBlur={(e) => e.target.value !== settings.companySub && patch({ companySub: e.target.value })} />
         </div>
 
@@ -165,9 +167,9 @@ export default function ControlPanel() {
               background: "var(--color-neutral-200)", border: "1px solid var(--color-divider)", overflow: "hidden",
             }}>
               {settings.logoId ? (
-                <img src={`/api/logo?v=${settings.logoId}`} alt="Logo"
+                <img src={`/api/logo?v=${settings.logoId}`} alt={tx("settings.logoPh", "Logo")}
                   style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-              ) : <span className="small muted">None</span>}
+              ) : <span className="small muted">{tx("settings.none", "None")}</span>}
             </div>
             <div className="f1min">
               <div className="small">
@@ -181,7 +183,7 @@ export default function ControlPanel() {
                 </button>
                 {settings.logoId ? (
                   <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-coral-deep)" }}
-                    onClick={() => patch({ logoId: "" })}>Remove</button>
+                    onClick={() => patch({ logoId: "" })}>{tx("settings.remove", "Remove")}</button>
                 ) : null}
               </div>
               <input ref={logoRef} type="file" accept="image/png,image/jpeg,image/svg+xml" className="hidden"
@@ -201,11 +203,11 @@ export default function ControlPanel() {
           </div>
 
           <div className="row" style={{ gap: 12, alignItems: "center" }}>
-            <input type="color" value={settings.brandColor ?? "#2f6fe0"} aria-label="Brand colour"
+            <input type="color" value={settings.brandColor ?? "#2f6fe0"} aria-label={tx("settings.brandColourPh", "Brand colour")}
               onChange={(e) => patch({ brandColor: e.target.value })}
               style={{ width: 46, height: 34, padding: 2, border: "1px solid var(--color-divider)", borderRadius: 8, background: "none", cursor: "pointer", flex: "none" }} />
             <div className="f1min">
-              <div className="fs-small w-500">Brand colour</div>
+              <div className="fs-small w-500">{tx("settings.brandColour", "Brand colour")}</div>
               <div className="small muted">
                 Buttons, links and highlights follow this. The lighter and darker shades
                 are worked out for you. Reload to see it everywhere.
@@ -214,7 +216,7 @@ export default function ControlPanel() {
           </div>
         </div>
 
-        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Mascot artwork</h6>
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>{tx("settings.mascotArtwork", "Mascot artwork")}</h6>
         <div className="card" style={{ gap: 12 }}>
           <div className="small muted">
             Upload your own character and it replaces the drawn one everywhere — sign-in,
@@ -233,7 +235,7 @@ export default function ControlPanel() {
                   {settings[key] ? (
                     <img src={`/api/mascot?mood=${hint}&v=${settings[key]}`} alt=""
                       style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
-                  ) : <span className="small muted fs-caption">Drawn</span>}
+                  ) : <span className="small muted fs-caption">{tx("settings.drawn", "Drawn")}</span>}
                 </div>
                 <div className="f1min">
                   <div style={{ fontSize: 13, fontWeight: 600 }}>{label}</div>
@@ -245,7 +247,7 @@ export default function ControlPanel() {
                     </button>
                     {settings[key] ? (
                       <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-coral-deep)" }}
-                        onClick={() => patch({ [key]: "" })}>Clear</button>
+                        onClick={() => patch({ [key]: "" })}>{tx("settings.clear", "Clear")}</button>
                     ) : null}
                   </div>
                 </div>
@@ -267,7 +269,7 @@ export default function ControlPanel() {
             }} />
         </div>
 
-        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>What you call things</h6>
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>{tx("settings.whatYouCallThings", "What you call things")}</h6>
         <div className="card gap-3">
           <div className="small muted">
             Change these and the whole app follows. Leave one empty to go back to the default.
@@ -288,17 +290,17 @@ export default function ControlPanel() {
         </div>
 
         <div className="field m0">
-          <label>Sign-in screen footer</label>
-          <input className="input" defaultValue={settings.loginFooter ?? ""} placeholder="Leave empty to hide"
+          <label>{tx("settings.signInScreenFooter", "Sign-in screen footer")}</label>
+          <input className="input" defaultValue={settings.loginFooter ?? ""} placeholder={tx("settings.leaveEmptyToHidePh", "Leave empty to hide")}
             onBlur={(e) => e.target.value !== settings.loginFooter && patch({ loginFooter: e.target.value })} />
         </div>
 
         <div className="field m0">
-          <label>Supervisor visit label</label>
+          <label>{tx("settings.supervisorVisitLabel", "Supervisor visit label")}</label>
           <input className="input" defaultValue={settings.supervisorVisitLabel} onBlur={(e) => e.target.value !== settings.supervisorVisitLabel && patch({ supervisorVisitLabel: e.target.value })} />
         </div>
 
-        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Cities</h6>
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>{tx("settings.cities", "Cities")}</h6>
         <div className="small muted">
           {`Every ${lower(t.doctor)}, ${lower(t.roleRep)} and stock location belongs to a city.`} Districts like Soran are areas inside their city.
         </div>
@@ -318,12 +320,12 @@ export default function ControlPanel() {
               <span className="small muted" style={{ width: 70 }}>{c.id}</span>
               <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-coral-deep)" }}
                 onClick={() => patchCities((settings.cities ?? []).filter((x: any) => x.id !== c.id))}>
-                Remove
+                {tx("settings.remove", "Remove")}
               </button>
             </div>
           ))}
           <div className="row gap-2">
-            <input className="input" placeholder="Add a city (e.g. Sulaymaniyah)" value={newCity} onChange={(e) => setNewCity(e.target.value)} />
+            <input className="input" placeholder={tx("settings.addACityEPh", "Add a city (e.g. Sulaymaniyah)")} value={newCity} onChange={(e) => setNewCity(e.target.value)} />
             <button className="btn btn-primary" style={{ padding: "8px 16px", flex: "none" }}
               onClick={() => {
                 const name = newCity.trim();
@@ -337,7 +339,7 @@ export default function ControlPanel() {
           {cityErr ? <div className="tag tag-hot self-start">{cityErr}</div> : null}
         </div>
 
-        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Product lines</h6>
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>{tx("settings.productLines", "Product lines")}</h6>
         <div className="small muted">
           {`Only needed if two ${lower(t.roleRep)}s work the same city on different ranges. They share the
           same ${lower(t.doctorPlural)}, but each only sells — and is paid commission on — their own line.
@@ -349,12 +351,12 @@ export default function ControlPanel() {
               <span style={{ flex: 1, fontSize: 13 }}>{l}</span>
               <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-coral-deep)" }}
                 onClick={() => patchLines((settings.productLines ?? []).filter((x: string) => x !== l))}>
-                Remove
+                {tx("settings.remove", "Remove")}
               </button>
             </div>
           ))}
           <div className="row gap-2">
-            <input className="input" placeholder="Add a line (e.g. Aesthetics)" value={newLine} onChange={(e) => setNewLine(e.target.value)} />
+            <input className="input" placeholder={tx("settings.addALineEPh", "Add a line (e.g. Aesthetics)")} value={newLine} onChange={(e) => setNewLine(e.target.value)} />
             <button className="btn btn-primary" style={{ padding: "8px 16px", flex: "none" }}
               onClick={() => {
                 const name = newLine.trim();
@@ -368,7 +370,7 @@ export default function ControlPanel() {
           {lineErr ? <div className="tag tag-hot self-start">{lineErr}</div> : null}
         </div>
 
-        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Feature switches</h6>
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>{tx("settings.featureSwitches", "Feature switches")}</h6>
         <div style={{ display: "flex", flexDirection: "column" }}>
           {togglesFor(t).map(([key, label, hint]) => (
             <label key={key} className="listrow" style={{ cursor: "pointer", padding: "10px 0" }}>
@@ -381,7 +383,7 @@ export default function ControlPanel() {
           ))}
         </div>
 
-        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Metrics</h6>
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>{tx("settings.metrics", "Metrics")}</h6>
         <div className="two-col gap-3">
           {metricsFor(t).map(([key, label]) => (
             <div key={key} className="field m0">
@@ -391,13 +393,13 @@ export default function ControlPanel() {
           ))}
         </div>
 
-        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Chat</h6>
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>{tx("settings.chat", "Chat")}</h6>
         <div className="field m0">
-          <label>Who can reps direct-message?</label>
+          <label>{tx("settings.whoCanRepsDirect", "Who can reps direct-message?")}</label>
           <select className="input" value={settings.dmPolicy} onChange={(e) => patch({ dmPolicy: e.target.value })}>
-            <option value="management">Supervisor and accountant only</option>
-            <option value="none">Nobody — groups only</option>
-            <option value="all">Everyone</option>
+            <option value="management">{tx("settings.supervisorAndAccountantOnly", "Supervisor and accountant only")}</option>
+            <option value="none">{tx("settings.nobodyGroupsOnly", "Nobody — groups only")}</option>
+            <option value="all">{tx("settings.everyone", "Everyone")}</option>
           </select>
         </div>
         <div className="stack-2">
@@ -407,11 +409,11 @@ export default function ControlPanel() {
                 <div className="fs-small w-500">{g.name}{g.builtin ? <span className="small muted"> · built-in</span> : ""}</div>
                 <div className="small muted">{g.memberIds.map((id: number) => users.find((u) => u.id === id)?.name?.split(" ")[0] ?? "?").join(", ") || "no members"}</div>
               </div>
-              <button className="btn btn-ghost fs-caption" onClick={() => setEditGroup({ ...g, memberIds: [...g.memberIds] })}>Edit</button>
+              <button className="btn btn-ghost fs-caption" onClick={() => setEditGroup({ ...g, memberIds: [...g.memberIds] })}>{tx("settings.edit", "Edit")}</button>
               {!g.builtin ? (
                 <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-coral-deep)" }}
                   onClick={async () => { if (window.confirm(`Delete group "${g.name}"?`)) { await api("/api/admin", { json: { action: "deleteGroup", id: g.id } }); load(); } }}>
-                  Delete
+                  {tx("settings.delete", "Delete")}
                 </button>
               ) : null}
             </div>
@@ -422,7 +424,7 @@ export default function ControlPanel() {
         {editGroup ? (
           <div className="card gap-3">
             <div className="field m0">
-              <label>Group name</label>
+              <label>{tx("settings.groupName", "Group name")}</label>
               <input className="input" value={editGroup.name} disabled={editGroup.builtin} onChange={(e) => setEditGroup({ ...editGroup, name: e.target.value })} />
             </div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -437,37 +439,37 @@ export default function ControlPanel() {
             </div>
             <div className="two">
               <button className="btn btn-primary" style={{ padding: 9 }}
-                onClick={async () => { await api("/api/admin", { json: { action: "saveGroup", ...editGroup } }); setEditGroup(null); load(); }}>Save group</button>
-              <button className="btn btn-secondary" style={{ padding: 9 }} onClick={() => setEditGroup(null)}>Cancel</button>
+                onClick={async () => { await api("/api/admin", { json: { action: "saveGroup", ...editGroup } }); setEditGroup(null); load(); }}>{tx("settings.saveGroup", "Save group")}</button>
+              <button className="btn btn-secondary" style={{ padding: 9 }} onClick={() => setEditGroup(null)}>{tx("settings.cancel", "Cancel")}</button>
             </div>
           </div>
         ) : null}
 
-        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Announcements</h6>
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>{tx("settings.announcements", "Announcements")}</h6>
         <div className="row gap-2">
-          <input className="input" placeholder="Write a pinned announcement…" value={announce} onChange={(e) => setAnnounce(e.target.value)} />
-          <button className="btn btn-primary" style={{ padding: "8px 16px", flex: "none" }} onClick={postAnnouncement}>Post</button>
+          <input className="input" placeholder={tx("settings.writeAPinnedAnnouncementPh", "Write a pinned announcement…")} value={announce} onChange={(e) => setAnnounce(e.target.value)} />
+          <button className="btn btn-primary" style={{ padding: "8px 16px", flex: "none" }} onClick={postAnnouncement}>{tx("settings.post", "Post")}</button>
         </div>
         {announcements.map((a) => (
           <div key={a.id} className="listrow py-2">
             <div style={{ flex: 1, fontSize: 13 }}>{a.body}</div>
             <span className="small muted">{a.seenBy?.length ?? 0} seen</span>
-            <button className="btn btn-ghost fs-caption" onClick={async () => { await api("/api/notify", { json: { action: "stopAnnouncement", id: a.id } }); load(); }}>Stop</button>
+            <button className="btn btn-ghost fs-caption" onClick={async () => { await api("/api/notify", { json: { action: "stopAnnouncement", id: a.id } }); load(); }}>{tx("settings.stop", "Stop")}</button>
           </div>
         ))}
 
-        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Company data</h6>
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>{tx("settings.companyData", "Company data")}</h6>
         <div className="card gap-2">
           <div className="small">
             The server keeps an automatic backup every day and holds the last 14.
             Download a copy now and then so the company keeps its own record too.
           </div>
           <a className="btn btn-secondary" href="/api/backup" style={{ padding: 9, textAlign: "center" }}>
-            Download a backup
+            {tx("settings.downloadABackup", "Download a backup")}
           </a>
         </div>
 
-        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Closing the month</h6>
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>{tx("settings.closingTheMonth", "Closing the month")}</h6>
         <div className="card gap-3">
           <div className="small muted">
             Once a month is closed, nothing dated in it can be added or edited — so payroll
@@ -505,13 +507,13 @@ export default function ControlPanel() {
                   load();
                 } catch (e: any) { setCloseMsg(e.message); }
               }}>
-              Reopen all months
+              {tx("settings.reopenAllMonths", "Reopen all months")}
             </button>
           ) : null}
           {closeMsg ? <div className="small" style={{ fontWeight: 600 }}>{closeMsg}</div> : null}
         </div>
 
-        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>Sample data</h6>
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>{tx("settings.sampleData", "Sample data")}</h6>
         <div className="card gap-3">
           <div className="small muted">
             Fills the app with a realistic demo company — staff, doctors, visits, orders
@@ -535,7 +537,7 @@ export default function ControlPanel() {
           {demoMsg ? <div className="small" style={{ fontWeight: 600 }}>{demoMsg}</div> : null}
         </div>
 
-        <h6 style={{ margin: "8px 0 0", color: "var(--c-coral-deep)" }}>Danger zone</h6>
+        <h6 style={{ margin: "8px 0 0", color: "var(--c-coral-deep)" }}>{tx("settings.dangerZone", "Danger zone")}</h6>
         <div className="card" style={{ gap: 10, borderColor: "var(--c-coral)" }}>
           <div className="small">
             When the training run is over and you are ready for real work, clear the
@@ -543,15 +545,15 @@ export default function ControlPanel() {
           </div>
           <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
             <button className="btn btn-secondary fs-small"
-              onClick={() => setWipe("records")}>Clear practice records</button>
+              onClick={() => setWipe("records")}>{tx("settings.clearPracticeRecords", "Clear practice records")}</button>
             <button className="btn btn-secondary" style={{ fontSize: 13, color: "var(--c-coral-deep)" }}
-              onClick={() => setWipe("everything")}>Start completely fresh</button>
+              onClick={() => setWipe("everything")}>{tx("settings.startCompletelyFresh", "Start completely fresh")}</button>
           </div>
           <div className="hint">
-            <b>Clear practice records</b> deletes doctors, visits, orders, payments, chat and
+            <b>{tx("settings.clearPracticeRecords", "Clear practice records")}</b> deletes doctors, visits, orders, payments, chat and
             tasks — your staff, products and settings stay.
             <br />
-            <b>Start completely fresh</b> also removes every other user account and the
+            <b>{tx("settings.startCompletelyFresh", "Start completely fresh")}</b> also removes every other user account and the
             product list, leaving only you.
           </div>
         </div>
@@ -562,7 +564,7 @@ export default function ControlPanel() {
               {wipe === "everything" ? "Start completely fresh?" : "Clear practice records?"}
             </div>
             <div className="small">
-              This cannot be undone from inside the app. Type <b>DELETE</b> to confirm.
+              {tx("settings.thisCannotBeUndone", "This cannot be undone from inside the app. Type")} <b>DELETE</b> to confirm.
             </div>
             <input className="input" value={wipeWord} placeholder="DELETE"
               onChange={(e) => setWipeWord(e.target.value)} />
@@ -583,7 +585,7 @@ export default function ControlPanel() {
                 {wipeBusy ? "Working…" : "Yes, delete"}
               </button>
               <button className="btn btn-secondary" onClick={() => { setWipe(null); setWipeWord(""); setWipeMsg(""); }}>
-                Cancel
+                {tx("settings.cancel", "Cancel")}
               </button>
             </div>
           </div>

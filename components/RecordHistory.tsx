@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { api, dmy, hm } from "@/lib/fmt";
 
 /* Who changed what, on one record.
@@ -8,6 +9,7 @@ import { api, dmy, hm } from "@/lib/fmt";
  * wrong or a doctor's class changed overnight, this is the first thing you want.
  */
 export function RecordHistory({ entity, id }: { entity: string; id: number }) {
+  const tx = useT();
   const [entries, setEntries] = useState<any[] | null>(null);
   const [open, setOpen] = useState(false);
 
@@ -21,12 +23,12 @@ export function RecordHistory({ entity, id }: { entity: string; id: number }) {
   return (
     <details className="card gap-2" onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
       <summary style={{ cursor: "pointer", fontSize: 13, fontWeight: 600, listStyle: "revert" }}>
-        History
+        {tx("hist.history", "History")}
       </summary>
       {entries === null ? (
-        <div className="small muted">Loading…</div>
+        <div className="small muted">{tx("hist.loading", "Loading…")}</div>
       ) : entries.length === 0 ? (
-        <div className="small muted">Nothing has been changed since this was created.</div>
+        <div className="small muted">{tx("hist.nothingHasBeenChanged", "Nothing has been changed since this was created.")}</div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column" }}>
           {entries.map((h) => (

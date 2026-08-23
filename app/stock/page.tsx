@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { Icon, paths } from "@/components/Icons";
 import { api, dmy, hm } from "@/lib/fmt";
@@ -29,6 +30,7 @@ const TRANSFER_TAG: Record<string, [string, string]> = {
 };
 
 export default function StockPage() {
+  const tx = useT();
   const me = useMe();
   const [data, setData] = useState<any>(null);
   const [counts, setCounts] = useState<Record<number, string>>({});
@@ -137,8 +139,8 @@ export default function StockPage() {
   return (
     <Screen me={me} wide>
       <div className="row items-base">
-        <h4 className="m0 f1">Stock</h4>
-        {isAcct ? <a href="#" className="fs-caption" onClick={(e) => { e.preventDefault(); downloadTemplate(); }}>Blank template</a> : null}
+        <h4 className="m0 f1">{tx("stk.stock", "Stock")}</h4>
+        {isAcct ? <a href="#" className="fs-caption" onClick={(e) => { e.preventDefault(); downloadTemplate(); }}>{tx("stk.blankTemplate", "Blank template")}</a> : null}
       </div>
 
       {data.mustCheck ? (
@@ -219,12 +221,12 @@ export default function StockPage() {
         <table className="table" style={{ fontSize: 12, minWidth: 380 }}>
           <thead>
             <tr>
-              <th>Product</th>
+              <th>{tx("stk.product", "Product")}</th>
               {locations.map((l) => (
                 <th key={l.id} style={{ textAlign: "right", background: myCity === l.id ? "var(--color-accent-100)" : undefined }}>{l.name}</th>
               ))}
-              <th className="ta-r">Total</th>
-              <th style={{ whiteSpace: "nowrap" }}>Expires</th>
+              <th className="ta-r">{tx("stk.total", "Total")}</th>
+              <th style={{ whiteSpace: "nowrap" }}>{tx("stk.expires", "Expires")}</th>
             </tr>
           </thead>
           <tbody>
@@ -278,7 +280,7 @@ export default function StockPage() {
           only the step that is theirs to take. */}
       <div className="card gap-3">
         <div className="row" style={{ alignItems: "baseline", gap: 8 }}>
-          <h6 className="m0 f1">Stock transfer requests</h6>
+          <h6 className="m0 f1">{tx("stk.stockTransferRequests", "Stock transfer requests")}</h6>
           {(me.role === "supervisor" || me.role === "admin" || (me.role === "rep" && myCity !== "main")) ? (
             <button className="btn btn-secondary" style={{ fontSize: 12, padding: "5px 12px" }}
               onClick={() => {
@@ -299,20 +301,20 @@ export default function StockPage() {
           <div className="stack-2">
             <div className="two-col gap-2">
               <div className="field m0">
-                <label>Product</label>
+                <label>{tx("stk.product", "Product")}</label>
                 <select className="input" value={ask.productId} onChange={(e) => setAsk({ ...ask, productId: e.target.value })}>
-                  <option value="">Choose…</option>
+                  <option value="">{tx("stk.choose", "Choose…")}</option>
                   {data.stock.map((x: any) => <option key={x.productId} value={x.productId}>{x.name}</option>)}
                 </select>
               </div>
               <div className="field m0">
-                <label>Quantity</label>
+                <label>{tx("stk.quantity", "Quantity")}</label>
                 <input className="input" inputMode="numeric" value={ask.qty}
                   onChange={(e) => setAsk({ ...ask, qty: e.target.value.replace(/[^0-9]/g, "") })} />
               </div>
             </div>
             <div className="field m0">
-              <label>Take it from</label>
+              <label>{tx("stk.takeItFrom", "Take it from")}</label>
               <select className="input" value={ask.fromCity}
                 onChange={(e) => {
                   const fromCity = e.target.value;
@@ -327,14 +329,14 @@ export default function StockPage() {
             </div>
             {me.role !== "rep" ? (
               <div className="field m0">
-                <label>Send it to</label>
+                <label>{tx("stk.sendItTo", "Send it to")}</label>
                 <select className="input" value={ask.toCity}
                   onChange={(e) => setAsk({ ...ask, toCity: e.target.value })}>
                   {locations.filter((l) => l.id !== ask.fromCity).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
                 </select>
               </div>
             ) : null}
-            <input className="input" placeholder="Why do you need it? (optional)" value={ask.note}
+            <input className="input" placeholder={tx("stk.whyDoYouNeedPh", "Why do you need it? (optional)")} value={ask.note}
               onChange={(e) => setAsk({ ...ask, note: e.target.value })} />
             {askErr ? <div className="tag tag-hot self-start">{askErr}</div> : null}
             <button className="btn btn-primary btn-block p-3"
@@ -350,13 +352,13 @@ export default function StockPage() {
                   load();
                 } catch (e: any) { setAskErr(e?.message || "Could not send the request"); }
               }}>
-              Send request
+              {tx("stk.sendRequest", "Send request")}
             </button>
           </div>
         ) : null}
 
         {(data.transferRequests ?? []).length === 0 ? (
-          <div className="small muted">Nothing requested.</div>
+          <div className="small muted">{tx("stk.nothingRequested", "Nothing requested.")}</div>
         ) : (
           (data.transferRequests ?? []).map((r: any) => (
             <div key={r.id} className="listrow" style={{ alignItems: "flex-start", gap: 8 }}>
@@ -383,17 +385,17 @@ export default function StockPage() {
                   && (r.requestedBy !== me.id || me.role === "admin") ? (
                   <div className="row gap-2">
                     <button className="btn btn-ghost fs-caption"
-                      onClick={() => decideTransfer(r.id, "approve")}>Approve</button>
+                      onClick={() => decideTransfer(r.id, "approve")}>{tx("stk.approve", "Approve")}</button>
                     <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-coral-deep)" }}
-                      onClick={() => decideTransfer(r.id, "reject")}>Decline</button>
+                      onClick={() => decideTransfer(r.id, "reject")}>{tx("stk.decline", "Decline")}</button>
                   </div>
                 ) : null}
                 {r.status === "supervisor_ok" && data.canFulfilTransfer ? (
                   <div className="row gap-2">
                     <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-green-deep)" }}
-                      onClick={() => decideTransfer(r.id, "fulfil")}>Mark moved</button>
+                      onClick={() => decideTransfer(r.id, "fulfil")}>{tx("stk.markMoved", "Mark moved")}</button>
                     <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-coral-deep)" }}
-                      onClick={() => decideTransfer(r.id, "reject")}>Decline</button>
+                      onClick={() => decideTransfer(r.id, "reject")}>{tx("stk.decline", "Decline")}</button>
                   </div>
                 ) : null}
               </div>
@@ -417,8 +419,8 @@ export default function StockPage() {
                   <span className="small muted" style={{ width: 34 }}>{s.unit}</span>
                 </div>
               ))}
-              <input className="input" placeholder="Note (damage, missing, etc.)" value={checkNote} onChange={(e) => setCheckNote(e.target.value)} />
-              <button className="btn btn-primary btn-block" style={{ padding: 11 }} onClick={submitCheck}>Submit count to accountant</button>
+              <input className="input" placeholder={tx("stk.noteDamageMissingEtcPh", "Note (damage, missing, etc.)")} value={checkNote} onChange={(e) => setCheckNote(e.target.value)} />
+              <button className="btn btn-primary btn-block" style={{ padding: 11 }} onClick={submitCheck}>{tx("stk.submitCountToAccountant", "Submit count to accountant")}</button>
             </>
           ) : (
             <div className="tag tag-ok self-start">This week&apos;s check is submitted ✓</div>
@@ -430,25 +432,25 @@ export default function StockPage() {
       {isAcct ? (
         <>
           <div className="card gap-3">
-            <h6 className="m0">Transfer to a city</h6>
+            <h6 className="m0">{tx("stk.transferToACity", "Transfer to a city")}</h6>
             <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 8 }}>
               <select className="input" value={transfer.productId} onChange={(e) => setTransfer({ ...transfer, productId: e.target.value })}>
-                <option value="">Product…</option>
+                <option value="">{tx("stk.product2", "Product…")}</option>
                 {data.stock.map((s: any) => <option key={s.productId} value={s.productId}>{s.name} ({s.byLocation?.main ?? 0} in main)</option>)}
               </select>
-              <input className="input" placeholder="Qty" inputMode="numeric" value={transfer.qty} onChange={(e) => setTransfer({ ...transfer, qty: e.target.value })} />
+              <input className="input" placeholder={tx("stk.qtyPh", "Qty")} inputMode="numeric" value={transfer.qty} onChange={(e) => setTransfer({ ...transfer, qty: e.target.value })} />
               <select className="input" value={transfer.to} onChange={(e) => setTransfer({ ...transfer, to: e.target.value })}>
                 {locations.filter((l) => l.id !== "main").map((l) => (
                   <option key={l.id} value={l.id}>→ {l.name}</option>
                 ))}
               </select>
             </div>
-            <button className="btn btn-primary" style={{ padding: 9 }} onClick={doTransfer} disabled={!transfer.productId || !transfer.qty}>Record transfer</button>
+            <button className="btn btn-primary" style={{ padding: 9 }} onClick={doTransfer} disabled={!transfer.productId || !transfer.qty}>{tx("stk.recordTransfer", "Record transfer")}</button>
           </div>
 
           {data.checks?.length ? (
             <div className="stack-2">
-              <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Weekly checks from reps</h6>
+              <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("stk.weeklyChecksFromReps", "Weekly checks from reps")}</h6>
               {data.checks.map((c: any) => (
                 <div key={c.id} className="card" style={{ gap: 8, padding: 12, borderColor: c.hasDiff && !c.reviewedBy ? "var(--c-amber)" : undefined }}>
                   <div className="row gap-2">
@@ -456,7 +458,7 @@ export default function StockPage() {
                       <div className="fs-small w-500">{c.userName} · {label(c.city)}</div>
                       <div className="small muted">week of {dmy(c.weekStart)} · submitted {dmy(c.ts)}</div>
                     </div>
-                    {c.reviewedBy ? <span className="tag tag-ok">Reviewed</span> : c.hasDiff ? <span className="tag tag-warn">Differences</span> : <span className="tag tag-ok">Matches</span>}
+                    {c.reviewedBy ? <span className="tag tag-ok">{tx("stk.reviewed", "Reviewed")}</span> : c.hasDiff ? <span className="tag tag-warn">{tx("stk.differences", "Differences")}</span> : <span className="tag tag-ok">{tx("stk.matches", "Matches")}</span>}
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 3, fontSize: 12 }}>
                     {c.rows.map((r: any) => (
@@ -471,11 +473,11 @@ export default function StockPage() {
                     <div className="two">
                       <button className="btn btn-primary" style={{ padding: 8, fontSize: 12 }}
                         onClick={async () => { await api("/api/stock", { json: { action: "reviewCheck", id: c.id, applyCounts: true } }); load(); }}>
-                        Accept counts (fix system)
+                        {tx("stk.acceptCountsFixSystem", "Accept counts (fix system)")}
                       </button>
                       <button className="btn btn-secondary" style={{ padding: 8, fontSize: 12 }}
                         onClick={async () => { await api("/api/stock", { json: { action: "reviewCheck", id: c.id } }); load(); }}>
-                        Mark reviewed
+                        {tx("stk.markReviewed", "Mark reviewed")}
                       </button>
                     </div>
                   ) : null}
@@ -485,7 +487,7 @@ export default function StockPage() {
           ) : null}
 
           <button className="btn btn-secondary p-3" onClick={() => fileRef.current?.click()}>
-            <Icon d={paths.upload} size={14} /> Upload main-warehouse count (.xlsx)
+            <Icon d={paths.upload} size={14} /> {tx("stk.uploadMainWarehouseCount", "Upload main-warehouse count (.xlsx)")}
           </button>
           <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={onFile} />
           {preview ? (
@@ -497,8 +499,8 @@ export default function StockPage() {
               </div>
               <div className="small" style={{ color: "var(--color-accent-800)" }}>{preview.rows.length} rows — confirm to apply.</div>
               <div className="two">
-                <button className="btn btn-primary" style={{ padding: 9 }} onClick={confirmUpload}>Confirm</button>
-                <button className="btn btn-secondary" style={{ padding: 9 }} onClick={() => setPreview(null)}>Cancel</button>
+                <button className="btn btn-primary" style={{ padding: 9 }} onClick={confirmUpload}>{tx("stk.confirm", "Confirm")}</button>
+                <button className="btn btn-secondary" style={{ padding: 9 }} onClick={() => setPreview(null)}>{tx("stk.cancel", "Cancel")}</button>
               </div>
             </div>
           ) : null}
@@ -511,7 +513,7 @@ export default function StockPage() {
 
           {data.transfers?.length ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>Recent transfers</h6>
+              <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("stk.recentTransfers", "Recent transfers")}</h6>
               {data.transfers.map((t: any) => (
                 <div key={t.id} className="small muted" style={{ display: "flex", gap: 8 }}>
                   <span className="f1">{t.qty} × {t.productName} · {label(t.from)} → {label(t.to)}</span>

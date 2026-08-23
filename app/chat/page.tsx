@@ -1,5 +1,6 @@
 "use client";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { useSearchParams } from "next/navigation";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { api, hm } from "@/lib/fmt";
@@ -7,6 +8,7 @@ import { Icon, paths } from "@/components/Icons";
 import { DoctorLink, CallButton } from "@/components/DoctorLink";
 
 function ChatInner() {
+  const tx = useT();
   const me = useMe();
   const params = useSearchParams();
   const wanted = params.get("channel") ?? "";
@@ -115,7 +117,7 @@ function ChatInner() {
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5Z" /></svg>
         </div>
         <div className="f1">
-          <div className="hnum" style={{ fontSize: 22, lineHeight: 1.05 }}>Chat</div>
+          <div className="hnum" style={{ fontSize: 22, lineHeight: 1.05 }}>{tx("chat.chat", "Chat")}</div>
           <div className="small muted">{channels.find((c) => c.id === channel)?.label ?? ""}</div>
         </div>
         {(() => {
@@ -136,7 +138,7 @@ function ChatInner() {
             value={channel.startsWith("dm-") ? channel : ""}
             onChange={(e) => e.target.value && setChannel(e.target.value)}
           >
-            <option value="">Direct…</option>
+            <option value="">{tx("chat.direct", "Direct…")}</option>
             {dms.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
           </select>
         ) : null}
@@ -171,32 +173,32 @@ function ChatInner() {
       {recording ? (
         <div className="row" style={{ gap: 9, padding: "8px 12px", borderRadius: 999, background: "var(--c-coral-soft)" }}>
           <span style={{ width: 9, height: 9, borderRadius: 999, background: "var(--c-coral)", flex: "none" }} />
-          <span style={{ flex: 1, fontSize: 12, color: "var(--c-coral-deep)" }}>Recording… tap the mic again to send</span>
+          <span style={{ flex: 1, fontSize: 12, color: "var(--c-coral-deep)" }}>{tx("chat.recordingTapTheMic", "Recording… tap the mic again to send")}</span>
         </div>
       ) : null}
       <div className="row" style={{ gap: 7 }}>
         <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAndSend(f, "image", f.name); e.target.value = ""; }} />
         <input ref={fileRef} type="file" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAndSend(f, "file", f.name); e.target.value = ""; }} />
-        <button className="btn btn-secondary btn-icon" style={{ flex: "none", }} onClick={() => imgRef.current?.click()} aria-label="Send image">
+        <button className="btn btn-secondary btn-icon" style={{ flex: "none", }} onClick={() => imgRef.current?.click()} aria-label={tx("chat.sendImagePh", "Send image")}>
           <Icon d="M21 15l-5-5L5 21M3 5h18v14H3Z" size={15} />
         </button>
-        <button className="btn btn-secondary btn-icon" style={{ flex: "none", }} onClick={() => fileRef.current?.click()} aria-label="Send file">
+        <button className="btn btn-secondary btn-icon" style={{ flex: "none", }} onClick={() => fileRef.current?.click()} aria-label={tx("chat.sendFilePh", "Send file")}>
           <Icon d="M21 12.5 12.5 21a4.95 4.95 0 0 1-7-7l8.5-8.5a3.5 3.5 0 0 1 5 5L10 19" size={15} />
         </button>
         <input
           className="input"
-          placeholder="Message…"
+          placeholder={tx("chat.messagePh", "Message…")}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send()}
           style={{ minHeight: 38, fontSize: 13 }}
         />
         {text.trim() ? (
-          <button className="btn btn-icon" style={{ flex: "none", background: "var(--c-violet)", border: "1px solid var(--c-violet)" }} onClick={send} aria-label="Send">
+          <button className="btn btn-icon" style={{ flex: "none", background: "var(--c-violet)", border: "1px solid var(--c-violet)" }} onClick={send} aria-label={tx("chat.sendPh", "Send")}>
             <Icon d={paths.send} size={15} stroke="#fff" />
           </button>
         ) : (
-          <button className="btn btn-icon" style={{ flex: "none", background: recording ? "var(--c-coral)" : "var(--c-violet)", border: "none" }} onClick={toggleRecord} aria-label="Voice message">
+          <button className="btn btn-icon" style={{ flex: "none", background: recording ? "var(--c-coral)" : "var(--c-violet)", border: "none" }} onClick={toggleRecord} aria-label={tx("chat.voiceMessagePh", "Voice message")}>
             <Icon d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z M19 10v2a7 7 0 0 1-14 0v-2 M12 19v3" size={15} stroke="#fff" />
           </button>
         )}
