@@ -12,6 +12,19 @@ import { api, dmy, money, monthName } from "@/lib/fmt";
  * whole point: paying a month while a spending is still unapproved means the
  * figure you paid was never the real one.
  */
+/* The server sends both a key and an English label. The key is what we
+ * translate against; the label is the fallback if a new blocker type appears
+ * before this list knows about it. */
+function blockerLabel(tx: (k: string, en: string) => string, key: string, fallback: string): string {
+  switch (key) {
+    case "deductions": return tx("monthend.blockerDeductions", "missed days still undecided");
+    case "spendings":  return tx("monthend.blockerSpendings", "spendings not yet approved");
+    case "orders":     return tx("monthend.blockerOrders", "orders still awaiting approval");
+    case "invoices":   return tx("monthend.blockerInvoices", "approved orders not yet invoiced");
+    default:           return fallback;
+  }
+}
+
 export default function MonthEnd() {
   const tx = useT();
   const me = useMe();
@@ -55,7 +68,7 @@ export default function MonthEnd() {
       <div className="row" style={{ alignItems: "baseline", flexWrap: "wrap" }}>
         <h4 className="m0 f1">{tx("monthend.monthEndPack", "Month-end pack")}</h4>
         <button className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 11px" }} onClick={() => shiftMonth(-1)}>
-          ← Earlier
+          {tx("monthend.earlier", "← Earlier")}
         </button>
         <span className="tag tag-neutral">{monthName(data.period)}</span>
         <button className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 11px" }} onClick={() => shiftMonth(1)}>
@@ -72,7 +85,7 @@ export default function MonthEnd() {
       {data.blockers.length === 0 ? (
         <MascotNote mood="cheer" tone="win" size={60}
           title={tx("monthend.nothingIsWaitingOnPh", "Nothing is waiting on a decision")}
-          body="Every missed day, spending and order for this month has been dealt with. Safe to pay." />
+          body={tx("monthend.safeToPay", "Every missed day, spending and order for this month has been dealt with. Safe to pay.")} />
       ) : (
         <div className="card" style={{ gap: 8, borderColor: "var(--c-amber)" }}>
           <div className="row gap-2">
@@ -80,12 +93,12 @@ export default function MonthEnd() {
             <span className="tag tag-warn">{data.blockers.length}</span>
           </div>
           <div className="small muted">
-            Each of these could still change what someone is owed. Paying now means paying a figure that moves afterwards.
+            {tx("monthend.blockersWhy", "Each of these could still change what someone is owed. Paying now means paying a figure that moves afterwards.")}
           </div>
           {data.blockers.map((b: any) => (
             <Link key={b.key} href={b.href} className="listrow" style={{ textDecoration: "none", color: "inherit" }}>
               <span className="hnum" style={{ fontSize: 18, width: 34 }}>{b.count}</span>
-              <span style={{ flex: 1, fontSize: 13 }}>{b.label}</span>
+              <span style={{ flex: 1, fontSize: 13 }}>{blockerLabel(tx, b.key, b.label)}</span>
               <span className="small" style={{ color: "var(--color-accent)" }}>{tx("monthend.open", "Open →")}</span>
             </Link>
           ))}
@@ -182,7 +195,7 @@ export default function MonthEnd() {
                     <button className="btn btn-primary" style={{ fontSize: 12, padding: "6px 12px" }}
                       disabled={busy === p.userId || data.isClosedAlready}
                       onClick={() => pay(p)}>
-                      {busy === p.userId ? "…" : "Pay wages"}
+                      {busy === p.userId ? "…" : tx("monthend.payWages", "Pay wages")}
                     </button>
                   )}
                 </td>
@@ -193,8 +206,7 @@ export default function MonthEnd() {
       </div>
 
       <div className="hint">
-        Wages and expenses are paid separately. The app records the wage payment here; reimbursements are
-        marked off on the Spendings screen. Hand over is what the person receives in total.
+        {tx("monthend.footer", "Wages and expenses are paid separately. The app records the wage payment here; reimbursements are marked off on the Spendings screen. Hand over is what the person receives in total.")}
       </div>
 
       {!data.isClosedAlready && data.blockers.length === 0 && t.paidCount === data.people.length ? (

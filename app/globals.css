@@ -699,9 +699,12 @@ textarea.input { min-height: 78px; resize: vertical; }
 .w-500     { font-weight: 500; }
 .w-700     { font-weight: 700; }
 
-/* Right-aligned in English, left-aligned in Arabic — a column of figures
-   should hug the edge the reader's eye returns to, whichever that is. */
-[dir="rtl"] .ta-r { text-align: left; }
+/* Deliberately NOT flipped under RTL.
+   The instinct is to mirror it like everything else, but a column of figures
+   is the exception: digits render left-to-right in both languages, so keeping
+   them right-aligned is what lines the units up under each other. Flip it and
+   17,000 sits above 9, with the 7 over the 9 — you lose the one thing an
+   aligned column of numbers is for. */
 
 .hidden    { display: none; }
 

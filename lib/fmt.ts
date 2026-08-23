@@ -1,9 +1,17 @@
+import { getLang } from "./i18n";
 // IQD: whole numbers, thousands separators — "65,000 IQD".
+/* Figures stay in Western digits and Latin grouping in both languages —
+ * that is what people here read on invoices — but the currency itself is a
+ * word, and words get translated. */
+function currency(): string {
+  return getLang() === "ar" ? "د.ع" : "IQD";
+}
+
 export function money(n: number): string {
-  return Math.round(n).toLocaleString("en-US") + " IQD";
+  return Math.round(n).toLocaleString("en-US") + " " + currency();
 }
 export function money0(n: number): string {
-  return Math.round(n).toLocaleString("en-US") + " IQD";
+  return Math.round(n).toLocaleString("en-US") + " " + currency();
 }
 // DD-MM-YYYY per spec
 export function dmy(dateIso: string): string {
@@ -27,7 +35,12 @@ export function durationHM(minutes: number): string {
 }
 export function monthName(period: string): string {
   const [y, m] = period.split("-").map(Number);
-  return new Date(y, m - 1, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
+  // Follows the reader's language. Hard-coding en-US meant "August 2026" sat
+  // in the middle of an otherwise Arabic month-end screen. ar-EG rather than
+  // plain ar: it gives the Gregorian month names people here actually use
+  // (أغسطس), not the Levantine ones (آب).
+  const locale = getLang() === "ar" ? "ar-EG" : "en-US";
+  return new Date(y, m - 1, 1).toLocaleString(locale, { month: "long", year: "numeric" });
 }
 export async function api<T = any>(path: string, opts?: RequestInit & { json?: any }): Promise<T> {
   const init: RequestInit = { ...opts };

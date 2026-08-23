@@ -469,6 +469,9 @@ const AR: Record<string, string> = {
   "monthend.expenses": "المصروفات",
   "monthend.goAndCloseIt": "اذهب لإقفاله",
   "monthend.handOver": "التسليم",
+  // Back and forward swap sides in Arabic, so each arrow travels inside its
+  // own string rather than being hard-coded in the JSX.
+  "monthend.earlier": "الأقدم →",
   "monthend.later": "لاحقاً ←",
   "monthend.monthEndPack": "ملف إقفال الشهر",
   "monthend.nothingIsWaitingOnPh": "لا يوجد شيء بانتظار قرار",
@@ -826,6 +829,19 @@ const AR: Record<string, string> = {
   "owner.controlPanelLine": "لوحة التحكم — المفاتيح والمؤشرات",
   "owner.payrollPayouts": "الرواتب والمستحقات",
   "owner.sameDataFooter": "البيانات نفسها على الحاسوب والهاتف — عرض المالك أثناء التنقّل.",
+
+
+  // — text that sits alongside a value, so the whole phrase is one
+  //   string with the number dropped in. Arabic does not pluralise by
+  //   adding an s, so these cannot be assembled from fragments. —
+  "monthend.blockerDeductions": "أيام غياب لم يُبتّ فيها",
+  "monthend.blockerInvoices": "طلبيات معتمدة لم تصدر فواتيرها",
+  "monthend.blockerOrders": "طلبيات ما زالت بانتظار الموافقة",
+  "monthend.blockerSpendings": "مصروفات لم تُعتمد بعد",
+  "monthend.blockersWhy": "كل واحد من هذه قد يغيّر ما هو مستحق لأحدهم. الدفع الآن يعني دفع رقم سيتغيّر بعده.",
+  "monthend.footer": "الأجور والمصروفات تُدفع بشكل منفصل. التطبيق يسجّل دفع الأجور هنا، أما الاستردادات فتُعلَّم في شاشة المصروفات. «التسليم» هو ما يستلمه الموظف إجمالاً.",
+  "monthend.payWages": "دفع الأجور",
+  "monthend.safeToPay": "كل يوم غياب ومصروف وطلبية لهذا الشهر تم البتّ فيه. يمكنك الدفع بأمان.",
 
   // — help —
   "help.title": "كيف تستخدم التطبيق",
