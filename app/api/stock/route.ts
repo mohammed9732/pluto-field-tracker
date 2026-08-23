@@ -129,7 +129,14 @@ export async function POST(req: Request) {
         }
         s.qty = qty;
         s.batch = r.batch ? String(r.batch) : s.batch;
-        s.expiry = r.expiry ? String(r.expiry) : s.expiry;
+        // Same check the manual entry gets. A column formatted as Text in
+        // Excel arrives as "31/12/26" or "Dec 2026", and storing that unread
+        // silently disables the expiry warning for that product.
+        if (r.expiry) {
+          const expiry = String(r.expiry).slice(0, 10);
+          if (/^\d{4}-\d{2}-\d{2}$/.test(expiry)) s.expiry = expiry;
+          else errors.push(`Row ${i + 2}: expiry "${r.expiry}" is not YYYY-MM-DD — quantity saved, expiry ignored`);
+        }
         s.updatedAt = nowIso();
         s.updatedBy = user.id;
         processed++;
