@@ -700,6 +700,7 @@ const AR: Record<string, string> = {
   "settings.companyName": "اسم الشركة",
   "settings.controlPanel": "لوحة التحكم",
   "settings.currencyLabel": "رمز العملة",
+  "settings.defaultLanguage": "لغة المستخدمين الجدد",
   "settings.dangerZone": "منطقة الخطر",
   "settings.delete": "حذف",
   "settings.downloadABackup": "تنزيل نسخة احتياطية",
@@ -876,12 +877,12 @@ const AR: Record<string, string> = {
 
 const DICTS: Record<Lang, Record<string, string>> = { en: {}, ar: AR };
 
+const STORE_KEY = "pluto.lang";
+
 let current: Lang = "en";
 const listeners = new Set<() => void>();
 
-export function setLang(next: Lang | undefined) {
-  const lang: Lang = next === "ar" ? "ar" : "en";
-  if (lang === current) return;
+function apply(lang: Lang) {
   current = lang;
   if (typeof document !== "undefined") {
     // The whole page mirrors for Arabic — navigation, alignment, the lot.
@@ -889,6 +890,51 @@ export function setLang(next: Lang | undefined) {
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
   }
   listeners.forEach((l) => l());
+}
+
+export function setLang(next: Lang | undefined) {
+  const lang: Lang = next === "ar" ? "ar" : "en";
+  if (lang === current) return;
+  apply(lang);
+}
+
+/* The choice the person made on THIS device.
+ *
+ * Kept separately from the signed-in profile because the login screen has no
+ * profile to read: without this, the first screen anybody sees is always
+ * English and there is nothing they can do about it until after they are in.
+ */
+export function rememberLang(lang: Lang) {
+  try { window.localStorage.setItem(STORE_KEY, lang); } catch {}
+  setLang(lang);
+}
+
+export function storedLang(): Lang | null {
+  try {
+    const v = window.localStorage.getItem(STORE_KEY);
+    return v === "ar" || v === "en" ? v : null;
+  } catch { return null; }
+}
+
+/* Called once, as early as possible, before anything is drawn. */
+export function initLang() {
+  const v = storedLang();
+  if (v && v !== current) apply(v);
+}
+
+/* Which language wins, once we know who is signed in.
+ *
+ *   1. the person's own saved choice  — they asked for this explicitly
+ *   2. what they picked on this device at the login screen
+ *   3. the company default the owner set
+ *   4. English
+ *
+ * Order matters: without step 2, someone who switches to Arabic on the login
+ * screen gets thrown back to English the moment they sign in, which reads as
+ * the setting not working.
+ */
+export function resolveLang(userLang?: Lang | null, companyDefault?: Lang | null): Lang {
+  return (userLang ?? storedLang() ?? companyDefault ?? "en") as Lang;
 }
 
 export function getLang(): Lang {

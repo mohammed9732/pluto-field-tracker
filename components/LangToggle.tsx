@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { api } from "@/lib/fmt";
-import { setLang, useLang, useT } from "@/lib/i18n";
+import { rememberLang, useLang, useT } from "@/lib/i18n";
 
 /* English / عربي.
  *
@@ -16,7 +16,10 @@ export function LangToggle({ compact = false }: { compact?: boolean }) {
 
   async function choose(next: "en" | "ar") {
     if (next === lang) return;
-    setLang(next);
+    // Applied and remembered on the device first, so it works on the sign-in
+    // screen where there is nobody to save it against yet. The server call is
+    // best-effort: signed out it will fail, and that is fine.
+    rememberLang(next);
     setBusy(true);
     try { await api("/api/lang", { json: { lang: next } }); }
     catch {}

@@ -154,6 +154,18 @@ export default function ControlPanel() {
           </div>
         </div>
         <div className="field m0">
+          <label>{tx("settings.defaultLanguage", "Language for new people")}</label>
+          {/* What somebody sees the first time they sign in. Anyone can still
+              switch their own, from the sign-in screen or the bell menu — this
+              only sets the starting point, so the whole company does not have
+              to change it one by one. */}
+          <select className="input" value={settings.defaultLang ?? "en"}
+            onChange={(e) => patch({ defaultLang: e.target.value })}>
+            <option value="en">English</option>
+            <option value="ar">العربية</option>
+          </select>
+        </div>
+        <div className="field m0">
           <label>{tx("settings.subtitleUnderTheCompany", "Subtitle under the company name")}</label>
           <input className="input" defaultValue={settings.companySub ?? ""} placeholder={tx("settings.leaveEmptyToHidePh", "Leave empty to hide")}
             onBlur={(e) => e.target.value !== settings.companySub && patch({ companySub: e.target.value })} />

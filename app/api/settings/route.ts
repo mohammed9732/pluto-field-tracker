@@ -52,6 +52,11 @@ export async function POST(req: Request) {
         db.settings.cities = cleaned;
         continue;
       }
+      if (k === "defaultLang") {
+        requireUser(["admin"]);
+        db.settings.defaultLang = v === "ar" ? "ar" : "en";
+        continue;
+      }
       if (k === "productLines") {
         requireUser(["admin"]);
         const cleaned = (Array.isArray(v) ? v : [])

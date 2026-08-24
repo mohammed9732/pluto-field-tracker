@@ -2,7 +2,7 @@
 import { LangToggle } from "./LangToggle";
 import { OutboxBar } from "./OutboxBar";
 import { setBrand, setTerms, term, useBrand, useTerms } from "@/lib/terms";
-import { setLang, tr, useLang, useT } from "@/lib/i18n";
+import { resolveLang, setLang, tr, useLang, useT } from "@/lib/i18n";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -23,10 +23,10 @@ export function useMe(): Me | null | undefined {
   const [me, setMe] = useState<Me | null | undefined>(undefined);
   const router = useRouter();
   useEffect(() => {
-    api<{ user: Me | null; terms?: any; companyName?: string; hasLogo?: boolean; lang?: any }>("/api/auth/me")
+    api<{ user: Me | null; terms?: any; companyName?: string; hasLogo?: boolean; lang?: any; defaultLang?: any }>("/api/auth/me")
       .then((r) => {
         setTerms(r.terms);
-        setLang(r.lang);
+        setLang(resolveLang(r.lang, r.defaultLang));
         setBrand({ companyName: r.companyName, hasLogo: r.hasLogo });
         setMe(r.user);
         if (!r.user) router.replace("/login");

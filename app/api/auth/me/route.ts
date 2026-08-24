@@ -13,7 +13,11 @@ export async function GET() {
   return Response.json({
     user: publicUser(user),
     terms: s.terms,
-    lang: user.lang ?? s.defaultLang ?? "en",
+    // Sent separately from the person's own choice so the client can apply
+    // the precedence itself — the profile alone cannot tell the difference
+    // between "no preference" and "chose English".
+    lang: user.lang ?? null,
+    defaultLang: s.defaultLang ?? "en",
     companyName: s.companyName,
     hasLogo: !!s.logoId,
   });

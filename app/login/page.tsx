@@ -1,6 +1,7 @@
 "use client";
 import { Mascot } from "@/components/Mascot";
-import { useT } from "@/lib/i18n";
+import { initLang, useT } from "@/lib/i18n";
+import { LangToggle } from "@/components/LangToggle";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/fmt";
@@ -16,6 +17,8 @@ export default function Login() {
   const router = useRouter();
 
   useEffect(() => {
+    // Before anything else: whatever this device chose last time.
+    initLang();
     fetch("/api/brand").then((r) => r.json()).then(setBrand).catch(() => {});
   }, []);
 
@@ -69,7 +72,7 @@ export default function Login() {
             </div>
             {err ? <div className="tag tag-hot self-start">{err}</div> : null}
             <button className="btn btn-primary btn-block" style={{ padding: 12 }} disabled={busy}>
-              {busy ? "Signing in…" : "Sign in"}
+              {busy ? tx("login.signingIn", "Signing in…") : tx("login.signIn", "Sign in")}
             </button>
           </form>
           {brand?.demo ? (
@@ -78,8 +81,14 @@ export default function Login() {
             </div>
           ) : null}
         </div>
+        {/* The language switch belongs here, not buried in a menu behind the
+            sign-in. Somebody who reads Arabic should be able to put the app
+            into Arabic before they type anything. */}
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 18 }}>
+          <LangToggle />
+        </div>
         {brand?.loginFooter ? (
-          <div className="hint" style={{ textAlign: "center" }}>{brand.loginFooter}</div>
+          <div className="hint" style={{ textAlign: "center", marginTop: 10 }}>{brand.loginFooter}</div>
         ) : null}
       </div>
     </div>
