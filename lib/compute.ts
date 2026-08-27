@@ -163,6 +163,32 @@ export function productsFor(db: DB, user: { role: string; productLine?: string |
   return active.filter((p) => !p.line || p.line === line);
 }
 
+/* Where a customer stands against their monthly ceiling.
+ *
+ * "Used" counts every order this month that is not rejected — pending
+ * included, so a rep cannot stack unapproved orders under the limit and have
+ * them all approved past it. Samples carry no value and do not count.
+ *
+ * Levels: ok below 80%, amber from 80%, red at 100%. Amber exists so the rep
+ * sees the wall coming while there is still room to plan around it, instead
+ * of discovering it mid-conversation in the clinic.
+ */
+export function ceilingStatus(
+  db: DB,
+  doctorId: number,
+): { ceiling: number; used: number; pct: number; level: "none" | "ok" | "amber" | "red" } {
+  const doc = db.doctors.find((d) => d.id === doctorId);
+  const ceiling = doc?.salesCeiling ?? 0;
+  if (!ceiling) return { ceiling: 0, used: 0, pct: 0, level: "none" };
+  const period = currentPeriod();
+  const used = db.orders
+    .filter((o) => o.doctorId === doctorId && o.status !== "rejected" && !o.isSample
+      && o.createdAt.slice(0, 7) === period)
+    .reduce((s, o) => s + o.items.reduce((x, it) => x + it.qty * it.price, 0), 0);
+  const pct = Math.round((used / ceiling) * 100);
+  return { ceiling, used, pct, level: pct >= 100 ? "red" : pct >= 80 ? "amber" : "ok" };
+}
+
 export function doctorsFor(db: DB, user: { role: string; city: string }) {
   if (user.role === "rep" && user.city && user.city !== "all") {
     return db.doctors.filter((d) => d.city === user.city);

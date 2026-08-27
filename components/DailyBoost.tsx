@@ -1,5 +1,6 @@
 "use client";
 import { Mascot } from "./Mascot";
+import { tr, useLang } from "@/lib/i18n";
 
 /* One line of encouragement a day, from Rafi — in English and Arabic.
  *
@@ -108,6 +109,7 @@ function lineForDate(dateIso: string): Line {
 }
 
 export function DailyBoost({ date, name }: { date: string; name?: string }) {
+  const lang = useLang();
   const line = lineForDate(date);
   const first = (name ?? "").split(" ")[0];
 
@@ -118,10 +120,15 @@ export function DailyBoost({ date, name }: { date: string; name?: string }) {
       </div>
       <div className="boost-text">
         <div className="boost-kicker">
-          {first ? `Rafi says, ${first}…` : "Rafi says…"}
+          {first
+            ? tr("boost.rafiSaysName", "Rafi says, {name}…").replace("{name}", first)
+            : tr("boost.rafiSays", "Rafi says…")}
         </div>
-        <div className="boost-line">{line.en}</div>
-        <div className="boost-ar" dir="rtl" lang="ar">{line.ar}</div>
+        {/* One language — the reader's. Showing both made the card twice as
+            tall and read like a language lesson rather than a nudge. */}
+        {lang === "ar"
+          ? <div className="boost-line" dir="rtl" lang="ar">{line.ar}</div>
+          : <div className="boost-line">{line.en}</div>}
       </div>
     </div>
   );

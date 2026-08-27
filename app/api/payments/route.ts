@@ -74,6 +74,31 @@ export async function POST(req: Request) {
       return Response.json({ error: closedError(db) }, { status: 400 });
     }
     db.payments.push(payment);
+
+    /* Close the matching scheduled collection, if one is open.
+     *
+     * Match = same customer, same collector, due today or overdue; oldest
+     * first, so a backlog clears in order. Per the owner's rule the item
+     * closes whatever the amount — a partial closes it with a shortfall flag,
+     * and the accountant decides about the remainder by looking at the flag,
+     * not by the app rescheduling on its own. */
+    const open = db.collections
+      .filter((c) => c.status === "due" && c.doctorId === doctor.id && c.repId === user.id && c.date <= todayStr())
+      .sort((a, b) => a.date.localeCompare(b.date))[0];
+    if (open) {
+      open.status = "done";
+      open.collectedAmount = amount;
+      open.paymentId = payment.id;
+      open.shortfall = amount < open.amount;
+      if (open.shortfall) {
+        for (const a of db.users.filter((u) => u.active && (u.role === "accountant" || u.role === "admin"))) {
+          notify(db, () => nextId(db), a.id,
+            `Shortfall: ${user.name} collected ${amount.toLocaleString()} of ${open.amount.toLocaleString()} IQD scheduled from ${doctor.name}${open.invoiceNo ? ` (invoice ${open.invoiceNo})` : ""}.`,
+            "/acct/collections");
+        }
+      }
+    }
+
     recordChange(db, () => nextId(db), user.id, "payment", payment.id, "recorded",
       `${amount.toLocaleString()} IQD from ${doctor.name}`);
     logActivity(db, () => nextId(db), user.id, `recorded ${amount.toLocaleString()} IQD from ${doctor.name}`);

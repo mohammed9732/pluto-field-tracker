@@ -59,6 +59,11 @@ function NewOrderInner() {
   }, [params]);
 
   if (!me) return <Spinner />;
+  // The server refuses a rep's order at a red customer; say so up front
+  // rather than letting them build a basket that bounces. Supervisors and
+  // the owner pass — the banner tells them they are ordering past the limit.
+  const ceilingRed = (doctor as any)?.ceiling?.level === "red";
+  const repBlocked = ceilingRed && me.role === "rep";
 
   const effective = (l: Line) => (isSample ? 0 : l.price.trim() !== "" ? parseFloat(l.price.replace(/,/g, "")) || 0 : tierPrice(l, l.qty));
   const total = lines.reduce((s, l) => s + l.qty * effective(l), 0);
@@ -102,6 +107,18 @@ function NewOrderInner() {
       ) : (
         <>
           <DoctorCard doctor={doctor} onChange={() => setDoctor(null)} />
+          {ceilingRed ? (
+            <div className="card" style={{ borderColor: "var(--c-coral)", gap: 4 }}>
+              <div className="fs-small w-500" style={{ color: "var(--c-coral-deep)" }}>
+                {tx("neworder.ceilingReached", "This customer has reached their monthly ceiling.")}
+              </div>
+              <div className="small muted">
+                {me.role === "rep"
+                  ? tx("neworder.ceilingRep", "Ordering reopens next month — or ask your supervisor.")
+                  : tx("neworder.ceilingOverride", "You can still place this order — it goes past the limit knowingly.")}
+              </div>
+            </div>
+          ) : null}
           {samplesOn ? (
             <label className="row" style={{
               gap: 10, padding: "10px 12px", borderRadius: 14, cursor: "pointer",
@@ -151,7 +168,7 @@ function NewOrderInner() {
             <span className="hnum fs-figure">{money(total)}</span>
           </div>
           {err ? <div className="tag tag-hot self-start">{err}</div> : null}
-          <button className="btn btn-primary btn-block" style={{ padding: 13 }} onClick={submit} disabled={busy}>
+          <button className="btn btn-primary btn-block" style={{ padding: 13 }} onClick={submit} disabled={busy || repBlocked}>
             {busy ? "Sending…" : isSample ? "Send sample request for approval" : "Send for approval"}
           </button>
           <div className="hint" style={{ textAlign: "center" }}>

@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { cityIds, currentPeriod, doctorsFor, hqCityId, nowIso, recordChange } from "@/lib/compute";
+import { ceilingStatus, cityIds, currentPeriod, doctorsFor, hqCityId, nowIso, recordChange } from "@/lib/compute";
 
 export async function GET(req: Request) {
   try {
@@ -9,7 +9,7 @@ export async function GET(req: Request) {
     const idParam = new URL(req.url).searchParams.get("id");
     if (!idParam) {
       return Response.json({
-        doctors: doctorsFor(db, user),
+        doctors: doctorsFor(db, user).map((d) => ({ ...d, ceiling: ceilingStatus(db, d.id) })),
         cities: db.settings.cities,
         scopedToCity: user.role === "rep" && user.city !== "all" ? user.city : null,
         canAdd:
@@ -61,6 +61,8 @@ export async function GET(req: Request) {
       (n) => n.doctorId === doctor.id && n.userId === user.id) ?? null;
     return Response.json({
       doctor, visits, orders, payments, competitors,
+      ceiling: ceilingStatus(db, doctor.id),
+      canSetCeiling: user.role === "accountant" || user.role === "admin",
       // Only ever this person's own note. It is deliberately not keyed by role:
       // a supervisor reading their rep's private notes would defeat the point.
       privateNote: privateNote ? { body: privateNote.body, ts: privateNote.ts } : null,
@@ -145,6 +147,20 @@ export async function POST(req: Request) {
       db.doctors.push(doc);
       saveDb();
       return Response.json({ ok: true, doctor: doc });
+    }
+
+    if (b.action === "setCeiling") {
+      // The accountant owns credit decisions; the owner can too. Deliberately
+      // NOT the supervisor — they are also the person pushing for the sale.
+      requireUser(["accountant", "admin"]);
+      const doc = db.doctors.find((d) => d.id === Number(b.doctorId));
+      if (!doc) return Response.json({ error: "Doctor not found" }, { status: 404 });
+      const ceiling = Math.max(0, Math.round(Number(String(b.ceiling ?? 0).replace(/,/g, "")) || 0));
+      recordChange(db, () => nextId(db), user.id, "doctor", doc.id, "Monthly ceiling changed",
+        `${(doc.salesCeiling ?? 0).toLocaleString()} → ${ceiling.toLocaleString()}`);
+      doc.salesCeiling = ceiling || null;
+      saveDb();
+      return Response.json({ ok: true, ceiling: ceilingStatus(db, doc.id) });
     }
 
     if (b.action === "privateNote") {

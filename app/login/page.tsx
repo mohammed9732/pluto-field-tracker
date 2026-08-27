@@ -44,6 +44,14 @@ export default function Login() {
         <Mascot size={88} mood="hello" />
       </div>
       <div className="screen-pad" style={{ paddingBottom: 20, position: "relative", zIndex: 1 }}>
+        {/* First thing on the screen, top-left, clear of the keyboard zone.
+            It used to sit at the bottom: with the phone field auto-focusing,
+            the iOS keyboard was already open, and on iOS the first tap outside
+            a focused field only dismisses the keyboard — so tapping العربية
+            appeared to do nothing at all. */}
+        <div style={{ display: "flex", justifyContent: "flex-start" }}>
+          <LangToggle compact />
+        </div>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 24 }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 12 }}>
             {brand?.hasLogo ? (
@@ -64,7 +72,7 @@ export default function Login() {
           <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div className="field">
               <label>{tx("login.phoneNumberOrName", "Phone number or name")}</label>
-              <input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+964 750 123 4567" autoFocus />
+              <input className="input" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+964 750 123 4567" />
             </div>
             <div className="field">
               <label>{tx("login.password", "Password")}</label>
@@ -80,12 +88,6 @@ export default function Login() {
               {tx("login.demoSignInsPassword", "Demo sign-ins (password:")} <b>password</b>): Mo · Dr. Alan · Sami Kareem · Dara Mustafa · Aland Talabani · Zhilan Omar
             </div>
           ) : null}
-        </div>
-        {/* The language switch belongs here, not buried in a menu behind the
-            sign-in. Somebody who reads Arabic should be able to put the app
-            into Arabic before they type anything. */}
-        <div style={{ display: "flex", justifyContent: "center", marginTop: 18 }}>
-          <LangToggle />
         </div>
         {brand?.loginFooter ? (
           <div className="hint" style={{ textAlign: "center", marginTop: 10 }}>{brand.loginFooter}</div>

@@ -54,7 +54,9 @@ export default function Home() {
   const min = me.dailyMin || 5;
   const route = data.route;
   const nextDoctor = route?.doctors?.find((d: any) => !d.visited) ?? null;
-  const visitWord = me.role === "supervisor" ? (data.supervisorVisitLabel || "Client meeting") : "Visit";
+  const visitWord = me.role === "supervisor"
+    ? (data.supervisorVisitLabel || tx("home.clientMeeting", "Client meeting"))
+    : tx("home.visitWord", "Visit");
 
   async function toggleCheck() {
     setBusy(true);
@@ -74,16 +76,16 @@ export default function Home() {
 
   // Everything that isn't part of the daily flow lives in the icon grid.
   const tiles: { href: string; label: string; icon: keyof typeof paths; badge?: number }[] = [
-    { href: "/map", label: "Map", icon: "pin" },
+    { href: "/map", label: tx("nav.map", "Map"), icon: "pin" },
     { href: "/doctors", label: term(t, "doctorPlural", "nav.doctors"), icon: "pinDot" },
-    ...(data.settings?.tasksEnabled ? [{ href: "/tasks", label: "Tasks", icon: "check" as const, badge: openTasks || undefined }] : []),
-    ...(data.settings?.spendingsEnabled ? [{ href: "/spendings", label: "Spendings", icon: "receipt" as const }] : []),
-    { href: "/stock", label: "Stock", icon: "warehouse" },
-    { href: "/catalog", label: "Products", icon: "bag" },
-    ...(data.settings?.competitorTracking ? [{ href: "/competitors", label: "Market intel", icon: "warn" as const }] : []),
-    { href: "/leave", label: "Leave", icon: "away" },
-    ...(me.role === "supervisor" ? [{ href: "/targets", label: "Targets", icon: "target" as const }] : []),
-    ...(me.role === "supervisor" ? [{ href: "/summary", label: "Day summary", icon: "cal" as const }] : []),
+    ...(data.settings?.tasksEnabled ? [{ href: "/tasks", label: tx("nav.tasks", "Tasks"), icon: "check" as const, badge: openTasks || undefined }] : []),
+    ...(data.settings?.spendingsEnabled ? [{ href: "/spendings", label: tx("nav.spendings", "Spendings"), icon: "receipt" as const }] : []),
+    { href: "/stock", label: tx("nav.stock", "Stock"), icon: "warehouse" },
+    { href: "/catalog", label: tx("nav.products", "Products"), icon: "bag" },
+    ...(data.settings?.competitorTracking ? [{ href: "/competitors", label: tx("nav.marketIntel", "Market intel"), icon: "warn" as const }] : []),
+    { href: "/leave", label: tx("nav.leave", "Leave"), icon: "away" },
+    ...(me.role === "supervisor" ? [{ href: "/targets", label: tx("nav.targets", "Targets"), icon: "target" as const }] : []),
+    ...(me.role === "supervisor" ? [{ href: "/summary", label: tx("nav.daySummary", "Day summary"), icon: "cal" as const }] : []),
   ];
 
   return (
@@ -96,7 +98,7 @@ export default function Home() {
           </div>
         </div>
         <Link href="/map" className="tag" style={{ textDecoration: "none", background: checkedIn ? "var(--c-coral-soft)" : "var(--color-neutral-200)", color: checkedIn ? "var(--c-coral-deep)" : "var(--color-neutral-600)", padding: "6px 12px", fontWeight: 600 }}>
-          {checkedIn ? `● ${durationHM(data.fieldTime.minutes)}` : "Not checked in"}
+          {checkedIn ? `● ${durationHM(data.fieldTime.minutes)}` : tx("day.notCheckedIn", "Not checked in")}
         </Link>
         <button className="btn btn-secondary btn-icon" style={{ }} onClick={logout} title={tx("home.signOutPh", "Sign out")}>
           <Icon d={paths.logout} size={17} />
@@ -115,7 +117,7 @@ export default function Home() {
 
       <div className="stack-2">
         <div className="row" style={{ alignItems: "baseline", gap: 8 }}>
-          <h5 className="m0">{route ? "Today's route" : "Today"}</h5>
+          <h5 className="m0">{route ? tx("day.todayRoute", "Today's route") : tx("common.today", "Today")}</h5>
           <span className="hnum" style={{ fontSize: 16, color: "var(--color-accent-700)" }}>{visitCount}/{min}</span>
           {route ? <span className="small muted" style={{ marginLeft: "auto" }}>{route.area}</span>
             : <span className="small muted" style={{ marginLeft: "auto" }}>{visitCount >= min ? "minimum reached" : `${min - visitCount} to go`}</span>}
@@ -192,7 +194,7 @@ export default function Home() {
               <Icon d={paths.clock} size={17} stroke={f.date === data.today ? "var(--color-accent)" : "var(--color-neutral-500)"} />
               <span className="f1">{f.doctor}</span>
               <span className="small" style={{ color: f.date === data.today ? "var(--color-accent-700)" : "var(--color-neutral-500)" }}>
-                {f.date === data.today ? "Today" : `${weekdayShort(f.date)} ${dm(f.date)}`}
+                {f.date === data.today ? tx("common.today", "Today") : `${weekdayShort(f.date)} ${dm(f.date)}`}
               </span>
             </div>
           ))}
@@ -200,6 +202,28 @@ export default function Home() {
       ) : null}
 
       <DailyBoost date={data.today} name={me.name} />
+
+      {/* The collections button — deliberately not a tile. The owner asked
+          for it big and unmissable: money the accountant is waiting on should
+          not be one small square among nine. Violet = conversation colour is
+          taken; this borrows the amber family money-pending already uses. */}
+      {typeof data.collectionsDue === "number" && data.collectionsDue > 0 ? (
+        <Link href="/collections" className="card" style={{
+          flexDirection: "row", alignItems: "center", gap: 12, textDecoration: "none",
+          color: "inherit", borderColor: "var(--c-amber)", background: "var(--c-amber-soft)",
+        }}>
+          <Icon d={paths.card} size={22} stroke="var(--c-amber-deep)" />
+          <div className="f1min">
+            <div className="fs-body w-700" style={{ color: "var(--c-amber-deep)" }}>
+              {tx("coll.homeButton", "Collections due")}
+            </div>
+            <div className="small" style={{ color: "var(--c-amber-deep)" }}>
+              {tx("coll.homeSub", "{n} waiting — tap to see who and how much").replace("{n}", String(data.collectionsDue))}
+            </div>
+          </div>
+          <span className="tag tag-warn hnum">{data.collectionsDue}</span>
+        </Link>
+      ) : null}
 
       <div className="tilegrid mt-auto">
         {tiles.map((t) => (

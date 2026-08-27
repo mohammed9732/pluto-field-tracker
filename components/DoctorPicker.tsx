@@ -7,6 +7,8 @@ import { Icon, paths } from "./Icons";
 export interface Doc {
   id: number; name: string; clinic: string; city: string; area: string;
   class: string; specialty: string; phone: string; lat: number | null; lng: number | null;
+  // Sent with every list row so pickers can warn without a second request.
+  ceiling?: { ceiling: number; used: number; pct: number; level: "none" | "ok" | "amber" | "red" };
 }
 
 export function DoctorCard({ doctor, onChange }: { doctor: Doc; onChange: () => void }) {
@@ -106,9 +108,10 @@ export function DoctorPicker({ onPick, allowAdd }: { onPick: (d: Doc) => void; a
         {filtered.map((d) => (
           <button key={d.id} className="listrow" style={{ background: "none", border: "none", borderBottom: "1px solid var(--color-divider)", textAlign: "left", cursor: "pointer", font: "inherit", width: "100%" }} onClick={() => onPick(d)}>
             <div className="f1min">
-              <div className="fs-small w-500">{d.name}</div>
+              <div className="fs-small w-500" style={{ color: d.ceiling?.level === "red" ? "var(--c-coral-deep)" : undefined }}>{d.name}</div>
               <div className="small muted">{d.clinic} · {d.specialty} · {d.area}</div>
             </div>
+            {d.ceiling?.level === "red" ? <span className="tag tag-hot">{tx("pick.ceiling", "Ceiling")}</span> : null}
             <Icon d={paths.pinDot} size={14} stroke={d.lat != null ? "var(--color-accent)" : "var(--color-neutral-400)"} />
             <span className={`tag ${d.class === "A" ? "tag-accent" : "tag-neutral"}`}>{d.class}</span>
           </button>

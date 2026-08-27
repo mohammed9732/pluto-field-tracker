@@ -72,7 +72,13 @@ export default function Approvals() {
       <h4 className="m0">{tx("appr.approvals", "Approvals")}</h4>
       {orders.length + pendingPlans.length + pendingLeaves.length > 0 ? (
         <div className="row" style={{ gap: 8, padding: "10px 12px", background: "var(--c-coral-soft)", borderRadius: 14, fontSize: 13, fontWeight: 600, color: "var(--c-coral-deep)" }}>
-          ⏱ Waiting on you: {[orders.length ? `${orders.length} order${orders.length === 1 ? "" : "s"}` : "", pendingPlans.length ? `${pendingPlans.length} plan${pendingPlans.length === 1 ? "" : "s"}` : "", pendingLeaves.length ? `${pendingLeaves.length} leave${pendingLeaves.length === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ")}
+          {/* One phrase per item with the number inside it — Arabic cannot be
+              assembled from "order" + "s". */}
+          ⏱ {tx("appr.waitingOnYou", "Waiting on you")}: {[
+            orders.length ? tx("appr.nOrders", "{n} orders").replace("{n}", String(orders.length)) : "",
+            pendingPlans.length ? tx("appr.nPlans", "{n} plans").replace("{n}", String(pendingPlans.length)) : "",
+            pendingLeaves.length ? tx("appr.nLeaves", "{n} leave requests").replace("{n}", String(pendingLeaves.length)) : "",
+          ].filter(Boolean).join(" · ")}
         </div>
       ) : null}
       <div className="seg" style={{ width: "100%" }}>

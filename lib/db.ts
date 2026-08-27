@@ -12,24 +12,31 @@ declare global {
   var __plutoDb: DB | undefined;
 }
 
+/* Bring a database — freshly loaded OR already cached — up to the current
+ * shape. Collections and settings added by later features are simply absent
+ * in an older file, and ALSO absent from the in-memory cache when code is
+ * hot-reloaded under a long-lived process: the cache was built by the old
+ * code and survives the reload. Deriving the check from the seed keeps it
+ * one loop that can never forget a new collection. */
+function ensureShape(db: DB) {
+  const seed = buildSeed() as unknown as Record<string, unknown>;
+  db.settings = { ...(seed.settings as object), ...db.settings } as DB["settings"];
+  db.settings.terms = { ...DEFAULT_TERMS, ...(db.settings.terms ?? {}) };
+  for (const key of Object.keys(seed)) {
+    if (Array.isArray(seed[key]) && !Array.isArray((db as any)[key])) {
+      (db as any)[key] = [];
+    }
+  }
+}
+
 export function getDb(): DB {
-  if (globalThis.__plutoDb) return globalThis.__plutoDb;
+  if (globalThis.__plutoDb) {
+    ensureShape(globalThis.__plutoDb);
+    return globalThis.__plutoDb;
+  }
   if (fs.existsSync(DB_FILE)) {
     const loaded = JSON.parse(fs.readFileSync(DB_FILE, "utf-8")) as DB;
-    // A database written before a feature shipped simply lacks its settings.
-    // Fill the gaps from the defaults rather than letting undefined leak into
-    // the UI as "undefined" text or a crash.
-    loaded.settings = { ...buildSeed().settings, ...loaded.settings };
-    loaded.settings.terms = { ...DEFAULT_TERMS, ...(loaded.settings.terms ?? {}) };
-    // Collections added by later features are simply absent in an older file.
-    // Derived from the current shape rather than listed by hand, so a new
-    // collection cannot be forgotten here and crash on first write.
-    const shape = buildSeed() as unknown as Record<string, unknown>;
-    for (const key of Object.keys(shape)) {
-      if (Array.isArray(shape[key]) && !Array.isArray((loaded as any)[key])) {
-        (loaded as any)[key] = [];
-      }
-    }
+    ensureShape(loaded);
     globalThis.__plutoDb = loaded;
   } else {
     globalThis.__plutoDb = SEED_DEMO ? buildSeed() : buildEmpty();

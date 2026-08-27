@@ -62,6 +62,7 @@ export default function DoctorProfile() {
   const [tab, setTab] = useState<"history" | "orders" | "money">("history");
   const [note, setNote] = useState<string | null>(null); // null until loaded
   const [noteSaved, setNoteSaved] = useState(false);
+  const [ceilingDraft, setCeilingDraft] = useState<string | null>(null);
   const [edit, setEdit] = useState<any>(null);
   const [editErr, setEditErr] = useState("");
   const t = useT();
@@ -209,6 +210,58 @@ export default function DoctorProfile() {
           </a>
         </div>
       </div>
+
+      {/* The ceiling. The number is deliberately visible to everyone — the
+          rep should know the wall exists before the doctor asks for one more
+          box, not discover it when the order bounces. */}
+      {(data.ceiling?.ceiling > 0 || data.canSetCeiling) ? (
+        <div className="card" style={{ gap: 6, borderColor: data.ceiling?.level === "red" ? "var(--c-coral)" : data.ceiling?.level === "amber" ? "var(--c-amber)" : undefined }}>
+          <div className="row items-base gap-2">
+            <h6 className="m0 f1">{t("doctor.monthlyCeiling", "Monthly ceiling")}</h6>
+            {data.ceiling?.ceiling > 0 ? (
+              <>
+                <span className="hnum fs-lead">{money(data.ceiling.used)}</span>
+                <span className="small muted">/ {money(data.ceiling.ceiling)}</span>
+              </>
+            ) : <span className="small muted">{t("doctor.noCeiling", "not set")}</span>}
+          </div>
+          {data.ceiling?.ceiling > 0 ? (
+            <>
+              <div className="meter">
+                <div className="fill" style={{
+                  width: `${Math.min(100, data.ceiling.pct)}%`,
+                  background: data.ceiling.level === "red" ? "var(--c-coral)" : data.ceiling.level === "amber" ? "var(--c-amber)" : undefined,
+                }} />
+              </div>
+              {data.ceiling.level === "red" ? (
+                <div className="small" style={{ color: "var(--c-coral-deep)", fontWeight: 600 }}>
+                  {t("doctor.ceilingReached", "Ceiling reached — ordering is closed for this month.")}
+                </div>
+              ) : data.ceiling.level === "amber" ? (
+                <div className="small" style={{ color: "var(--c-amber-deep)" }}>
+                  {t("doctor.ceilingNear", "Getting close to the ceiling — plan the remaining room.")}
+                </div>
+              ) : null}
+            </>
+          ) : null}
+          {data.canSetCeiling ? (
+            <div className="row gap-2" style={{ alignItems: "center" }}>
+              <input className="input hnum" inputMode="numeric" placeholder="5,000,000"
+                value={ceilingDraft ?? groupDigits(String(data.ceiling?.ceiling || ""))}
+                onChange={(e) => setCeilingDraft(groupDigits(e.target.value))}
+                style={{ flex: 1 }} />
+              <button className="btn btn-secondary" style={{ flex: "none", fontSize: 12.5, padding: "0 16px" }}
+                onClick={async () => {
+                  await api("/api/doctors", { json: { action: "setCeiling", doctorId: d.id, ceiling: ungroup(ceilingDraft ?? "") } });
+                  setCeilingDraft(null);
+                  load();
+                }}>
+                {t("common.save", "Save")}
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       {data.potentialMonthly > 0 ? (
         <div className="card gap-2">

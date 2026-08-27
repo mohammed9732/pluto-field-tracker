@@ -49,6 +49,10 @@ export async function GET() {
     return Response.json({
       hasStarted,
       route,
+      // How many scheduled collections are waiting on this person right now —
+      // due today or overdue. Drives the big amber button on the home screen.
+      collectionsDue: db.collections.filter(
+        (c) => c.repId === user.id && c.status === "due" && c.date <= today).length,
       supervisorVisitLabel: db.settings.supervisorVisitLabel,
       settings: {
         plannerEnabled: db.settings.plannerEnabled,

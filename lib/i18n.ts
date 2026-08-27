@@ -844,6 +844,61 @@ const AR: Record<string, string> = {
   "monthend.payWages": "دفع الأجور",
   "monthend.safeToPay": "كل يوم غياب ومصروف وطلبية لهذا الشهر تم البتّ فيه. يمكنك الدفع بأمان.",
 
+
+  // — text that sits alongside a value, so the whole phrase is one
+  //   string with the number dropped in. Arabic does not pluralise by
+  //   adding an s, so these cannot be assembled from fragments. —
+  "appr.nLeaves": "{n} طلب إجازة",
+  "appr.nOrders": "{n} طلبية",
+  "appr.nPlans": "{n} خطة",
+  "appr.waitingOnYou": "بانتظارك",
+  "boost.rafiSays": "رافي يقول…",
+  "boost.rafiSaysName": "رافي يقول لك يا {name}…",
+  "home.clientMeeting": "اجتماع عميل",
+  "home.visitWord": "زيارة",
+
+
+  // — text that sits alongside a value, so the whole phrase is one
+  //   string with the number dropped in. Arabic does not pluralise by
+  //   adding an s, so these cannot be assembled from fragments. —
+  "coll.allItems": "كل التحصيلات المجدولة",
+  "coll.amountIqd": "المبلغ (دينار)",
+  "coll.collect": "تحصيل",
+  "coll.collectedFull": "حُصّلت كاملة",
+  "coll.customer": "العميل",
+  "coll.done": "حُصّلت",
+  "coll.due": "مستحقة",
+  "coll.dueNow": "مستحقة الآن",
+  "coll.gotOf": "استُلم {a} من {b}",
+  "coll.hint": "يحددها المحاسب. تسجيل دفعة من العميل يشطب البند تلقائياً — حصّل ما تستطيع، والمحاسب يرى أي فرق.",
+  "coll.homeButton": "تحصيلات مستحقة",
+  "coll.homeSub": "{n} بانتظارك — اضغط لترى من وكم",
+  "coll.invoice": "فاتورة",
+  "coll.invoiceNo": "رقم الفاتورة",
+  "coll.missed": "فائتة",
+  "coll.noneYet": "لا يوجد شيء مجدول بعد.",
+  "coll.nothingDue": "لا يوجد شيء مستحق — كل شيء منجز.",
+  "coll.recent": "حُصّلت مؤخراً",
+  "coll.schedule": "جدولة",
+  "coll.scheduleOne": "جدولة تحصيل",
+  "coll.scheduleTitle": "جدول التحصيل",
+  "coll.scheduled": "تمت الجدولة — تم إشعار المندوب.",
+  "coll.shortfall": "نقص",
+  "coll.shortfallLine": "حُصّل {a} من {b}",
+  "coll.title": "التحصيلات",
+  "coll.upcoming": "القادمة",
+  "coll.whoCollects": "من يحصّل",
+  "docs.ceilingFull": "بلغ السقف",
+  "doctor.ceilingNear": "يقترب من السقف — خطط للمساحة المتبقية.",
+  "doctor.ceilingReached": "بلغ السقف — الطلب مغلق لهذا الشهر.",
+  "doctor.monthlyCeiling": "السقف الشهري",
+  "doctor.noCeiling": "غير محدد",
+  "nav.collections": "التحصيلات",
+  "neworder.ceilingOverride": "ما زال بإمكانك إتمام الطلبية — ستتجاوز السقف عن علم.",
+  "neworder.ceilingReached": "هذا العميل بلغ سقفه الشهري.",
+  "neworder.ceilingRep": "يُفتح الطلب الشهر القادم — أو اطلب من مشرفك.",
+  "pick.ceiling": "بلغ السقف",
+
   // — help —
   "help.title": "كيف تستخدم التطبيق",
   "help.open": "كيف تستخدم التطبيق",

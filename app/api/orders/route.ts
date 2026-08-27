@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { closedError, isClosed, logActivity, notify, nowIso, orderTotal, priceForQty, productsFor, recordChange, stockCityIds } from "@/lib/compute";
+import { ceilingStatus, closedError, isClosed, logActivity, notify, nowIso, orderTotal, priceForQty, productsFor, recordChange, stockCityIds } from "@/lib/compute";
 import { OrderItem } from "@/lib/types";
 
 function enrich(db: ReturnType<typeof getDb>, o: any) {
@@ -61,6 +61,19 @@ export async function POST(req: Request) {
         if (already) return Response.json({ ok: true, order: enrich(db, already), duplicate: true });
       }
       const isSample = !!b.isSample && db.settings.samplesEnabled;
+
+      /* The ceiling. Checked before anything is built: a rep at a red
+       * customer is refused outright; supervisor and owner may pass — the
+       * override is a decision someone senior takes knowingly, and it is
+       * theirs to take, so it is role-gated rather than confirm-gated. */
+      if (!isSample && b.doctorId) {
+        const cs = ceilingStatus(db, Number(b.doctorId));
+        if (cs.level === "red" && user.role === "rep") {
+          return Response.json({
+            error: `This customer has reached their monthly ceiling (${cs.used.toLocaleString()} of ${cs.ceiling.toLocaleString()} IQD). Ordering reopens next month — or ask your supervisor.`,
+          }, { status: 400 });
+        }
+      }
 
       /* The order screen already filters by product line, so an item from
        * another line means either a stale screen or a hand-made request. The

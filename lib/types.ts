@@ -54,6 +54,36 @@ export interface Doctor {
   createdBy: number;
   potentialMonthly: number; // what this doctor should buy per month (IQD), 0 = not set
   secretaryPhone?: string | null; // the person who actually books the appointment
+  /* Monthly sales ceiling in IQD, set by the accountant. Everything not
+     rejected counts toward it (samples excluded), so a rep cannot stack
+     pending orders under the limit. 0 or absent = no ceiling. Reps are
+     blocked at the ceiling; supervisor and owner may order past it. */
+  salesCeiling?: number | null;
+}
+
+/* One scheduled collection: the accountant tells a rep to collect a specific
+ * amount from a specific customer on a specific day, against an invoice
+ * number typed from the paper invoice.
+ *
+ * A recorded payment closes it whatever the amount — a partial payment closes
+ * the item and carries a shortfall flag for the accountant, who decides
+ * whether to schedule the remainder (their call, not automated). An item
+ * whose date passes uncollected is flagged missed. */
+export interface CollectionItem {
+  id: number;
+  doctorId: number;
+  repId: number;        // who is to collect it
+  date: string;         // YYYY-MM-DD
+  amount: number;       // IQD expected
+  invoiceNo: string;    // typed by the accountant off the paper invoice
+  note: string;
+  status: "due" | "done";
+  collectedAmount: number | null;  // what actually came in
+  paymentId: number | null;        // the payment that closed it
+  shortfall: boolean;              // closed with less than scheduled
+  missedFlagged: boolean;          // date passed with nothing collected
+  createdBy: number;
+  ts: string;
 }
 
 export interface Checkin {
@@ -498,6 +528,26 @@ export interface Settings {
 
   // The language a new person gets before they choose their own.
   defaultLang: "en" | "ar";
+  /* Which events push to phones. Owner-controlled, company-wide: the owner
+     decides what is worth interrupting somebody for. The in-app bell always
+     records everything regardless — these gate only the phone push. */
+  pushTypes: {
+    dm: boolean;          // direct messages
+    group: boolean;       // group chat
+    orderNew: boolean;    // a new order landing on an approver
+    orderStatus: boolean; // your order approved / rejected / invoiced
+    planStatus: boolean;  // weekly plan approved / returned
+    leave: boolean;       // leave requests and decisions
+    transfer: boolean;    // stock transfer chain
+    payment: boolean;     // payment recorded
+    task: boolean;        // tasks assigned / completed
+    collection: boolean;  // collection schedule
+    custom: boolean;      // messages the owner composes
+  };
+  /* The documents library (invoices + receipts) is always available to the
+     accountant and owner; this switch opens it to supervisors and reps —
+     reps scoped to their own customers. */
+  docLibraryForField: boolean;
 
   // Notice required before leave starts, in calendar days.
   leaveShortNoticeDays: number; // 1–2 day requests
@@ -532,6 +582,7 @@ export interface DB {
   history: ChangeLog[];
   privateNotes: PrivateNote[];
   transferRequests: TransferRequest[];
+  collections: CollectionItem[];
   deductions: Deduction[];
   activity: Activity[];
   files: StoredFile[];

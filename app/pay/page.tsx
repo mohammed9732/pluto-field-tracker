@@ -32,6 +32,11 @@ function CollectPaymentInner() {
     api("/api/settings")
       .then((r: any) => setReceiptRequired(r.settings.paymentReceiptRequired !== false))
       .catch(() => {});
+    // Arriving from a scheduled collection: the expected amount comes along,
+    // pre-filled but editable — the rep records what was actually handed over.
+    const a = params.get("amount");
+    if (a && Number(a) > 0) setAmount(groupDigits(a));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

@@ -207,9 +207,16 @@ export default function Doctors() {
         {filtered.map((d) => (
           <Link key={d.id} href={`/doctors/${d.id}`} className="listrow" style={{ padding: "10px 0", textDecoration: "none", color: "inherit" }}>
             <div className="f1min">
-              <div className="fs-small w-500">{d.name}</div>
+              {/* Red name = ceiling reached: the rep sees it from the list,
+                  before even opening the profile. */}
+              <div className="fs-small w-500" style={{ color: d.ceiling?.level === "red" ? "var(--c-coral-deep)" : undefined }}>{d.name}</div>
               <div className="small muted">{d.clinic} · {d.specialty} · {d.area}</div>
             </div>
+            {d.ceiling?.level === "red" ? (
+              <span className="tag tag-hot">{tx("docs.ceilingFull", "Ceiling")}</span>
+            ) : d.ceiling?.level === "amber" ? (
+              <span className="tag tag-warn">{d.ceiling.pct}%</span>
+            ) : null}
             <Icon d={paths.pinDot} size={14} stroke={d.lat != null ? "var(--color-accent)" : "var(--color-neutral-400)"} />
             <span className={`tag ${d.class === "A" ? "tag-accent" : "tag-neutral"}`}>{d.class}</span>
           </Link>

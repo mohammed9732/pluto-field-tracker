@@ -88,6 +88,7 @@ const SIDEBAR: Record<string, { group: string; gkey?: string; items: { href: str
     { group: "Money & stock", gkey: "group.moneyStock", items: [
       { href: "/acct", label: "Money", tkey: "nav.money", icon: "receipt" },
       { href: "/acct/queue", label: "Invoice queue", tkey: "nav.invoiceQueue", icon: "orders" },
+      { href: "/acct/collections", label: "Collections", tkey: "nav.collections", icon: "card" },
       { href: "/stock", label: "Stock", tkey: "nav.stock", icon: "warehouse" },
       { href: "/spendings", label: "Spendings", tkey: "nav.spendings", icon: "card" },
       { href: "/acct/monthend", label: "Month-end", tkey: "nav.monthEnd", icon: "cal" },
@@ -131,6 +132,7 @@ const SIDEBAR: Record<string, { group: string; gkey?: string; items: { href: str
     { group: "Money", gkey: "group.money", items: [
       { href: "/acct", label: "Dashboard", tkey: "nav.dashboard", icon: "chart" },
       { href: "/acct/queue", label: "Invoice queue", tkey: "nav.invoiceQueue", icon: "orders" },
+      { href: "/acct/collections", label: "Collections", tkey: "nav.collections", icon: "card" },
       { href: "/acct/monthend", label: "Month-end", tkey: "nav.monthEnd", icon: "cal" },
         { href: "/acct/payroll", label: "Payroll", tkey: "nav.payroll", icon: "users" },
       { href: "/acct/payouts", label: "Payouts", tkey: "nav.payouts", icon: "card" },

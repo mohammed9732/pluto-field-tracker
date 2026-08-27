@@ -72,3 +72,8 @@ export function groupDigits(raw: string): string {
 export function ungroup(formatted: string): number {
   return Math.round(Number(String(formatted).replace(/,/g, "")) || 0);
 }
+
+// Today as YYYY-MM-DD, for date-input min/max bounds.
+export function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
