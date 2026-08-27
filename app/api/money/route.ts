@@ -1,26 +1,8 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { collectionCommission, currentPeriod, currentQuarter, dailyRate, monthlyIncentiveTotal, nowIso, onApprovedLeave, periodsInQuarter, quarterAccrual, quarterIncentivePaid, quarterOf, todayStr, workDaysInMonth } from "@/lib/compute";
+import { collectionCommission, currentPeriod, currentQuarter, dailyRate, flagMissedDays, monthlyIncentiveTotal, nowIso, onApprovedLeave, payrollFigures, periodsInQuarter, quarterAccrual, quarterIncentivePaid, quarterOf, todayStr, workDaysInMonth } from "@/lib/compute";
 import { nextId as seqNext } from "@/lib/db";
 
-// Flag unexcused no-check-in workdays (past days only) as pending deductions.
-function flagMissedDays(db: ReturnType<typeof getDb>, period: string) {
-  if (!db.settings.deductionsEnabled) return;
-  const today = todayStr();
-  // Only look back 7 days — older gaps shouldn't suddenly appear on payroll.
-  const cutoff = new Date(today + "T12:00:00");
-  cutoff.setDate(cutoff.getDate() - 7);
-  const cutoffStr = cutoff.toISOString().slice(0, 10);
-  for (const u of db.users.filter((x) => x.active && (x.role === "rep" || x.role === "supervisor"))) {
-    for (const d of workDaysInMonth(period)) {
-      if (d >= today || d < cutoffStr) continue;
-      if (onApprovedLeave(db, u.id, d)) continue;
-      if (db.checkins.some((c) => c.userId === u.id && c.type === "in" && c.ts.startsWith(d))) continue;
-      if (db.deductions.some((x) => x.userId === u.id && x.date === d)) continue;
-      db.deductions.push({ id: seqNext(db), userId: u.id, date: d, amount: dailyRate(u.baseSalary), status: "flagged", decidedBy: null });
-    }
-  }
-}
 
 // GET ?view=payouts|payroll&quarter=&period=
 export async function GET(req: Request) {
@@ -55,7 +37,7 @@ export async function GET(req: Request) {
     }
     // payroll
     const period = url.searchParams.get("period") ?? currentPeriod();
-    flagMissedDays(db, period);
+    flagMissedDays(db, () => nextId(db), period);
     saveDb();
     const isQuarterEnd = periodsInQuarter(quarterOf(period))[2] === period;
     const rows = db.users
@@ -63,16 +45,13 @@ export async function GET(req: Request) {
       .map((u) => {
         // Only offer the incentive here if it has not already been paid out
         // separately — otherwise the quarter-end wage run would pay it twice.
-        const alreadyPaidOut = db.payoutsPaid.some(
-          (p) => p.userId === u.id && p.quarter === quarterOf(period));
-        const incentiveDue = isQuarterEnd && !alreadyPaidOut
-          ? quarterAccrual(db, u.id, quarterOf(period)).total
-          : 0;
+        const fig = payrollFigures(db, u.id, period);
+        const incentiveDue = fig.incentiveDue;
         const paid = db.payrollPaid.find((p) => p.userId === u.id && p.period === period);
         const userDeductions = db.deductions.filter((x) => x.userId === u.id && x.date.slice(0, 7) === period);
         const confirmed = userDeductions.filter((x) => x.status === "confirmed").reduce((s, x) => s + x.amount, 0);
         const spendingsDue = db.spendings.filter((s) => s.userId === u.id && s.date.slice(0, 7) === period && s.status === "approved").reduce((x, s) => x + s.amount, 0);
-        const commission = collectionCommission(db, u.id, period);
+        const commission = fig.commission;
         return {
           userId: u.id, name: u.name, role: u.role, city: u.city,
           base: u.baseSalary, incentiveDue,
@@ -80,7 +59,7 @@ export async function GET(req: Request) {
           deducted: confirmed,
           spendingsDue,
           commission,
-          total: Math.max(0, u.baseSalary + incentiveDue + commission - confirmed),
+          total: fig.netPay,
           monthIncentive: monthlyIncentiveTotal(db, u.id, period),
           paid: paid ? { amount: paid.amount, paidAt: paid.paidAt, paidByName: db.users.find((x) => x.id === paid.paidBy)?.name ?? "?" } : null,
         };
@@ -123,15 +102,7 @@ export async function POST(req: Request) {
       // The amount is recomputed here rather than taken from the request. The
       // client's figure is a display value; letting it decide what was paid
       // would put the payroll ledger at the mercy of a stale screen.
-      const quarter = quarterOf(period);
-      const isLastOfQuarter = periodsInQuarter(quarter)[2] === period;
-      const alreadyPaidOut = db.payoutsPaid.some((p) => p.userId === userId && p.quarter === quarter);
-      const incentive = isLastOfQuarter && !alreadyPaidOut ? quarterAccrual(db, userId, quarter).total : 0;
-      const deducted = db.deductions
-        .filter((x) => x.userId === userId && x.date.slice(0, 7) === period && x.status === "confirmed")
-        .reduce((s, x) => s + x.amount, 0);
-      const amount = Math.max(0,
-        target.baseSalary + incentive + collectionCommission(db, userId, period) - deducted);
+      const amount = payrollFigures(db, userId, period).netPay;
       db.payrollPaid.push({ id: nextId(db), userId, period, amount, paidAt: nowIso(), paidBy: user.id });
       saveDb();
       return Response.json({ ok: true });

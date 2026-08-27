@@ -177,14 +177,14 @@ export default function MonthEnd() {
                 <td style={{ textAlign: "right", color: p.deducted ? "var(--c-coral-deep)" : undefined }}>
                   {p.deducted ? `−${money(p.deducted)}` : "—"}
                   {p.undecidedDeductions ? (
-                    <div className="small" style={{ color: "var(--c-amber-deep)" }}>{p.undecidedDeductions} {tx("monthend.undecided", "undecided")}</div>
+                    <div className="small" style={{ color: "var(--c-amber-deep)" }}><a href="/acct/payroll" style={{ color: "inherit" }}>{p.undecidedDeductions} {tx("monthend.undecided", "undecided")} →</a></div>
                   ) : null}
                 </td>
                 <td style={{ textAlign: "right", fontWeight: 700 }}>{money(p.netPay)}</td>
                 <td className="ta-r">
                   {p.reimburse ? money(p.reimburse) : "—"}
                   {p.spendingsPendingCount ? (
-                    <div className="small" style={{ color: "var(--c-amber-deep)" }}>{p.spendingsPendingCount} {tx("monthend.pending", "pending")}</div>
+                    <div className="small" style={{ color: "var(--c-amber-deep)" }}><a href="/spendings" style={{ color: "inherit" }}>{p.spendingsPendingCount} {tx("monthend.pending", "pending")} →</a></div>
                   ) : null}
                 </td>
                 <td style={{ textAlign: "right", fontWeight: 700 }}>{money(p.handOver)}</td>

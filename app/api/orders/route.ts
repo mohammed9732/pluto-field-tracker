@@ -183,6 +183,28 @@ export async function POST(req: Request) {
       return Response.json({ ok: true, order: enrich(db, order) });
     }
 
+    /* The accountant bounces a wrong APPROVED order back to pending.
+     * Distinct from "reject" (supervisor-only, pending-only): this is the
+     * person about to raise a real invoice noticing a wrong price or absent
+     * stock. A note is required — an order returning with no reason teaches
+     * the rep nothing. */
+    if (b.action === "return") {
+      requireUser(["accountant", "admin"]);
+      if (order.status !== "approved") return Response.json({ error: "Only an approved order can be returned" }, { status: 400 });
+      const note = String(b.note ?? "").trim();
+      if (!note) return Response.json({ error: "Say why it is coming back" }, { status: 400 });
+      order.status = "pending";
+      order.rejectNote = note;
+      recordChange(db, () => nextId(db), user.id, "order", order.id, "returned from invoicing", note);
+      const doctorName = db.doctors.find((d) => d.id === order.doctorId)?.name ?? "?";
+      for (const s of db.users.filter((u) => u.active && (u.role === "supervisor" || u.role === "admin"))) {
+        notify(db, () => nextId(db), s.id, `${user.name} returned the order for ${doctorName} from invoicing: ${note}`, "/approvals", "orderStatus");
+      }
+      notify(db, () => nextId(db), order.createdBy, `Order for ${doctorName} was returned before invoicing: ${note}`, "/orders", "orderStatus");
+      saveDb();
+      return Response.json({ ok: true, order: enrich(db, order) });
+    }
+
     if (b.action === "invoice") {
       requireUser(["accountant", "admin"]);
       if (order.status !== "approved") return Response.json({ error: "Order must be approved first" }, { status: 400 });

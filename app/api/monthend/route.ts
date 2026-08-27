@@ -1,9 +1,6 @@
-import { getDb, saveDb } from "@/lib/db";
+import { getDb, nextId, saveDb } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import {
-  cityName, collectionCommission, currentPeriod, monthlyIncentiveTotal,
-  monthlySalesValue, periodsInQuarter, quarterAccrual, quarterOf, samplesGiven,
-} from "@/lib/compute";
+import { cityName, collectionCommission, currentPeriod, flagMissedDays, monthlyIncentiveTotal, monthlySalesValue, payrollFigures, periodsInQuarter, quarterAccrual, quarterOf, samplesGiven } from "@/lib/compute";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +16,10 @@ export async function GET(req: Request) {
     requireUser(["admin", "accountant"]);
     const db = getDb();
     const period = new URL(req.url).searchParams.get("period") ?? currentPeriod();
+    // The blockers card must reflect reality whichever page she opens first —
+    // these flags used to be created only when the Payroll page was opened.
+    flagMissedDays(db, () => nextId(db), period);
+    saveDb();
     const quarter = quarterOf(period);
     const isQuarterEnd = periodsInQuarter(quarter)[2] === period;
 
@@ -35,9 +36,12 @@ export async function GET(req: Request) {
         const reimburse = spendings.filter((s) => s.status === "approved").reduce((x, s) => x + s.amount, 0);
         const spendingsPending = spendings.filter((s) => s.status !== "approved" && s.status !== "rejected" && s.status !== "paid");
 
-        const commission = collectionCommission(db, u.id, period);
-        const incentiveDue = isQuarterEnd ? quarterAccrual(db, u.id, quarter).total : 0;
-        const netPay = Math.max(0, u.baseSalary + commission + incentiveDue - confirmed);
+        // Shared with Payroll and with the recorded payment — see
+        // payrollFigures in lib/compute.ts for why this must not be local.
+        const fig = payrollFigures(db, u.id, period);
+        const commission = fig.commission;
+        const incentiveDue = fig.incentiveDue;
+        const netPay = fig.netPay;
         const paid = db.payrollPaid.find((p) => p.userId === u.id && p.period === period);
 
         return {

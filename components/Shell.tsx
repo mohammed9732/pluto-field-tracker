@@ -59,7 +59,7 @@ const NAV: Record<string, { href: string; label: string; tkey?: string; icon: ke
     { href: "/acct/queue", label: "Queue", tkey: "nav.queue", icon: "orders" },
     { href: "/stock", label: "Stock", tkey: "nav.stock", icon: "warehouse" },
     { href: "/acct/monthend", label: "Month-end", tkey: "nav.monthEnd", icon: "cal" },
-        { href: "/acct/payroll", label: "Payroll", tkey: "nav.payroll", icon: "users" },
+        { href: "/acct/payroll", label: "Pay people", tkey: "nav.payPeople", icon: "users" },
   ],
   admin: [
     { href: "/admin", label: "Today", tkey: "nav.today", icon: "home" },
@@ -88,12 +88,11 @@ const SIDEBAR: Record<string, { group: string; gkey?: string; items: { href: str
     { group: "Money & stock", gkey: "group.moneyStock", items: [
       { href: "/acct", label: "Money", tkey: "nav.money", icon: "receipt" },
       { href: "/acct/queue", label: "Invoice queue", tkey: "nav.invoiceQueue", icon: "orders" },
-      { href: "/acct/collections", label: "Collections", tkey: "nav.collections", icon: "card" },
+      { href: "/acct/collections", label: "Money in", tkey: "nav.moneyIn", icon: "card" },
       { href: "/stock", label: "Stock", tkey: "nav.stock", icon: "warehouse" },
       { href: "/spendings", label: "Spendings", tkey: "nav.spendings", icon: "card" },
       { href: "/acct/monthend", label: "Month-end", tkey: "nav.monthEnd", icon: "cal" },
-        { href: "/acct/payroll", label: "Payroll", tkey: "nav.payroll", icon: "users" },
-      { href: "/acct/payouts", label: "Payouts", tkey: "nav.payouts", icon: "card" },
+        { href: "/acct/payroll", label: "Pay people", tkey: "nav.payPeople", icon: "users" },
       { href: "/docs", label: "Documents", tkey: "nav.documents", icon: "file" },
     ]},
     { group: "Setup", gkey: "group.setup", items: [
@@ -133,10 +132,9 @@ const SIDEBAR: Record<string, { group: string; gkey?: string; items: { href: str
     { group: "Money", gkey: "group.money", items: [
       { href: "/acct", label: "Dashboard", tkey: "nav.dashboard", icon: "chart" },
       { href: "/acct/queue", label: "Invoice queue", tkey: "nav.invoiceQueue", icon: "orders" },
-      { href: "/acct/collections", label: "Collections", tkey: "nav.collections", icon: "card" },
+      { href: "/acct/collections", label: "Money in", tkey: "nav.moneyIn", icon: "card" },
       { href: "/acct/monthend", label: "Month-end", tkey: "nav.monthEnd", icon: "cal" },
-        { href: "/acct/payroll", label: "Payroll", tkey: "nav.payroll", icon: "users" },
-      { href: "/acct/payouts", label: "Payouts", tkey: "nav.payouts", icon: "card" },
+        { href: "/acct/payroll", label: "Pay people", tkey: "nav.payPeople", icon: "users" },
       { href: "/spendings", label: "Spendings", tkey: "nav.spendings", icon: "receipt" },
       { href: "/docs", label: "Documents", tkey: "nav.documents", icon: "file" },
     ]},
@@ -337,10 +335,17 @@ export function Ticker() {
   );
 }
 
-export function Screen({ me, children, nav = true, alerts = true, wide = false }: { me?: Me; children: React.ReactNode; nav?: boolean; alerts?: boolean; wide?: boolean }) {
-  // wide = full desktop layout, but only for the roles that actually have a
-  // sidebar. Reps and supervisors keep the phone shell so they never lose the
-  // bottom bar on a page they share with management (products, stock, summary).
+export function Screen({ me, children, nav = true, alerts = true, wide = true }: { me?: Me; children: React.ReactNode; nav?: boolean; alerts?: boolean; wide?: boolean }) {
+  /* Desktop is the DEFAULT for anyone whose role has a sidebar; phones are
+   * unaffected because the wide layout only engages at 900px and above.
+   *
+   * It used to be opt-in per screen, which produced exactly the bug the owner
+   * reported: every screen that forgot the flag — documents, spendings,
+   * collections, doctors, tasks — rendered as a phone column in the middle of
+   * a PC monitor. A default cannot be forgotten. Reps never get the wide
+   * shell: they have no sidebar, so the guard below keeps them in the app
+   * layout everywhere.
+   */
   const hasSidebar = !!me && !!SIDEBAR[me.role];
   wide = wide && hasSidebar;
   return (

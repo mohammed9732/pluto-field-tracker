@@ -204,6 +204,54 @@ export function ceilingStatus(
   return { ceiling, used, pct, level: pct >= 100 ? "red" : pct >= 80 ? "amber" : "ok" };
 }
 
+/* Flag unexcused no-check-in workdays (past days only) as pending
+ * deductions. Lives here — not inside one route — because BOTH the payroll
+ * screen and month-end must see the same flags. When it ran only on the
+ * payroll GET, opening Month-end first showed "Safe to pay" over days that
+ * had never been flagged. */
+export function flagMissedDays(db: DB, seq: () => number, period: string) {
+  if (!db.settings.deductionsEnabled) return;
+  const today = todayStr();
+  // Only look back 7 days — older gaps shouldn't suddenly appear on payroll.
+  const cutoff = new Date(today + "T12:00:00");
+  cutoff.setDate(cutoff.getDate() - 7);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  for (const u of db.users.filter((x) => x.active && (x.role === "rep" || x.role === "supervisor"))) {
+    for (const d of workDaysInMonth(period)) {
+      if (d >= today || d < cutoffStr) continue;
+      if (onApprovedLeave(db, u.id, d)) continue;
+      if (db.checkins.some((c) => c.userId === u.id && c.type === "in" && c.ts.startsWith(d))) continue;
+      if (db.deductions.some((x) => x.userId === u.id && x.date === d)) continue;
+      db.deductions.push({ id: seq(), userId: u.id, date: d, amount: dailyRate(u.baseSalary), status: "flagged", decidedBy: null });
+    }
+  }
+}
+
+/* ONE set of wage figures for a person and month.
+ *
+ * Payroll, Month-end, and the payment that actually gets recorded must all
+ * come from here. They used to compute independently, and drifted: Month-end
+ * still counted a quarter incentive that the Payouts screen had already paid,
+ * so at quarter end its Pay button showed an inflated figure while Payroll
+ * showed the right one.
+ */
+export function payrollFigures(db: DB, userId: number, period: string) {
+  const u = db.users.find((x) => x.id === userId);
+  if (!u) return { base: 0, commission: 0, incentiveDue: 0, deducted: 0, netPay: 0 };
+  const quarter = quarterOf(period);
+  const isQuarterEnd = periodsInQuarter(quarter)[2] === period;
+  const alreadyPaidOut = db.payoutsPaid.some((p) => p.userId === userId && p.quarter === quarter);
+  const incentiveDue = isQuarterEnd && !alreadyPaidOut ? quarterAccrual(db, userId, quarter).total : 0;
+  const deducted = db.deductions
+    .filter((x) => x.userId === userId && x.date.slice(0, 7) === period && x.status === "confirmed")
+    .reduce((s, x) => s + x.amount, 0);
+  const commission = collectionCommission(db, userId, period);
+  return {
+    base: u.baseSalary, commission, incentiveDue, deducted,
+    netPay: Math.max(0, u.baseSalary + commission + incentiveDue - deducted),
+  };
+}
+
 export function doctorsFor(db: DB, user: { role: string; city: string }) {
   if (user.role === "rep" && user.city && user.city !== "all") {
     return db.doctors.filter((d) => d.city === user.city);

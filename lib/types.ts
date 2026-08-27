@@ -82,6 +82,11 @@ export interface CollectionItem {
   paymentId: number | null;        // the payment that closed it
   shortfall: boolean;              // closed with less than scheduled
   missedFlagged: boolean;          // date passed with nothing collected
+  /* The accountant has dealt with this item's flag (rescheduled it, or
+     decided to let it go). Clears it from the needs-attention list WITHOUT
+     rewriting history — the shortfall still happened and still shows in the
+     table; it just stops demanding attention. */
+  attended?: boolean;
   createdBy: number;
   ts: string;
 }

@@ -939,6 +939,43 @@ const AR: Record<string, string> = {
   "settings.sendPush": "إرسال رسالة إلى الهواتف",
   "settings.sendPushSub": "رسالة واحدة، مباشرة إلى الهاتف — للجميع أو لدور واحد أو لشخص واحد.",
 
+
+  // — text that sits alongside a value, so the whole phrase is one
+  //   string with the number dropped in. Arabic does not pluralise by
+  //   adding an s, so these cannot be assembled from fragments. —
+  "acct.moneyInSub": "الجدول والدفعات المستلمة وفحص النقد — مع المجاميع.",
+  "coll.allReps": "كل المندوبين",
+  "coll.dismissHint": "أزِله من هذه القائمة — السجل نفسه يبقى",
+  "coll.moneyIn": "الأموال الواردة",
+  "coll.needsAttention": "يحتاج انتباهك",
+  "coll.receivedCount": "{n} دفعة",
+  "coll.reconHint": "لكل مندوب لكل يوم — طابق عمود النقد مع ما سُلّم فعلياً، ثم أدخله في النظام المحاسبي.",
+  "coll.reschedule": "إعادة جدولة",
+  "coll.tabCashCheck": "فحص النقد",
+  "coll.tabReceived": "المستلمة",
+  "coll.tabSchedule": "الجدول",
+  "nav.moneyIn": "الأموال الواردة",
+  "nav.payPeople": "رواتب الموظفين",
+  "payouts.confirmPay": "تدفع لـ {name} مبلغ {amount} عن {q}؟",
+  "payouts.history": "سجل المدفوعات",
+  "payouts.nothingAccrued": "لا شيء متراكم هذا الربع بعد.",
+  "payouts.quarterly": "الحوافز الربعية",
+  "payouts.withWages": "مع الراتب",
+  "payroll.confirmPay": "تدفع لـ {name} مبلغ {amount} عن {month}؟",
+  "payroll.decideFirst": "احسم هذه قبل الدفع",
+  "payroll.footer": "الرواتب مرئية للمالك والمحاسب فقط. كل دفعة تسجّل الوقت ومن ضغط الزر؛ والمبلغ يحسبه النظام دائماً، لا يؤخذ من الشاشة.",
+  "payroll.incentives": "الحوافز",
+  "payroll.monthlyWages": "الرواتب الشهرية",
+  "payroll.noCheckin": "بلا تسجيل حضور",
+  "payroll.paidSoFar": "المدفوع",
+  "payroll.payBtn": "دفع",
+  "payroll.payPeople": "رواتب الموظفين",
+  "payroll.quarterNote": "حوافز الربع تُضاف إلى الشهر الثالث من كل ربع — أو تُدفع منفصلة أدناه.",
+  "payroll.stillDue": "المتبقي",
+  "payroll.wageBill": "إجمالي الرواتب",
+  "queue.returnBtn": "إعادة…",
+  "queue.returnWhy": "لماذا تُعاد؟ سيقرأ المشرف والمندوب هذا:",
+
   // — help —
   "help.title": "كيف تستخدم التطبيق",
   "help.open": "كيف تستخدم التطبيق",

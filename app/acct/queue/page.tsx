@@ -4,7 +4,7 @@ import { useT } from "@/lib/i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { Icon, paths } from "@/components/Icons";
-import { api, dmy, hm, money } from "@/lib/fmt";
+import { api, dmy, hm, money, money0 } from "@/lib/fmt";
 import { useRouter } from "next/navigation";
 import { DoctorLink, CallButton } from "@/components/DoctorLink";
 
@@ -51,11 +51,16 @@ export default function AcctQueue() {
   }
 
   async function returnOrder(o: any) {
-    const note = window.prompt("Return note to the approver (required):");
+    const note = window.prompt(tx("queue.returnWhy", "Why is it coming back? The approver and the rep will read this:"));
     if (!note) return;
-    await api("/api/orders", { json: { action: "reject", id: o.id, note } }).catch(async () => {
-      // Accountant cannot reject via approval flow — record as a note through reject is supervisor-only.
-    });
+    // A dedicated action: "reject" is supervisor-only and pending-only, and
+    // the old code swallowed that failure — she thought she had returned the
+    // order and nothing had happened at all.
+    try {
+      await api("/api/orders", { json: { action: "return", id: o.id, note } });
+    } catch (e: any) {
+      alert(e?.message || "Could not return it");
+    }
     load();
   }
 
@@ -85,7 +90,11 @@ export default function AcctQueue() {
     <Screen me={me} wide>
       <div className="row items-base">
         <h4 className="m0 f1">{tx("queue.invoicingQueue", "Invoicing queue")}</h4>
-        <span className="tag tag-accent">{orders.length} approved</span>
+        {/* Not just how many — how much. "How much is stuck in the queue?" is
+            the owner's question, and she was adding card totals by hand. */}
+        <span className="tag tag-accent hnum">
+          {orders.length} · {money0(orders.filter((o: any) => !o.isSample).reduce((s: number, o: any) => s + o.total, 0))}
+        </span>
         <button className="btn btn-secondary btn-icon" style={{ }} onClick={logout} title={tx("queue.signOutPh", "Sign out")}>
           <Icon d={paths.logout} size={17} />
         </button>
@@ -139,24 +148,32 @@ export default function AcctQueue() {
               </button>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 8 }}>
-              <button className="btn btn-primary p-3" onClick={() => invoice(o)}>{tx("queue.confirmInvoice", "Confirm & invoice")}</button>
+              <div className="row gap-2">
+                <button className="btn btn-primary p-3 f1" onClick={() => invoice(o)}>{tx("queue.confirmInvoice", "Confirm & invoice")}</button>
+                {/* The way out for a wrong order — previously her only options
+                    were invoice it anyway or leave it in the queue forever. */}
+                <button className="btn btn-secondary p-3" style={{ flex: "none" }} onClick={() => returnOrder(o)}>
+                  {tx("queue.returnBtn", "Return…")}
+                </button>
+              </div>
             </div>
           </div>
         );
       })}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: "auto" }}>
-        <h6 style={{ margin: 0, color: "var(--color-neutral-600)" }}>{tx("queue.cashCollectedToday", "Cash collected today")}</h6>
-        {payments.length === 0 ? <div className="small muted">{tx("queue.nothingCollectedYetToday", "Nothing collected yet today.")}</div> : null}
-        {payments.map((p) => (
-          <div key={p.id} className="listrow py-2">
-            <div className="f1">
-              <div className="fs-small"><DoctorLink id={p.doctorId} name={p.doctorName} /></div>
-              <div className="small muted">by {p.collectedByName} · {hm(p.ts)} · {p.method}</div>
-            </div>
-            <span className="hnum fs-body">{money(p.amount)}</span>
+      {/* One line, not a second copy of the payments list — the full list
+          with filters and totals lives on Money in. This page is for
+          invoicing; the line is just the end-of-day glance. */}
+      <a href="/acct/collections" className="card mt-auto" style={{ flexDirection: "row", alignItems: "center", gap: 10, textDecoration: "none", color: "inherit" }}>
+        <div className="f1min">
+          <div className="fs-small w-500">{tx("queue.cashCollectedToday", "Cash collected today")} →</div>
+          <div className="small muted">
+            {payments.length === 0
+              ? tx("queue.nothingCollectedYetToday", "Nothing collected yet today.")
+              : `${tx("acct.cash", "Cash")} ${money0(payments.filter((p) => p.method === "cash").reduce((s, p) => s + p.amount, 0))} · ${tx("acct.transfer", "Transfer")} ${money0(payments.filter((p) => p.method === "transfer").reduce((s, p) => s + p.amount, 0))} · ${payments.length} ${tx("acct.receipts", "Receipts")}`}
           </div>
-        ))}
-      </div>
+        </div>
+        <span className="hnum fs-lead">{money0(payments.reduce((s, p) => s + p.amount, 0))}</span>
+      </a>
     </Screen>
   );
 }

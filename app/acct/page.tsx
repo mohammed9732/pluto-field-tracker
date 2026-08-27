@@ -16,7 +16,7 @@ export default function AcctDashboard() {
   const t = useTerms();
   const router = useRouter();
   const [data, setData] = useState<any>(null);
-  const [tab, setTab] = useState<"collections" | "recon" | "people">("collections");
+  
 
   const load = useCallback(() => {
     api("/api/acctdash").then(setData).catch(() => {});
@@ -25,15 +25,6 @@ export default function AcctDashboard() {
 
   if (!me || !data) return <Spinner />;
   const k = data.kpis;
-
-  function exportCollections() {
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.collections.map((c: any) => ({
-      Ref: c.ref, Date: c.ts.slice(0, 10), Time: c.ts.slice(11, 16), Doctor: c.doctor, Rep: c.rep,
-      Method: c.method, Note: c.note ?? "", "Amount IQD": c.amount,
-    }))), "Collections");
-    XLSX.writeFile(wb, `collections-${data.period}.xlsx`);
-  }
 
   async function logout() {
     await api("/api/auth/logout", { json: {} });
@@ -65,52 +56,19 @@ export default function AcctDashboard() {
         </Link>
       </div>
 
-      <div className="seg" style={{ width: "100%", overflowX: "auto" }}>
-        {([["collections", "Collections"], ["recon", "Cash check"], ["people", "People"]] as const).map(([t, label]) => (
-          <label key={t} className="seg-opt" style={{ flex: 1, justifyContent: "center", whiteSpace: "nowrap" }}>
-            <input type="radio" name="adtab" checked={tab === t} onChange={() => setTab(t)} />{label}
-          </label>
-        ))}
-      </div>
 
-      {tab === "collections" ? (
-        <>
-          <button className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 12px", alignSelf: "flex-start" }} onClick={exportCollections}>{tx("acct.exportToExcel", "Export to Excel")}</button>
-          {data.collections.length === 0 ? <div className="card muted">{tx("acct.nothingCollectedThisMonth", "Nothing collected this month yet.")}</div> : null}
-          {data.collections.map((c: any) => (
-            <div key={c.ref} className="listrow">
-              <div className="f1min">
-                <div className="fs-small"><DoctorLink id={c.doctorId} name={c.doctor} /></div>
-                <div className="small muted">{c.rep} · {dmy(c.ts)} {hm(c.ts)} · {c.method}{c.note ? ` · ${c.note}` : ""}</div>
-              </div>
-              {c.photo ? <a className="small" href={`/api/files?id=${c.photo}`} target="_blank">{tx("acct.receipt", "receipt")}</a> : <span className="small" style={{ color: "var(--c-amber-deep)" }}>{tx("acct.noPhoto", "no photo")}</span>}
-              <span className="hnum fs-body">{money(c.amount)}</span>
-            </div>
-          ))}
-        </>
-      ) : null}
+      {/* The lists that used to live here — received payments and the cash
+          check — moved to Money in, where the schedule already was. One page
+          for money coming in, instead of the same word meaning two things. */}
+      <a href="/acct/collections" className="card" style={{ flexDirection: "row", alignItems: "center", gap: 12, textDecoration: "none", color: "inherit" }}>
+        <div className="f1min">
+          <div className="fs-small w-700">{tx("coll.moneyIn", "Money in")} →</div>
+          <div className="small muted">{tx("acct.moneyInSub", "Schedule, received payments, and the cash check — with totals.")}</div>
+        </div>
+        <span className="hnum fs-lead">{money(k.collectedMTD)}</span>
+      </a>
 
-      {tab === "recon" ? (
-        <>
-          <div className="hint">Per rep per day — match the cash column against what was physically handed in, then enter it in the accounting system.</div>
-          <table className="table fs-caption">
-            <thead><tr><th>{tx("acct.rep", "Rep")}</th><th>{tx("acct.date", "Date")}</th><th className="ta-r">{tx("acct.cash", "Cash")}</th><th className="ta-r">{tx("acct.transfer", "Transfer")}</th><th className="ta-r">{tx("acct.receipts", "Receipts")}</th></tr></thead>
-            <tbody>
-              {data.reconciliation.map((r: any, i: number) => (
-                <tr key={i}>
-                  <td>{r.rep}</td><td>{dmy(r.date)}</td>
-                  <td style={{ textAlign: "right", fontWeight: 700 }}>{r.cash ? money0(r.cash) : "—"}</td>
-                  <td className="ta-r">{r.transfer ? money0(r.transfer) : "—"}</td>
-                  <td className="ta-r">{r.receipts}</td>
-                </tr>
-              ))}
-              {data.reconciliation.length === 0 ? <tr><td colSpan={5} className="muted">{tx("acct.noPaymentsThisMonth", "No payments this month.")}</td></tr> : null}
-            </tbody>
-          </table>
-        </>
-      ) : null}
-
-      {tab === "people" ? (
+      {true ? (
         <>
           <div className="hint">{tx("acct.thisMonthPerPerson", "This month per person — full detail on the")} <Link href="/acct/payroll">{tx("acct.payroll", "Payroll")}</Link> and <Link href="/spendings">{tx("acct.spendings", "Spendings")}</Link> pages.</div>
           <table className="table fs-caption">

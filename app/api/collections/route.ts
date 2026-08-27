@@ -124,11 +124,29 @@ export async function POST(req: Request) {
         createdBy: user.id, ts: nowIso(),
       };
       db.collections.push(item);
+      // A reschedule carries the id of the item it replaces: scheduling the
+      // remainder is what "dealing with" a shortfall means, so the old flag
+      // stands down by itself.
+      if (b.afterId) {
+        const prev = db.collections.find((c) => c.id === Number(b.afterId));
+        if (prev) prev.attended = true;
+      }
       notify(db, () => nextId(db), rep.id,
         `Collection scheduled: ${amount.toLocaleString()} IQD from ${doctor.name} on ${date}${item.invoiceNo ? ` (invoice ${item.invoiceNo})` : ""}.`,
         "/collections", "collection");
       saveDb();
       return Response.json({ ok: true, item: enrich(db, item) });
+    }
+
+    /* Take an item off the needs-attention list without touching the record.
+     * Used directly ("I have decided to let this go") and by reschedule
+     * ("the remainder now has its own new item"). */
+    if (b.action === "dismiss") {
+      const item = db.collections.find((c) => c.id === Number(b.id));
+      if (!item) return Response.json({ error: "Not found" }, { status: 404 });
+      item.attended = true;
+      saveDb();
+      return Response.json({ ok: true });
     }
 
     if (b.action === "delete") {
