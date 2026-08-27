@@ -72,7 +72,10 @@ export default function Login() {
           <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div className="field">
               <label>{tx("login.phoneNumberOrName", "Phone number or name")}</label>
-              <input className="input" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+964 750 123 4567" />
+              {/* Deliberately the ORDINARY keyboard. This field takes a phone number
+                  OR a name, and the iOS tel keypad has no letters at all — with
+                  inputMode="tel", somebody signing in as "Sami" was simply stuck. */}
+              <input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+964 750 123 4567" autoComplete="username" />
             </div>
             <div className="field">
               <label>{tx("login.password", "Password")}</label>

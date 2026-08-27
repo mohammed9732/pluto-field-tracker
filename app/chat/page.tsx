@@ -149,7 +149,16 @@ function ChatInner() {
           </select>
         ) : null}
       </div>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12, overflowY: "auto" }}>
+      {/* Tapping the conversation dismisses the keyboard. In the home-screen
+          app iOS does not reliably do this on its own, so a rep who finished
+          typing was stuck behind the keypad with no way to put it away. */}
+      <div
+        style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12, overflowY: "auto" }}
+        onPointerDown={() => {
+          const el = document.activeElement;
+          if (el instanceof HTMLElement && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) el.blur();
+        }}
+      >
         {messages.map((m) => (
           <div key={m.id} style={{ display: "flex", flexDirection: "column", gap: 3, alignItems: m.mine ? "flex-end" : "flex-start" }}>
             <span style={{ fontSize: 12, color: "var(--color-neutral-500)" }}>

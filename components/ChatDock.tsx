@@ -131,7 +131,13 @@ export function ChatDock() {
             {channels.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
           </select>
 
-          <div className="chatdock-body">
+          {/* Same tap-to-dismiss as the phone chat: the dock is desktop-first
+              but the accountant uses it on a tablet too. */}
+          <div className="chatdock-body"
+            onPointerDown={() => {
+              const el = document.activeElement;
+              if (el instanceof HTMLElement && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) el.blur();
+            }}>
             {messages.map((m) => (
               <div key={m.id} style={{ display: "flex", flexDirection: "column", gap: 2, alignItems: m.mine ? "flex-end" : "flex-start" }}>
                 <span style={{ fontSize: 12, color: "var(--color-neutral-500)" }}>
