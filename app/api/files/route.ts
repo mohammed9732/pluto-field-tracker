@@ -1,7 +1,6 @@
-import fs from "fs";
-import path from "path";
 import crypto from "crypto";
-import { getDb, saveDb, UPLOAD_DIR } from "@/lib/db";
+import { getDb, saveDb } from "@/lib/db";
+import { getFile, putFile } from "@/lib/storage";
 import { requireUser, errResponse } from "@/lib/auth";
 import { canSeeFile, nowIso } from "@/lib/compute";
 
@@ -16,9 +15,10 @@ export async function POST(req: Request) {
     if (!file) return Response.json({ error: "No file" }, { status: 400 });
     if (file.size > MAX_BYTES) return Response.json({ error: "File is too big (15 MB max)" }, { status: 400 });
     const id = crypto.randomBytes(12).toString("hex");
-    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
     const buf = Buffer.from(await file.arrayBuffer());
-    fs.writeFileSync(path.join(UPLOAD_DIR, id), buf);
+    // Cloud storage when configured, the local disk otherwise — the caller
+    // never knows the difference. See lib/storage.ts.
+    await putFile(id, buf, file.type || "application/octet-stream");
     const db = getDb();
     db.files.push({ id, name: file.name || "file", mime: file.type || "application/octet-stream", size: file.size, ownerId: user.id, ts: nowIso() });
     saveDb();
@@ -39,9 +39,9 @@ export async function GET(req: Request) {
     // which file ids exist.
     if (!canSeeFile(db, user, id)) return Response.json({ error: "Not found" }, { status: 404 });
     const meta = db.files.find((f) => f.id === id);
-    const p = path.join(UPLOAD_DIR, id);
-    if (!meta || !fs.existsSync(p)) return Response.json({ error: "Not found" }, { status: 404 });
-    const buf = fs.readFileSync(p);
+    if (!meta) return Response.json({ error: "Not found" }, { status: 404 });
+    const buf = await getFile(id);
+    if (!buf) return Response.json({ error: "Not found" }, { status: 404 });
     // Only render media inline. Anything else downloads, so an uploaded .html or
     // .svg can never execute as a page in a colleague's browser.
     const safeInline = /^(image\/(png|jpe?g|gif|webp|heic|heif)|audio\/|video\/|application\/pdf)/i.test(meta.mime);

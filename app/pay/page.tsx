@@ -1,4 +1,5 @@
 "use client";
+import { compressImage } from "@/lib/image";
 import { enqueue, isOffline, newRef } from "@/lib/outbox";
 import { useT } from "@/lib/i18n";
 import { useTerms, lower } from "@/lib/terms";
@@ -51,7 +52,9 @@ function CollectPaymentInner() {
 
   if (!me) return <Spinner />;
 
-  async function attachPhoto(file: File) {
+  async function attachPhoto(raw: File) {
+    // Shrunk on the phone before it travels — see lib/image.ts.
+    const file = await compressImage(raw);
     const fd = new FormData();
     fd.append("file", file);
     try {

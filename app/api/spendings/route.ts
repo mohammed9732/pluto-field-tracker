@@ -63,7 +63,7 @@ export async function POST(req: Request) {
       const approver = db.settings.spendingSupervisorStep
         ? db.users.find((u) => u.active && u.role === "supervisor")
         : db.users.find((u) => u.active && u.role === "accountant");
-      if (approver && approver.id !== user.id) notify(db, () => nextId(db), approver.id, `${user.name} logged a spending — ${amount.toLocaleString()} IQD (${s.type}).`, "/spendings");
+      if (approver && approver.id !== user.id) notify(db, () => nextId(db), approver.id, `${user.name} logged a spending — ${amount.toLocaleString()} IQD (${s.type}).`, "/spendings", "payment");
       saveDb();
       return Response.json({ ok: true, spending: enrich(db, s) });
     }
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
         s.status = "approved";
       }
       s.decidedBy = user.id;
-      notify(db, () => nextId(db), s.userId, `Your ${s.type} spending of ${s.amount.toLocaleString()} IQD was ${s.status === "rejected" ? "rejected" : "approved"}.`, "/spendings");
+      notify(db, () => nextId(db), s.userId, `Your ${s.type} spending of ${s.amount.toLocaleString()} IQD was ${s.status === "rejected" ? "rejected" : "approved"}.`, "/spendings", "payment");
       logActivity(db, () => nextId(db), user.id, `${s.status === "rejected" ? "rejected" : "approved"} spending #${s.id}`);
       saveDb();
       return Response.json({ ok: true, spending: enrich(db, s) });
@@ -111,7 +111,7 @@ export async function POST(req: Request) {
           total += s.amount;
         }
       }
-      notify(db, () => nextId(db), userId, `Your spendings for ${period} were paid back — ${total.toLocaleString()} IQD.`, "/spendings");
+      notify(db, () => nextId(db), userId, `Your spendings for ${period} were paid back — ${total.toLocaleString()} IQD.`, "/spendings", "payment");
       logActivity(db, () => nextId(db), user.id, `paid back ${total.toLocaleString()} IQD spendings to user #${userId}`);
       saveDb();
       return Response.json({ ok: true, total });

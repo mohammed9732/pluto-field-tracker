@@ -1,4 +1,5 @@
 "use client";
+import { compressImage } from "@/lib/image";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "@/lib/i18n";
 import { useSearchParams } from "next/navigation";
@@ -67,8 +68,13 @@ function ChatInner() {
   }
 
   async function uploadAndSend(file: File | Blob, kind: "image" | "file" | "voice", name: string, duration?: number) {
+    // Chat photos shrink like every other photo; voice notes and files pass
+    // through untouched. See lib/image.ts.
+    const toSend = kind === "image"
+      ? await compressImage(new File([file], name, { type: (file as File).type || "image/jpeg" }))
+      : new File([file], name, { type: (file as File).type || "application/octet-stream" });
     const fd = new FormData();
-    fd.append("file", new File([file], name, { type: (file as File).type || "application/octet-stream" }));
+    fd.append("file", toSend);
     try {
       const up = await fetch("/api/files", { method: "POST", body: fd }).then((x) => x.json());
       if (!up.id) return;

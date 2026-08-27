@@ -121,7 +121,7 @@ export async function POST(req: Request) {
       }
       db.orders.push(order);
       const approvers = db.users.filter((u) => u.active && (u.role === "supervisor" || u.role === "admin") && u.id !== user.id);
-      for (const a of approvers) notify(db, () => nextId(db), a.id, `New ${isSample ? "SAMPLE request" : "order"} from ${user.name} awaits approval.`, "/approvals");
+      for (const a of approvers) notify(db, () => nextId(db), a.id, `New ${isSample ? "SAMPLE request" : "order"} from ${user.name} awaits approval.`, "/approvals", "orderNew");
       saveDb();
       return Response.json({ ok: true, order: enrich(db, order) });
     }
@@ -177,7 +177,7 @@ export async function POST(req: Request) {
       recordChange(db, () => nextId(db), user.id, "order", order.id,
         order.status === "approved" ? "approved" : "returned",
         order.rejectNote ? `Note: ${order.rejectNote}` : null);
-      notify(db, () => nextId(db), order.createdBy, `Your order for ${db.doctors.find((d) => d.id === order.doctorId)?.name ?? "?"} was ${order.status} by ${user.name}.`, "/orders");
+      notify(db, () => nextId(db), order.createdBy, `Your order for ${db.doctors.find((d) => d.id === order.doctorId)?.name ?? "?"} was ${order.status} by ${user.name}.`, "/orders", "orderStatus");
       logActivity(db, () => nextId(db), user.id, `${order.status} order #${order.id}`);
       saveDb();
       return Response.json({ ok: true, order: enrich(db, order) });
@@ -207,7 +207,7 @@ export async function POST(req: Request) {
       order.invoicedAt = nowIso();
       if (b.pdfName) order.invoicePdfName = String(b.pdfName);
       if (b.pdfId) order.invoicePdfId = String(b.pdfId);
-      notify(db, () => nextId(db), order.createdBy, `Order for ${db.doctors.find((d) => d.id === order.doctorId)?.name ?? "?"} is invoiced${order.invoicePdfName ? " — invoice attached." : "."}`, "/orders");
+      notify(db, () => nextId(db), order.createdBy, `Order for ${db.doctors.find((d) => d.id === order.doctorId)?.name ?? "?"} is invoiced${order.invoicePdfName ? " — invoice attached." : "."}`, "/orders", "orderStatus");
       logActivity(db, () => nextId(db), user.id, `invoiced order #${order.id}`);
       saveDb();
       return Response.json({ ok: true, order: enrich(db, order), warnings });
@@ -218,7 +218,7 @@ export async function POST(req: Request) {
       order.invoicePdfName = String(b.pdfName ?? "invoice.pdf");
       if (b.pdfId) order.invoicePdfId = String(b.pdfId);
       if (order.status === "invoiced") {
-        notify(db, () => nextId(db), order.createdBy, `Invoice attached for ${db.doctors.find((d) => d.id === order.doctorId)?.name ?? "?"}.`, "/orders");
+        notify(db, () => nextId(db), order.createdBy, `Invoice attached for ${db.doctors.find((d) => d.id === order.doctorId)?.name ?? "?"}.`, "/orders", "orderStatus");
       }
       saveDb();
       return Response.json({ ok: true, order: enrich(db, order) });

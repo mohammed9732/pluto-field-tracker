@@ -39,6 +39,21 @@ export async function POST(req: Request) {
     const user = requireUser(["admin"]);
     const db = getDb();
     const b = await req.json();
+    if (b.action === "migrateToCloud") {
+      requireUser(["admin"]);
+      // Move files still on the local disk into R2. Safe to run repeatedly:
+      // a local copy is deleted only after its upload succeeded.
+      const { migrateDiskToR2, r2Configured } = await import("@/lib/storage");
+      if (!r2Configured()) {
+        return Response.json({ error: "Cloud storage is not configured — add the R2 variables in Railway first" }, { status: 400 });
+      }
+      const result = await migrateDiskToR2(db.files.map((f) => ({ id: f.id, mime: f.mime })));
+      logActivity(db, () => nextId(db), user.id,
+        `migrated files to cloud storage: ${result.moved} moved, ${result.alreadyDone} already there, ${result.failed} failed`);
+      saveDb();
+      return Response.json({ ok: true, ...result });
+    }
+
     if (b.action === "saveUser") {
       if (b.id) {
         const u = db.users.find((x) => x.id === Number(b.id));

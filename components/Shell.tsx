@@ -94,6 +94,7 @@ const SIDEBAR: Record<string, { group: string; gkey?: string; items: { href: str
       { href: "/acct/monthend", label: "Month-end", tkey: "nav.monthEnd", icon: "cal" },
         { href: "/acct/payroll", label: "Payroll", tkey: "nav.payroll", icon: "users" },
       { href: "/acct/payouts", label: "Payouts", tkey: "nav.payouts", icon: "card" },
+      { href: "/docs", label: "Documents", tkey: "nav.documents", icon: "file" },
     ]},
     { group: "Setup", gkey: "group.setup", items: [
       { href: "/catalog", label: "Products", tkey: "nav.products", icon: "bag" },
@@ -137,6 +138,7 @@ const SIDEBAR: Record<string, { group: string; gkey?: string; items: { href: str
         { href: "/acct/payroll", label: "Payroll", tkey: "nav.payroll", icon: "users" },
       { href: "/acct/payouts", label: "Payouts", tkey: "nav.payouts", icon: "card" },
       { href: "/spendings", label: "Spendings", tkey: "nav.spendings", icon: "receipt" },
+      { href: "/docs", label: "Documents", tkey: "nav.documents", icon: "file" },
     ]},
     { group: "Stock", gkey: "group.stock", items: [
       { href: "/stock", label: "Stock & checks", tkey: "nav.stockChecks", icon: "warehouse" },

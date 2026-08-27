@@ -69,7 +69,7 @@ export async function POST(req: Request) {
         dueDate: b.dueDate ?? null, status: "open" as const, createdAt: nowIso(), doneAt: null,
       };
       db.tasks.push(t);
-      for (const id of assigneeIds) if (id !== user.id) notify(db, () => nextId(db), id, `New task from ${user.name}: ${t.title}`, "/tasks");
+      for (const id of assigneeIds) if (id !== user.id) notify(db, () => nextId(db), id, `New task from ${user.name}: ${t.title}`, "/tasks", "task");
       saveDb();
       return Response.json({ ok: true, task: enrich(db, t, user.id) });
     }
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
         t.status = "done";
         t.doneAt = nowIso();
       }
-      if (t.createdBy !== user.id) notify(db, () => nextId(db), t.createdBy, `${user.name} finished: ${t.title} (${t.completions.length}/${t.assigneeIds.length})`, "/tasks");
+      if (t.createdBy !== user.id) notify(db, () => nextId(db), t.createdBy, `${user.name} finished: ${t.title} (${t.completions.length}/${t.assigneeIds.length})`, "/tasks", "task");
     } else if (b.action === "reopen") {
       // Only somebody the task belongs to — an assignee undoing their own tick,
       // or the person who set it. Everybody else was able to reopen any task.

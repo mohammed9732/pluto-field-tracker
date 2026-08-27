@@ -79,7 +79,8 @@ export async function POST(req: Request) {
     for (const id of Array.from(new Set(recipients))) {
       notifyOnce(db, () => nextId(db), id,
         channel.startsWith("dm-") ? `${user.name}: ${preview}` : `${label} · ${user.name}: ${preview}`,
-        `/chat?channel=${channel}`);
+        `/chat?channel=${channel}`,
+        channel.startsWith("dm-") ? "dm" : "group");
     }
 
     saveDb();

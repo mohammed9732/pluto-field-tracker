@@ -45,7 +45,7 @@ function flagMissed(db: ReturnType<typeof getDb>) {
       for (const a of db.users.filter((u) => u.active && (u.role === "accountant" || u.role === "admin"))) {
         notify(db, () => nextId(db), a.id,
           `⚠ Collection missed: ${rep?.name ?? "?"} did not collect ${c.amount.toLocaleString()} IQD from ${doc?.name ?? "?"} (due ${c.date}).`,
-          "/acct/collections");
+          "/acct/collections", "collection");
       }
     }
   }
@@ -126,7 +126,7 @@ export async function POST(req: Request) {
       db.collections.push(item);
       notify(db, () => nextId(db), rep.id,
         `Collection scheduled: ${amount.toLocaleString()} IQD from ${doctor.name} on ${date}${item.invoiceNo ? ` (invoice ${item.invoiceNo})` : ""}.`,
-        "/collections");
+        "/collections", "collection");
       saveDb();
       return Response.json({ ok: true, item: enrich(db, item) });
     }

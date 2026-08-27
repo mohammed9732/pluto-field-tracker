@@ -209,7 +209,7 @@ export async function POST(req: Request) {
       db.transferRequests.push(req);
       for (const sup of db.users.filter((u) => u.active && (u.role === "supervisor" || u.role === "admin"))) {
         notify(db, () => nextId(db), sup.id,
-          `${user.name} needs ${qty} x ${product.name} moved from ${cityName(db, fromCity)} to ${cityName(db, toCity)}.`, "/stock");
+          `${user.name} needs ${qty} x ${product.name} moved from ${cityName(db, fromCity)} to ${cityName(db, toCity)}.`, "/stock", "transfer");
       }
       logActivity(db, () => nextId(db), user.id, `requested ${qty} x ${product.name} ${fromCity} -> ${toCity}`);
       saveDb();
@@ -228,7 +228,7 @@ export async function POST(req: Request) {
         requireUser(["supervisor", "accountant", "admin"]);
         req.status = "rejected"; req.decidedBy = user.id; req.decidedNote = note || null;
         notify(db, () => nextId(db), req.requestedBy,
-          `Your request for ${req.qty} x ${product?.name ?? "stock"} was declined${note ? `: ${note}` : "."}`, "/stock");
+          `Your request for ${req.qty} x ${product?.name ?? "stock"} was declined${note ? `: ${note}` : "."}`, "/stock", "transfer");
         saveDb();
         return Response.json({ ok: true });
       }
@@ -245,7 +245,7 @@ export async function POST(req: Request) {
         req.status = "supervisor_ok"; req.decidedBy = user.id; req.decidedNote = note || null;
         for (const acct of db.users.filter((u) => u.active && (u.role === "accountant" || u.role === "admin"))) {
           notify(db, () => nextId(db), acct.id,
-            `Approved: move ${req.qty} x ${product?.name ?? "stock"} from ${cityName(db, req.fromCity)} to ${cityName(db, req.toCity)}.`, "/stock");
+            `Approved: move ${req.qty} x ${product?.name ?? "stock"} from ${cityName(db, req.fromCity)} to ${cityName(db, req.toCity)}.`, "/stock", "transfer");
         }
         saveDb();
         return Response.json({ ok: true });
@@ -276,7 +276,7 @@ export async function POST(req: Request) {
         });
         req.status = "done"; req.decidedBy = user.id; req.decidedNote = note || req.decidedNote;
         notify(db, () => nextId(db), req.requestedBy,
-          `${req.qty} x ${product.name} is on its way to ${cityName(db, req.toCity)}.`, "/stock");
+          `${req.qty} x ${product.name} is on its way to ${cityName(db, req.toCity)}.`, "/stock", "transfer");
         logActivity(db, () => nextId(db), user.id, `fulfilled transfer request #${req.id}`);
         saveDb();
         return Response.json({ ok: true });
@@ -306,7 +306,7 @@ export async function POST(req: Request) {
       src.updatedBy = dst.updatedBy = user.id;
       db.stockTransfers.push({ id: nextId(db), productId: product.id, qty, from, to, by: user.id, ts: nowIso(), note: String(b.note ?? "") });
       const cityRep = db.users.find((u) => u.active && u.role === "rep" && u.city === to);
-      if (cityRep) notify(db, () => nextId(db), cityRep.id, `${qty} × ${product.name} transferred to your ${to} stock.`, "/stock");
+      if (cityRep) notify(db, () => nextId(db), cityRep.id, `${qty} × ${product.name} transferred to your ${to} stock.`, "/stock", "transfer");
       logActivity(db, () => nextId(db), user.id, `transferred ${qty} × ${product.name} ${from} → ${to}`);
       saveDb();
       return Response.json({ ok: true });
@@ -328,7 +328,7 @@ export async function POST(req: Request) {
       db.stockChecks.push(check);
       const diffs = rows.filter((r: any) => r.counted !== r.system).length;
       const acct = db.users.find((u) => u.active && u.role === "accountant");
-      if (acct) notify(db, () => nextId(db), acct.id, `${user.name} submitted the weekly ${city} stock check${diffs ? ` — ${diffs} difference${diffs === 1 ? "" : "s"}!` : " — all matching."}`, "/acct/stock");
+      if (acct) notify(db, () => nextId(db), acct.id, `${user.name} submitted the weekly ${city} stock check${diffs ? ` — ${diffs} difference${diffs === 1 ? "" : "s"}!` : " — all matching."}`, "/acct/stock", "transfer");
       saveDb();
       return Response.json({ ok: true, diffs });
     }

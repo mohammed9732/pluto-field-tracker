@@ -123,7 +123,7 @@ export async function POST(req: Request) {
       }
       // Whoever decides on this plan should know it is waiting.
       for (const a of db.users.filter((u) => u.active && (u.role === "supervisor" || u.role === "admin") && u.id !== user.id)) {
-        notify(db, () => nextId(db), a.id, `${user.name} submitted a weekly plan for approval.`, "/approvals");
+        notify(db, () => nextId(db), a.id, `${user.name} submitted a weekly plan for approval.`, "/approvals", "planStatus");
       }
       saveDb();
       return Response.json({ ok: true, plan });
@@ -139,7 +139,7 @@ export async function POST(req: Request) {
         plan.status === "approved"
           ? `Your weekly plan was approved by ${user.name}.`
           : `Your weekly plan was returned by ${user.name}${plan.note ? ` — ${plan.note}` : "."}`,
-        "/plan");
+        "/plan", "planStatus");
       saveDb();
       return Response.json({ ok: true, plan });
     }

@@ -44,6 +44,7 @@ const togglesFor = (t: typeof DEFAULT_TERMS): [string, string, string][] => [
   ["weeklyStockCheck", "Weekly stock check", "City reps must count their own stock by Thursday"],
   ["samplesEnabled", "Free samples", "Reps can mark an order as a sample — free, no target credit, stock still moves"],
   ["competitorTracking", "Competitor tracking", "Capture competitor info during visits and on the market intel page"],
+  ["docLibraryForField", "Documents library for field staff", `Invoices and receipts, searchable. You and the ${lower(t.roleAccountant)} always have it; this opens it to ${lower(t.roleSupervisor)}s and ${lower(t.roleRep)}s — ${lower(t.roleRep)}s see their own ${lower(t.doctorPlural)} only`],
 ];
 
 const metricsFor = (t: typeof DEFAULT_TERMS): [string, string][] => [
@@ -68,6 +69,10 @@ export default function ControlPanel() {
   const me = useMe();
   const [settings, setSettings] = useState<any>(null);
   const [announce, setAnnounce] = useState("");
+  const [announcePush, setAnnouncePush] = useState(false);
+  const [pushMsg, setPushMsg] = useState({ text: "", role: "", userId: "" });
+  const [pushSent, setPushSent] = useState("");
+  const [migrateMsg, setMigrateMsg] = useState("");
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [savedFlash, setSavedFlash] = useState(false);
   const [groups, setGroups] = useState<any[]>([]);
@@ -130,7 +135,7 @@ export default function ControlPanel() {
 
   async function postAnnouncement() {
     if (!announce.trim()) return;
-    await api("/api/notify", { json: { action: "announce", body: announce.trim() } });
+    await api("/api/notify", { json: { action: "announce", body: announce.trim(), push: announcePush } });
     setAnnounce("");
     load();
   }
@@ -382,6 +387,70 @@ export default function ControlPanel() {
           {lineErr ? <div className="tag tag-hot self-start">{lineErr}</div> : null}
         </div>
 
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>{tx("settings.phonePushes", "Phone notifications")}</h6>
+        <div className="small muted">
+          {tx("settings.phonePushesSub", "Which events reach a locked phone. Company-wide — your call, not each person's. The bell inside the app records everything regardless.")}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 4 }}>
+          {([
+            ["dm", tx("settings.pushDm", "Direct messages")],
+            ["group", tx("settings.pushGroup", "Group chat")],
+            ["orderNew", tx("settings.pushOrderNew", "New order awaiting approval")],
+            ["orderStatus", tx("settings.pushOrderStatus", "Order approved / rejected / invoiced")],
+            ["planStatus", tx("settings.pushPlan", "Weekly plan decisions")],
+            ["leave", tx("settings.pushLeave", "Leave requests & decisions")],
+            ["transfer", tx("settings.pushTransfer", "Stock transfers")],
+            ["payment", tx("settings.pushPayment", "Payments & spendings")],
+            ["task", tx("settings.pushTask", "Tasks")],
+            ["collection", tx("settings.pushCollection", "Collection schedule")],
+            ["custom", tx("settings.pushCustom", "Your own messages & announcements")],
+          ] as const).map(([key, label]) => (
+            <label key={key} className="radio fs-small" style={{ padding: "6px 0" }}>
+              <input type="checkbox"
+                checked={settings.pushTypes?.[key] !== false}
+                onChange={(e) => patch({ pushTypes: { ...settings.pushTypes, [key]: e.target.checked } })} />
+              <span className="dot" />{label}
+            </label>
+          ))}
+        </div>
+
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>{tx("settings.sendPush", "Send a message to phones")}</h6>
+        <div className="small muted">
+          {tx("settings.sendPushSub", "A one-off message, straight to the phone — everyone, one role, or one person.")}
+        </div>
+        <div className="stack-2">
+          <input className="input" maxLength={300}
+            placeholder={tx("settings.pushTextPh", "Write the message…")}
+            value={pushMsg.text} onChange={(e) => setPushMsg({ ...pushMsg, text: e.target.value })} />
+          <div className="row gap-2" style={{ flexWrap: "wrap" }}>
+            <select className="input" style={{ flex: 1, minWidth: 140 }} value={pushMsg.role}
+              onChange={(e) => setPushMsg({ ...pushMsg, role: e.target.value, userId: "" })}>
+              <option value="">{tx("settings.pushEveryone", "Everyone")}</option>
+              <option value="rep">{t.roleRep}s</option>
+              <option value="supervisor">{t.roleSupervisor}</option>
+              <option value="accountant">{t.roleAccountant}</option>
+            </select>
+            <select className="input" style={{ flex: 1, minWidth: 140 }} value={pushMsg.userId}
+              onChange={(e) => setPushMsg({ ...pushMsg, userId: e.target.value, role: "" })}>
+              <option value="">{tx("settings.pushOnePerson", "…or one person")}</option>
+              {users.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </select>
+            <button className="btn btn-primary" style={{ padding: "8px 18px", flex: "none" }}
+              onClick={async () => {
+                setPushSent("");
+                const r = await api<{ sent: number }>("/api/notify", { json: {
+                  action: "pushMessage", text: pushMsg.text,
+                  role: pushMsg.role || undefined, userId: pushMsg.userId || undefined,
+                } });
+                setPushSent(tx("settings.pushSentTo", "Sent to {n} people").replace("{n}", String(r.sent)));
+                setPushMsg({ text: "", role: "", userId: "" });
+              }}>
+              {tx("common.send", "Send")}
+            </button>
+          </div>
+          {pushSent ? <div className="small" style={{ color: "var(--c-green-deep)" }}>{pushSent}</div> : null}
+        </div>
+
         <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>{tx("settings.featureSwitches", "Feature switches")}</h6>
         <div style={{ display: "flex", flexDirection: "column" }}>
           {togglesFor(t).map(([key, label, hint]) => (
@@ -462,6 +531,11 @@ export default function ControlPanel() {
           <input className="input" placeholder={tx("settings.writeAPinnedAnnouncementPh", "Write a pinned announcement…")} value={announce} onChange={(e) => setAnnounce(e.target.value)} />
           <button className="btn btn-primary" style={{ padding: "8px 16px", flex: "none" }} onClick={postAnnouncement}>{tx("settings.post", "Post")}</button>
         </div>
+        <label className="radio fs-small">
+          <input type="checkbox" checked={announcePush} onChange={(e) => setAnnouncePush(e.target.checked)} />
+          <span className="dot" />
+          {tx("settings.announcePush", "Also push it to every phone — the ticker only reaches people who open the app")}
+        </label>
         {announcements.map((a) => (
           <div key={a.id} className="listrow py-2">
             <div style={{ flex: 1, fontSize: 13 }}>{a.body}</div>
@@ -479,7 +553,19 @@ export default function ControlPanel() {
           <a className="btn btn-secondary" href="/api/backup" style={{ padding: 9, textAlign: "center" }}>
             {tx("settings.downloadABackup", "Download a backup")}
           </a>
+          <button className="btn btn-secondary" style={{ padding: "8px 16px" }}
+            onClick={async () => {
+              setMigrateMsg("…");
+              try {
+                const r = await api<any>("/api/admin", { json: { action: "migrateToCloud" } });
+                setMigrateMsg(tx("settings.migrated", "{a} moved to cloud storage, {b} already there, {c} failed")
+                  .replace("{a}", String(r.moved)).replace("{b}", String(r.alreadyDone)).replace("{c}", String(r.failed)));
+              } catch (e: any) { setMigrateMsg(e?.message || "failed"); }
+            }}>
+            {tx("settings.migrateCloud", "Move photos to cloud storage")}
+          </button>
         </div>
+        {migrateMsg ? <div className="small muted">{migrateMsg}</div> : null}
 
         <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>{tx("settings.closingTheMonth", "Closing the month")}</h6>
         <div className="card gap-3">

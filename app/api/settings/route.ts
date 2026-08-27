@@ -52,6 +52,16 @@ export async function POST(req: Request) {
         db.settings.cities = cleaned;
         continue;
       }
+      if (k === "pushTypes") {
+        requireUser(["admin"]);
+        const incoming = (v ?? {}) as Record<string, unknown>;
+        const next = { ...db.settings.pushTypes };
+        for (const key of Object.keys(next) as (keyof typeof next)[]) {
+          if (typeof incoming[key] === "boolean") next[key] = incoming[key] as boolean;
+        }
+        db.settings.pushTypes = next;
+        continue;
+      }
       if (k === "defaultLang") {
         requireUser(["admin"]);
         db.settings.defaultLang = v === "ar" ? "ar" : "en";

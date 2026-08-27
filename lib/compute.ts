@@ -14,8 +14,20 @@ export function dailyRate(baseSalary: number): number {
   return Math.round(baseSalary / 26);
 }
 
-export function notify(db: DB, seq: () => number, userId: number, body: string, href: string | null) {
+export type PushType = keyof DB["settings"]["pushTypes"];
+
+export function notify(
+  db: DB, seq: () => number, userId: number, body: string, href: string | null,
+  type?: PushType,
+) {
+  // The bell records everything, always — the switches below gate only the
+  // phone push. A person can open the app and see the full history whatever
+  // the owner has muted.
   db.notifications.push({ id: seq(), userId, body, href, ts: nowIso(), read: false });
+  // Owner-controlled, company-wide. An untyped notify always pushes: safer
+  // for a future call site that forgets to classify itself than a message
+  // that silently never reaches a phone.
+  if (type && db.settings.pushTypes && db.settings.pushTypes[type] === false) return;
   // Phone push (no-op until VAPID keys exist, i.e. after deployment).
   import("./push").then((m) => m.pushToUser(db, userId, db.settings.companyName, body, href)).catch(() => {});
 }
@@ -23,14 +35,17 @@ export function notify(db: DB, seq: () => number, userId: number, body: string, 
 // Same as notify(), but if this person already has an UNREAD notification
 // pointing at the same place, it refreshes that one instead of stacking another.
 // Six people chatting in a group would otherwise bury every approval alert.
-export function notifyOnce(db: DB, seq: () => number, userId: number, body: string, href: string | null) {
+export function notifyOnce(
+  db: DB, seq: () => number, userId: number, body: string, href: string | null,
+  type?: PushType,
+) {
   const existing = db.notifications.find((n) => n.userId === userId && n.href === href && !n.read);
   if (existing) {
     existing.body = body;
     existing.ts = nowIso();
     return;
   }
-  notify(db, seq, userId, body, href);
+  notify(db, seq, userId, body, href, type);
 }
 
 // Attach a change to the record it happened to, so the record can tell its own

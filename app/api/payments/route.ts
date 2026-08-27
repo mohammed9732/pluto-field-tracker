@@ -94,7 +94,7 @@ export async function POST(req: Request) {
         for (const a of db.users.filter((u) => u.active && (u.role === "accountant" || u.role === "admin"))) {
           notify(db, () => nextId(db), a.id,
             `Shortfall: ${user.name} collected ${amount.toLocaleString()} of ${open.amount.toLocaleString()} IQD scheduled from ${doctor.name}${open.invoiceNo ? ` (invoice ${open.invoiceNo})` : ""}.`,
-            "/acct/collections");
+            "/acct/collections", "payment");
         }
       }
     }
@@ -105,7 +105,7 @@ export async function POST(req: Request) {
     // Money coming in is the accountant's business, and the owner's.
     for (const a of db.users.filter((u) => u.active && (u.role === "accountant" || u.role === "admin") && u.id !== user.id)) {
       notify(db, () => nextId(db), a.id,
-        `${user.name} collected ${amount.toLocaleString()} IQD from ${doctor.name}.`, "/acct");
+        `${user.name} collected ${amount.toLocaleString()} IQD from ${doctor.name}.`, "/acct", "payment");
     }
     saveDb();
     return Response.json({

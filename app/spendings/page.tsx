@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { compressImage } from "@/lib/image";
 import { useT } from "@/lib/i18n";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { Icon, paths } from "@/components/Icons";
@@ -37,7 +38,8 @@ export default function Spendings() {
   if (!me || !data) return <Spinner />;
   if (!data.enabled) return <Screen me={me}><div className="card muted">{tx("spend.spendingsAreSwitchedOff", "Spendings are switched off by the admin.")}</div></Screen>;
 
-  async function attachReceipt(file: File) {
+  async function attachReceipt(raw: File) {
+    const file = await compressImage(raw);
     const fd = new FormData();
     fd.append("file", file);
     const r = await fetch("/api/files", { method: "POST", body: fd }).then((x) => x.json());

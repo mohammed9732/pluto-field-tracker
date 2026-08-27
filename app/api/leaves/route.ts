@@ -70,7 +70,7 @@ export async function POST(req: Request) {
       db.leaves.push(leave);
       // Leave has to be seen by someone, or it sits unanswered.
       for (const a of db.users.filter((u) => u.active && (u.role === "supervisor" || u.role === "admin") && u.id !== user.id)) {
-        notify(db, () => nextId(db), a.id, `${user.name} requested leave.`, "/approvals");
+        notify(db, () => nextId(db), a.id, `${user.name} requested leave.`, "/approvals", "leave");
       }
       saveDb();
       return Response.json({ ok: true, leave });
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
       leave.decidedBy = user.id;
       notify(db, () => nextId(db), leave.userId,
         `Your ${leave.type} leave (${leave.start} to ${leave.end}) was ${leave.status} by ${user.name}.`,
-        "/leave");
+        "/leave", "leave");
       saveDb();
       return Response.json({ ok: true, leave });
     }
