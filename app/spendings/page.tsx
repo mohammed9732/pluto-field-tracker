@@ -1,4 +1,5 @@
 "use client";
+import { openImage } from "@/components/Lightbox";
 import { useCallback, useEffect, useState } from "react";
 import { compressImage } from "@/lib/image";
 import { useT } from "@/lib/i18n";
@@ -117,7 +118,7 @@ export default function Spendings() {
                 </div>
                 <span className="hnum fs-body">{money(s.amount)}</span>
               </div>
-              {s.receipt ? <a className="small" href={`/api/files?id=${s.receipt}`} target="_blank">{tx("spend.viewReceipt", "View receipt")}</a> : <span className="small" style={{ color: "var(--c-amber-deep)" }}>{tx("spend.noReceiptAttached", "No receipt attached")}</span>}
+              {s.receipt ? <a className="small" href="#" onClick={(e) => { e.preventDefault(); openImage(`/api/files?id=${s.receipt}`); }}>{tx("spend.viewReceipt", "View receipt")}</a> : <span className="small" style={{ color: "var(--c-amber-deep)" }}>{tx("spend.noReceiptAttached", "No receipt attached")}</span>}
               <div className="two">
                 <button className="btn btn-primary" style={{ padding: 8 }} onClick={() => decide(s.id, "approve")}>{tx("spend.approve", "Approve")}</button>
                 <button className="btn btn-secondary" style={{ padding: 8 }} onClick={() => decide(s.id, "reject")}>{tx("spend.reject", "Reject…")}</button>

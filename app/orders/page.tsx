@@ -1,4 +1,5 @@
 "use client";
+import { openImage } from "@/components/Lightbox";
 import { MascotNote } from "@/components/MascotNote";
 import { useT } from "@/lib/i18n";
 import Link from "next/link";
@@ -125,7 +126,7 @@ function OrdersInner() {
                   {me.role === "rep" ? "" : `by ${p.collectedByName} · `}{dmy(p.ts)} {hm(p.ts)} · {p.method}{p.note ? ` · ${p.note}` : ""}
                 </div>
               </div>
-              {p.photo ? <a className="small" href={`/api/files?id=${p.photo}`} target="_blank">receipt</a> : null}
+              {p.photo ? <a className="small" href="#" onClick={(e) => { e.preventDefault(); openImage(`/api/files?id=${p.photo}`); }}>receipt</a> : null}
               <span className="hnum fs-body">{money(p.amount)}</span>
             </div>
           ))}

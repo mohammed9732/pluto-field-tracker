@@ -9,9 +9,11 @@ import { api } from "@/lib/fmt";
 import { getPosition } from "@/lib/geo";
 import * as XLSX from "xlsx";
 
-const EMPTY_DOC = { name: "", clinic: "", city: "", area: "", address: "", specialty: "Dermatologist", class: "B", phone: "", secretaryPhone: "", potentialMonthly: "" };
+const EMPTY_DOC = { name: "", clinic: "", city: "", area: "", address: "", specialty: "Dermatologist", class: "B", phone: "", clinicPhone: "", secretaryPhone: "", potentialMonthly: "" };
 
-const TEMPLATE_HEADERS = ["Doctor Name", "Clinic Name", "City", "Area", "Specialty", "Class (A/B/C)", "Phone"];
+// Must match the sheet the owner circulates — the last two columns are the
+// doctor's own number and the clinic's landline, in that order.
+const TEMPLATE_HEADERS = ["Doctor Name", "Clinic Name", "City", "Area", "Specialty", "Class (A/B/C)", "Personal Phone", "Clinic phone"];
 
 export default function Doctors() {
   const tx = useT();
@@ -75,7 +77,7 @@ export default function Doctors() {
       const ws = wb.Sheets[wb.SheetNames[0]];
       const raw: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
       const rows = raw.slice(1).filter((r) => r.some((c) => String(c).trim() !== "")).map((r) => ({
-        name: r[0], clinic: r[1], city: String(r[2] ?? "").toLowerCase(), area: r[3], specialty: r[4], class: String(r[5] ?? "").toUpperCase(), phone: r[6],
+        name: r[0], clinic: r[1], city: String(r[2] ?? "").toLowerCase(), area: r[3], specialty: r[4], class: String(r[5] ?? "").toUpperCase(), phone: r[6], clinicPhone: r[7],
       }));
       setPreview({ rows, filename: f.name });
       setImportResult(null);
@@ -129,12 +131,17 @@ export default function Doctors() {
                 <option>A</option><option>B</option><option>C</option>
               </select>
             </div>
-            <div className="field m0"><label>{tx("docs.phone", "Phone")}</label><input className="input" value={newDoc.phone} onChange={(e) => setNewDoc({ ...newDoc, phone: e.target.value })} /></div>
+            <div className="field m0"><label>{tx("docs.phone", "Personal phone")}</label><input className="input hnum" inputMode="tel" value={newDoc.phone} onChange={(e) => setNewDoc({ ...newDoc, phone: e.target.value })} /></div>
           </div>
           <div className="field m0">
             <label>{tx("docs.monthlyPotentialIqdOptional", "Monthly potential (IQD, optional)")}</label>
             <input className="input" inputMode="numeric" placeholder={tx("docs.whatThisDoctorShouldPh", "What this doctor should buy per month")}
               value={newDoc.potentialMonthly} onChange={(e) => setNewDoc({ ...newDoc, potentialMonthly: e.target.value })} />
+            <div className="field">
+              <label>{tx("docs.clinicPhone", "Clinic phone")}</label>
+              <input className="input hnum" inputMode="tel" placeholder="066 000 0000"
+                value={newDoc.clinicPhone} onChange={(e) => setNewDoc({ ...newDoc, clinicPhone: e.target.value })} />
+            </div>
             <div className="field">
               <label>{tx("docs.secretaryPhoneOptional", "Secretary phone (optional)")}</label>
               <input className="input hnum" inputMode="tel" placeholder="0750 000 0000"
@@ -224,7 +231,7 @@ export default function Doctors() {
       </div>
       <div className="hint mt-auto">
         {scoped ? "You see the doctors in your city. " : ""}Grey pin = no clinic location yet — captured by the rep on first visit.{" "}
-        {canEdit ? <>Import template: Name | Clinic | City | Area | Specialty | Class | Phone. <a href="#" onClick={(e) => { e.preventDefault(); downloadTemplate(); }}>{tx("docs.downloadBlankTemplate", "Download blank template")}</a>.</> : null}
+        {canEdit ? <>Import template: Name | Clinic | City | Area | Specialty | Class | Personal phone | Clinic phone. <a href="#" onClick={(e) => { e.preventDefault(); downloadTemplate(); }}>{tx("docs.downloadBlankTemplate", "Download blank template")}</a>.</> : null}
       </div>
     </Screen>
   );

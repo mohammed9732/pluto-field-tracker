@@ -70,7 +70,7 @@ export async function POST(req: Request) {
         const cs = ceilingStatus(db, Number(b.doctorId));
         if (cs.level === "red" && user.role === "rep") {
           return Response.json({
-            error: `This customer has reached their monthly ceiling (${cs.used.toLocaleString()} of ${cs.ceiling.toLocaleString()} IQD). Ordering reopens next month — or ask your supervisor.`,
+            error: `This customer has reached their sales ceiling (${cs.used.toLocaleString()} of ${cs.ceiling.toLocaleString()} IQD outstanding). It reopens when they pay down the balance — or ask your supervisor.`,
           }, { status: 400 });
         }
       }
@@ -109,19 +109,31 @@ export async function POST(req: Request) {
         });
       if (!items.length) return Response.json({ error: "Add at least one product" }, { status: 400 });
       if (!b.doctorId) return Response.json({ error: "Pick a doctor" }, { status: 400 });
+      /* The owner's rule: a supervisor's own order needs no second
+       * signature. It is born approved and goes straight to the accountant's
+       * queue — the old separation-of-duties block meant Dr. Alan could not
+       * move his own orders at all. Reps still need supervisor approval, and
+       * sample requests still go through approval whoever raises them. */
+      const auto = user.role === "supervisor" && !isSample;
       const order = {
         id: nextId(db), doctorId: Number(b.doctorId), createdBy: user.id, createdAt: nowIso(),
-        status: "pending" as const, isSample, items,
+        status: auto ? ("approved" as const) : ("pending" as const), isSample, items,
         clientRef: b.clientRef ? String(b.clientRef) : null,
-        approvedBy: null, approvedAt: null, rejectNote: null,
+        approvedBy: auto ? user.id : null, approvedAt: auto ? nowIso() : null, rejectNote: null,
         invoicePdfName: null, invoicePdfId: null, invoicedBy: null, invoicedAt: null,
       };
       if (isClosed(db, order.createdAt)) {
         return Response.json({ error: closedError(db) }, { status: 400 });
       }
       db.orders.push(order);
-      const approvers = db.users.filter((u) => u.active && (u.role === "supervisor" || u.role === "admin") && u.id !== user.id);
-      for (const a of approvers) notify(db, () => nextId(db), a.id, `New ${isSample ? "SAMPLE request" : "order"} from ${user.name} awaits approval.`, "/approvals", "orderNew");
+      if (auto) {
+        const docName = db.doctors.find((d) => d.id === order.doctorId)?.name ?? "?";
+        for (const a of db.users.filter((u) => u.active && (u.role === "accountant" || u.role === "admin")))
+          notify(db, () => nextId(db), a.id, `Order from ${user.name} for ${docName} is ready to invoice.`, "/acct/queue", "orderNew");
+      } else {
+        const approvers = db.users.filter((u) => u.active && (u.role === "supervisor" || u.role === "admin") && u.id !== user.id);
+        for (const a of approvers) notify(db, () => nextId(db), a.id, `New ${isSample ? "SAMPLE request" : "order"} from ${user.name} awaits approval.`, "/approvals", "orderNew");
+      }
       saveDb();
       return Response.json({ ok: true, order: enrich(db, order) });
     }

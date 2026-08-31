@@ -58,15 +58,19 @@ export function GeoMap({ checkins, visits, pings, doctorPins = [], height = 280 
         map.fitBounds(L.latLngBounds(pts).pad(0.2));
       }
 
-      // Every known clinic, drawn first so it sits under today's activity and
-      // deliberately small and grey: this is background, not the story. It is
-      // also left out of the bounds calculation above, or one far-flung clinic
-      // would zoom the whole map out and today's route would vanish.
+      // Every known clinic, drawn first so it sits under today's activity.
+      // Blue pins, not faint circles — the owner wants clinics visible at a
+      // glance. Still left out of the bounds calculation above, or one
+      // far-flung clinic would zoom the map out and today's route would vanish.
       const visitedToday = new Set(visits.map((v: any) => v.doctorId));
       for (const doc of doctorPins) {
         if (doc.lat == null || doc.lng == null || visitedToday.has(doc.id)) continue;
-        L.circleMarker([doc.lat, doc.lng], {
-          radius: 5, color: "#8a7c6a", fillColor: "#fff", fillOpacity: 0.95, weight: 2,
+        L.marker([doc.lat, doc.lng], {
+          icon: L.divIcon({
+            className: "",
+            html: `<svg width="20" height="28" viewBox="0 0 20 28"><path d="M10 0C4.5 0 0 4.4 0 9.8 0 17 10 28 10 28s10-11 10-18.2C20 4.4 15.5 0 10 0Z" fill="#2f6fe0" stroke="#fff" stroke-width="1.5"/><circle cx="10" cy="9.5" r="3.6" fill="#fff"/></svg>`,
+            iconSize: [20, 28], iconAnchor: [10, 27], popupAnchor: [0, -24],
+          }),
         }).addTo(map).bindPopup(
           `<div style="font:13px Barlow,system-ui;min-width:150px">
             <b>${escapeHtml(doc.name)}</b>${doc.class ? ` <span style="opacity:.6">· ${escapeHtml(doc.class)}</span>` : ""}<br>

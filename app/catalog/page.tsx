@@ -1,4 +1,5 @@
 "use client";
+import { openImage } from "@/components/Lightbox";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "@/lib/i18n";
 import { Screen, useMe, Spinner } from "@/components/Shell";
@@ -77,7 +78,7 @@ export default function Catalog() {
           <div key={p.id} className="card gap-3">
             <div className="row" style={{ gap: 12, alignItems: "flex-start" }}>
               {p.imageId ? (
-                <a href={`/api/files?id=${p.imageId}`} target="_blank" style={{ flex: "none" }}>
+                <a href="#" onClick={(e) => { e.preventDefault(); openImage(`/api/files?id=${p.imageId}`); }} style={{ flex: "none" }}>
                   <img src={`/api/files?id=${p.imageId}`} alt={p.name}
                     style={{ width: 76, height: 76, objectFit: "cover", borderRadius: 12, display: "block" }} />
                 </a>

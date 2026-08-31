@@ -54,9 +54,11 @@ export interface Doctor {
   createdBy: number;
   potentialMonthly: number; // what this doctor should buy per month (IQD), 0 = not set
   secretaryPhone?: string | null; // the person who actually books the appointment
-  /* Monthly sales ceiling in IQD, set by the accountant. Everything not
-     rejected counts toward it (samples excluded), so a rep cannot stack
-     pending orders under the limit. 0 or absent = no ceiling. Reps are
+  clinicPhone?: string | null; // the clinic's landline — its own column on the import sheet
+  /* Lifetime sales ceiling in IQD — a credit limit, set by the accountant.
+     Usage = everything ever ordered (not rejected, samples excluded, pending
+     included so orders can't stack under it) minus everything ever paid, so
+     a payment brings the bar back down. 0 or absent = no ceiling. Reps are
      blocked at the ceiling; supervisor and owner may order past it. */
   salesCeiling?: number | null;
 }

@@ -1,4 +1,5 @@
 "use client";
+import { openImage } from "@/components/Lightbox";
 import { useCallback, useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 import { Screen, useMe, Spinner, PageHead } from "@/components/Shell";
@@ -328,7 +329,7 @@ export default function MoneyIn() {
                     <td>{c.method === "cash" ? tx("acct.cash", "Cash") : tx("acct.transfer", "Transfer")}</td>
                     <td>
                       {c.photo
-                        ? <a href={`/api/files?id=${c.photo}`} target="_blank" rel="noreferrer">{tx("acct.receipt", "receipt")}</a>
+                        ? <a href="#" onClick={(e) => { e.preventDefault(); openImage(`/api/files?id=${c.photo}`); }}>{tx("acct.receipt", "receipt")}</a>
                         : <span style={{ color: "var(--c-amber-deep)" }}>{tx("acct.noPhoto", "no photo")}</span>}
                     </td>
                     <td className="ta-r hnum w-700">{money0(c.amount)}</td>

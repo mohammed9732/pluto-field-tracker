@@ -880,3 +880,17 @@ textarea.input { min-height: 78px; resize: vertical; }
   .card, .table, .tile { box-shadow: none !important; }
   .screen-pad > * { animation: none !important; opacity: 1 !important; }
 }
+
+/* Feel like an app, not a web page. Long-pressing text popped the copy
+ * bubble and long-pressing anything that links offered "Open in new tab" —
+ * both scream "browser". Selection stays available where people actually
+ * type or copy: inputs, textareas, and chat/code content that opts back in. */
+html {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+input, textarea, [contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+}

@@ -1,4 +1,5 @@
 "use client";
+import { openImage } from "@/components/Lightbox";
 import { compressImage } from "@/lib/image";
 import { enqueue, isOffline, newRef } from "@/lib/outbox";
 import { useT } from "@/lib/i18n";
@@ -119,7 +120,7 @@ function CollectPaymentInner() {
             <div style={{ display: "flex" }}><span style={{ width: 92, color: "var(--color-neutral-600)" }}>{tx("pay.collectedBy", "Collected by")}</span><span>{done.collectedByName} · {dmy(done.ts)} {done.ts.slice(11, 16)}</span></div>
             <div style={{ display: "flex" }}><span style={{ width: 92, color: "var(--color-neutral-600)" }}>{tx("pay.reference", "Reference")}</span><span>{done.ref}</span></div>
           </div>
-          {done.photo ? <img src={`/api/files?id=${done.photo}`} alt={tx("pay.signedReceiptPh", "signed receipt")} style={{ maxWidth: "100%", borderRadius: 12, maxHeight: 220, objectFit: "cover" }} /> : null}
+          {done.photo ? <img src={`/api/files?id=${done.photo}`} alt={tx("pay.signedReceiptPh", "signed receipt")} onClick={() => openImage(`/api/files?id=${done.photo}`)} style={{ maxWidth: "100%", borderRadius: 12, maxHeight: 220, objectFit: "cover", cursor: "pointer" }} /> : null}
         </div>
         <div className="two-3">
           <button className="btn btn-secondary" style={{ padding: 11 }} onClick={() => { setDone(null); setDoctor(null); setAmount(""); setNote(""); setPhoto(null); }}>{tx("pay.recordAnother", "Record another")}</button>

@@ -111,13 +111,15 @@ export async function POST(req: Request) {
           area: b.area ?? doc.area, address: b.address ?? doc.address, class: b.class ?? doc.class,
           specialty: b.specialty ?? doc.specialty, phone: b.phone ?? doc.phone,
           secretaryPhone: b.secretaryPhone ?? doc.secretaryPhone ?? "",
+          clinicPhone: b.clinicPhone ?? doc.clinicPhone ?? "",
           potentialMonthly: b.potentialMonthly != null ? Math.max(0, Math.round(Number(b.potentialMonthly))) : doc.potentialMonthly,
         };
         // Record each field that actually moved, in words the owner can read.
         const labels: Record<string, string> = {
           name: "Name", clinic: "Clinic", city: "City", area: "Area", address: "Address",
           class: "Class", specialty: "Specialty", phone: "Phone",
-          secretaryPhone: "Secretary phone", potentialMonthly: "Monthly potential",
+          secretaryPhone: "Secretary phone", clinicPhone: "Clinic phone",
+          potentialMonthly: "Monthly potential",
         };
         for (const [k, v] of Object.entries(next)) {
           const before = (doc as any)[k];
@@ -140,6 +142,7 @@ export async function POST(req: Request) {
         id: nextId(db), name: b.name, clinic: b.clinic ?? "", city: wantCity,
         area: b.area ?? "", address: b.address ?? "", class: (b.class ?? "B") as "A" | "B" | "C", specialty: b.specialty ?? "Dermatologist",
         phone: b.phone ?? "", secretaryPhone: b.secretaryPhone ?? "",
+        clinicPhone: b.clinicPhone ?? "",
         potentialMonthly: Math.max(0, Math.round(Number(b.potentialMonthly) || 0)),
         lat: b.lat ?? null, lng: b.lng ?? null,
         locationSetBy: b.lat != null ? user.id : null, locationSetAt: b.lat != null ? new Date().toISOString().slice(0, 19) : null, createdBy: user.id,
@@ -156,7 +159,7 @@ export async function POST(req: Request) {
       const doc = db.doctors.find((d) => d.id === Number(b.doctorId));
       if (!doc) return Response.json({ error: "Doctor not found" }, { status: 404 });
       const ceiling = Math.max(0, Math.round(Number(String(b.ceiling ?? 0).replace(/,/g, "")) || 0));
-      recordChange(db, () => nextId(db), user.id, "doctor", doc.id, "Monthly ceiling changed",
+      recordChange(db, () => nextId(db), user.id, "doctor", doc.id, "Sales ceiling changed",
         `${(doc.salesCeiling ?? 0).toLocaleString()} → ${ceiling.toLocaleString()}`);
       doc.salesCeiling = ceiling || null;
       saveDb();
@@ -205,6 +208,7 @@ export async function POST(req: Request) {
           address: String(r.address ?? "").trim(), potentialMonthly: Math.max(0, Math.round(Number(r.potential) || 0)),
           class: cls as "A" | "B" | "C", specialty: String(r.specialty ?? "").trim() || "Dermatologist",
           phone: String(r.phone ?? "").trim(), secretaryPhone: String(r.secretaryPhone ?? r.secretary ?? "").trim(),
+          clinicPhone: String(r.clinicPhone ?? "").trim(),
           lat: null, lng: null,
           locationSetBy: null, locationSetAt: null, createdBy: user.id,
         });

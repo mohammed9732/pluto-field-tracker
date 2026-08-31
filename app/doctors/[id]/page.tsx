@@ -1,4 +1,5 @@
 "use client";
+import { openImage } from "@/components/Lightbox";
 import { RecordHistory } from "@/components/RecordHistory";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -130,8 +131,10 @@ export default function DoctorProfile() {
               <input className="input" value={edit.name ?? ""} onChange={(e) => setEdit({ ...edit, name: e.target.value })} /></div>
             <div className="field m0"><label>{t("doctor.clinic", "Clinic")}</label>
               <input className="input" value={edit.clinic ?? ""} onChange={(e) => setEdit({ ...edit, clinic: e.target.value })} /></div>
-            <div className="field m0"><label>{t("common.phone", "Phone")}</label>
+            <div className="field m0"><label>{t("common.phone", "Personal phone")}</label>
               <input className="input hnum" inputMode="tel" value={edit.phone ?? ""} onChange={(e) => setEdit({ ...edit, phone: e.target.value })} /></div>
+            <div className="field m0"><label>{t("doctor.clinicPhone", "Clinic phone")}</label>
+              <input className="input hnum" inputMode="tel" value={edit.clinicPhone ?? ""} onChange={(e) => setEdit({ ...edit, clinicPhone: e.target.value })} /></div>
             <div className="field m0"><label>{t("doctor.secretary", "Secretary phone")}</label>
               <input className="input hnum" inputMode="tel" value={edit.secretaryPhone ?? ""} onChange={(e) => setEdit({ ...edit, secretaryPhone: e.target.value })} /></div>
             <div className="field m0"><label>{t("doctor.specialty", "Specialty")}</label>
@@ -157,6 +160,7 @@ export default function DoctorProfile() {
                   await api("/api/doctors", { json: {
                     action: "update", id: d.id,
                     name: edit.name, clinic: edit.clinic, phone: edit.phone,
+                    clinicPhone: edit.clinicPhone,
                     secretaryPhone: edit.secretaryPhone, specialty: edit.specialty,
                     area: edit.area, address: edit.address, class: edit.class,
                     potentialMonthly: Number(edit.potentialMonthly) || 0,
@@ -183,6 +187,7 @@ export default function DoctorProfile() {
             appointment, so their number gets equal billing rather than being
             squeezed onto the end of a line. */}
         {d.phone ? <ContactRow label={t("common.phone", "Doctor")} number={d.phone} /> : null}
+        {d.clinicPhone ? <ContactRow label={t("doctor.clinicPhone", "Clinic")} number={String(d.clinicPhone)} /> : null}
         {d.secretaryPhone ? <ContactRow label={t("doctor.secretary", "Secretary")} number={String(d.secretaryPhone)} /> : null}
         <div className="row gap-2">
           <Icon d={paths.pinDot} size={14} stroke={d.lat != null ? "var(--color-accent)" : "var(--color-neutral-400)"} />
@@ -217,7 +222,7 @@ export default function DoctorProfile() {
       {(data.ceiling?.ceiling > 0 || data.canSetCeiling) ? (
         <div className="card" style={{ gap: 6, borderColor: data.ceiling?.level === "red" ? "var(--c-coral)" : data.ceiling?.level === "amber" ? "var(--c-amber)" : undefined }}>
           <div className="row items-base gap-2">
-            <h6 className="m0 f1">{t("doctor.monthlyCeiling", "Monthly ceiling")}</h6>
+            <h6 className="m0 f1">{t("doctor.monthlyCeiling", "Sales ceiling")}</h6>
             {data.ceiling?.ceiling > 0 ? (
               <>
                 <span className="hnum fs-lead">{money(data.ceiling.used)}</span>
@@ -233,9 +238,14 @@ export default function DoctorProfile() {
                   background: data.ceiling.level === "red" ? "var(--c-coral)" : data.ceiling.level === "amber" ? "var(--c-amber)" : undefined,
                 }} />
               </div>
+              {/* The bar is a balance, not a month: payments pull it back down. */}
+              <div className="small muted">
+                {t("doctor.ceilingMath", "Ordered {a} − paid {b}")
+                  .replace("{a}", money(data.ceiling.ordered ?? 0)).replace("{b}", money(data.ceiling.paid ?? 0))}
+              </div>
               {data.ceiling.level === "red" ? (
                 <div className="small" style={{ color: "var(--c-coral-deep)", fontWeight: 600 }}>
-                  {t("doctor.ceilingReached", "Ceiling reached — ordering is closed for this month.")}
+                  {t("doctor.ceilingReached", "Ceiling reached — ordering is closed until the balance comes down.")}
                 </div>
               ) : data.ceiling.level === "amber" ? (
                 <div className="small" style={{ color: "var(--c-amber-deep)" }}>
@@ -361,7 +371,7 @@ export default function DoctorProfile() {
               <div className="f1min">
                 <div className="fs-small">{OUTCOME[v.outcome] ?? v.outcome} · <span className="muted">{v.byName}</span></div>
                 {v.notes ? <div className="small muted">{v.notes}</div> : null}
-                {v.photo ? <img src={`/api/files?id=${v.photo}`} alt={tx("docp.visitPh", "visit")} style={{ maxWidth: "100%", borderRadius: 10, marginTop: 4, maxHeight: 140, objectFit: "cover" }} /> : null}
+                {v.photo ? <img src={`/api/files?id=${v.photo}`} alt={tx("docp.visitPh", "visit")} onClick={() => openImage(`/api/files?id=${v.photo}`)} style={{ maxWidth: "100%", borderRadius: 10, marginTop: 4, maxHeight: 140, objectFit: "cover", cursor: "pointer" }} /> : null}
               </div>
             </div>
           ))}

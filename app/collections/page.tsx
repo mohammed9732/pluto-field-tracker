@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Screen, useMe, Spinner, PageHead } from "@/components/Shell";
+import { useCallback, useEffect, useState } from "react";
+import { Screen, useMe, Spinner, PageHead, useRefresh } from "@/components/Shell";
 import { api, dmy, money } from "@/lib/fmt";
 import { useT } from "@/lib/i18n";
 
@@ -16,9 +16,9 @@ export default function CollectionsPage() {
   const tx = useT();
   const [data, setData] = useState<any>(null);
 
-  useEffect(() => {
-    api("/api/collections").then(setData).catch(() => {});
-  }, []);
+  const load = useCallback(() => { api("/api/collections").then(setData).catch(() => {}); }, []);
+  useEffect(load, [load]);
+  useRefresh(load);
 
   if (!me || !data) return <Spinner />;
 

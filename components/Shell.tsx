@@ -1,4 +1,5 @@
 "use client";
+import { LightboxHost } from "@/components/Lightbox";
 import { LangToggle } from "./LangToggle";
 import { OutboxBar } from "./OutboxBar";
 import { setBrand, setTerms, term, useBrand, useTerms } from "@/lib/terms";
@@ -361,8 +362,22 @@ export function Screen({ me, children, nav = true, alerts = true, wide = true }:
       </div>
       {nav && me ? <BottomNav me={me} /> : null}
       {wide && me ? <ChatDock /> : null}
+      <LightboxHost />
     </div>
   );
+}
+
+/* Re-fetch when the app comes back to the foreground. An installed PWA is
+ * frozen, not closed: reopening it showed whatever was on screen when it was
+ * last used — which is why the collections list looked like it was lagging.
+ * Any screen whose data changes behind the user's back should call this. */
+export function useRefresh(fn: () => void) {
+  useEffect(() => {
+    const on = () => { if (document.visibilityState === "visible") fn(); };
+    document.addEventListener("visibilitychange", on);
+    window.addEventListener("focus", on);
+    return () => { document.removeEventListener("visibilitychange", on); window.removeEventListener("focus", on); };
+  }, [fn]);
 }
 
 export function PageHead({ title, back, right }: { title: string; back?: string; right?: React.ReactNode }) {

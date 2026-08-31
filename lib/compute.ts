@@ -86,15 +86,23 @@ export const APP_TZ_NOW = () => new Date();
 export function todayStr(): string {
   return localDateStr(new Date());
 }
+/* Every date in the app is anchored to Baghdad time (UTC+3 — Iraq has no
+ * DST), wherever the code runs. Railway's servers run on UTC, and using
+ * their clock made "today" arrive three hours late: a collection due Monday
+ * only reached the rep's phone at 3am. On a phone in Iraq this is identical
+ * to the local clock, so nothing changes for the people using it. */
+const BAGHDAD_MS = 3 * 3600 * 1000;
 export function localDateStr(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
+  const b = new Date(d.getTime() + BAGHDAD_MS);
+  const y = b.getUTCFullYear();
+  const m = String(b.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(b.getUTCDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
 export function nowIso(): string {
   const d = new Date();
-  return `${localDateStr(d)}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
+  const b = new Date(d.getTime() + BAGHDAD_MS);
+  return `${localDateStr(d)}T${String(b.getUTCHours()).padStart(2, "0")}:${String(b.getUTCMinutes()).padStart(2, "0")}:${String(b.getUTCSeconds()).padStart(2, "0")}`;
 }
 export function periodOf(dateIso: string): string {
   return dateIso.slice(0, 7); // YYYY-MM
@@ -191,17 +199,21 @@ export function productsFor(db: DB, user: { role: string; productLine?: string |
 export function ceilingStatus(
   db: DB,
   doctorId: number,
-): { ceiling: number; used: number; pct: number; level: "none" | "ok" | "amber" | "red" } {
+): { ceiling: number; used: number; ordered: number; paid: number; pct: number; level: "none" | "ok" | "amber" | "red" } {
   const doc = db.doctors.find((d) => d.id === doctorId);
   const ceiling = doc?.salesCeiling ?? 0;
-  if (!ceiling) return { ceiling: 0, used: 0, pct: 0, level: "none" };
-  const period = currentPeriod();
-  const used = db.orders
-    .filter((o) => o.doctorId === doctorId && o.status !== "rejected" && !o.isSample
-      && o.createdAt.slice(0, 7) === period)
+  if (!ceiling) return { ceiling: 0, used: 0, ordered: 0, paid: 0, pct: 0, level: "none" };
+  /* Lifetime, not monthly — the owner's rule. This is a credit limit:
+   * everything the customer has ever ordered minus everything they have
+   * ever paid. A payment brings the bar straight back down, and the
+   * accountant can raise or lower the limit at any moment. */
+  const ordered = db.orders
+    .filter((o) => o.doctorId === doctorId && o.status !== "rejected" && !o.isSample)
     .reduce((s, o) => s + o.items.reduce((x, it) => x + it.qty * it.price, 0), 0);
+  const paid = db.payments.filter((p) => p.doctorId === doctorId).reduce((s, p) => s + p.amount, 0);
+  const used = Math.max(0, ordered - paid);
   const pct = Math.round((used / ceiling) * 100);
-  return { ceiling, used, pct, level: pct >= 100 ? "red" : pct >= 80 ? "amber" : "ok" };
+  return { ceiling, used, ordered, paid, pct, level: pct >= 100 ? "red" : pct >= 80 ? "amber" : "ok" };
 }
 
 /* Flag unexcused no-check-in workdays (past days only) as pending

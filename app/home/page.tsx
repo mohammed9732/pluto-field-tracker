@@ -4,7 +4,7 @@ import { DailyBoost } from "@/components/DailyBoost";
 import { roleLabel, term, useTerms } from "@/lib/terms";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Screen, useMe, Spinner, Pips } from "@/components/Shell";
+import { Screen, useMe, Spinner, Pips, useRefresh } from "@/components/Shell";
 import { Icon, paths } from "@/components/Icons";
 import { api, dmy, durationHM, hm, dm, weekdayShort } from "@/lib/fmt";
 import { getPosition } from "@/lib/geo";
@@ -34,6 +34,7 @@ export default function Home() {
     }).catch(() => {});
   }, []);
   useEffect(load, [load]);
+  useRefresh(load);
 
   // Location ping while checked in and the app is open (interval from settings).
   useEffect(() => {

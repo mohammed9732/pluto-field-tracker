@@ -110,11 +110,11 @@ function NewOrderInner() {
           {ceilingRed ? (
             <div className="card" style={{ borderColor: "var(--c-coral)", gap: 4 }}>
               <div className="fs-small w-500" style={{ color: "var(--c-coral-deep)" }}>
-                {tx("neworder.ceilingReached", "This customer has reached their monthly ceiling.")}
+                {tx("neworder.ceilingReached", "This customer has reached their sales ceiling.")}
               </div>
               <div className="small muted">
                 {me.role === "rep"
-                  ? tx("neworder.ceilingRep", "Ordering reopens next month — or ask your supervisor.")
+                  ? tx("neworder.ceilingRep", "It reopens when they pay down their balance — or ask your supervisor.")
                   : tx("neworder.ceilingOverride", "You can still place this order — it goes past the limit knowingly.")}
               </div>
             </div>

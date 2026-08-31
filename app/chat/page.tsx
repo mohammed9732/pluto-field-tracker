@@ -1,4 +1,5 @@
 "use client";
+import { openImage } from "@/components/Lightbox";
 import { compressImage } from "@/lib/image";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "@/lib/i18n";
@@ -165,9 +166,9 @@ function ChatInner() {
               {m.mine ? hm(m.ts) : `${m.senderName} · ${hm(m.ts)}`}
             </span>
             {m.kind === "image" && m.fileId ? (
-              <a href={`/api/files?id=${m.fileId}`} target="_blank" className={m.mine ? "bubble-out" : "bubble-in"} style={{ padding: 4, background: m.mine ? "var(--c-violet)" : undefined }}>
+              <div onClick={() => openImage(`/api/files?id=${m.fileId}`)} className={m.mine ? "bubble-out" : "bubble-in"} style={{ padding: 4, background: m.mine ? "var(--c-violet)" : undefined, cursor: "pointer" }}>
                 <img src={`/api/files?id=${m.fileId}`} alt={m.fileName ?? "image"} style={{ maxWidth: 200, maxHeight: 200, borderRadius: 12, display: "block" }} />
-              </a>
+              </div>
             ) : m.kind === "voice" && m.fileId ? (
               <div className={m.mine ? "bubble-out" : "bubble-in"} style={{ padding: "6px 10px", background: m.mine ? "var(--c-violet)" : undefined }}>
                 <audio controls src={`/api/files?id=${m.fileId}`} style={{ height: 36, maxWidth: 210 }} />
