@@ -556,6 +556,13 @@ export interface Settings {
      reps scoped to their own customers. */
   docLibraryForField: boolean;
 
+  /* ERP import memory. The accounting system's inventory export names
+     products and warehouses its own way (and in Arabic); these maps remember
+     how the accountant linked them to app products and stock locations, so
+     next month's file applies with no questions. null = deliberately skip. */
+  erpProductAliases?: Record<string, number | null>;
+  erpWarehouseMap?: Record<string, string | null>;
+
   // Notice required before leave starts, in calendar days.
   leaveShortNoticeDays: number; // 1–2 day requests
   leaveLongNoticeDays: number;  // 3 days or more

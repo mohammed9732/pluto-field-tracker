@@ -89,6 +89,8 @@ export function buildSeed(): DB {
       task: true, collection: true, custom: true,
     },
     docLibraryForField: false,
+    erpProductAliases: {},
+    erpWarehouseMap: {},
     leaveShortNoticeDays: 2,
     leaveLongNoticeDays: 10,
     leaveShortMaxDays: 2,

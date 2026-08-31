@@ -30,6 +30,9 @@ export default function MoneyIn() {
   const [err, setErr] = useState("");
   const [repFilter, setRepFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  // A payment being corrected: {id, ref, amount, method, reason}, null = closed.
+  const [editPay, setEditPay] = useState<any>(null);
+  const [editErr, setEditErr] = useState("");
 
   const load = useCallback(() => {
     api("/api/collections").then(setSched).catch(() => {});
@@ -291,6 +294,36 @@ export default function MoneyIn() {
 
       {/* ═══════════ RECEIVED ═══════════ */}
       {tab === "received" ? (<>
+        {editPay ? (
+          <div className="card" style={{ gap: 8, borderColor: "var(--c-amber)" }}>
+            <h6 className="m0" style={{ color: "var(--c-amber-deep)" }}>
+              {tx("acct.fixPayment", "Correct payment")} <span className="hnum">{editPay.ref}</span>
+            </h6>
+            <div className="row gap-2">
+              <input className="input hnum f1" inputMode="numeric" value={editPay.amount}
+                onChange={(e) => setEditPay({ ...editPay, amount: groupDigits(e.target.value) })} />
+              <select className="input" style={{ width: 130 }} value={editPay.method}
+                onChange={(e) => setEditPay({ ...editPay, method: e.target.value })}>
+                <option value="cash">{tx("acct.cash", "Cash")}</option>
+                <option value="transfer">{tx("acct.transfer", "Transfer")}</option>
+              </select>
+            </div>
+            <input className="input" placeholder={tx("acct.correctionReason", "Why is it corrected? Required — goes on the record")}
+              value={editPay.reason} onChange={(e) => setEditPay({ ...editPay, reason: e.target.value })} />
+            {editErr ? <div className="tag tag-hot self-start">{editErr}</div> : null}
+            <div className="two">
+              <button className="btn btn-primary" style={{ padding: 9 }} onClick={async () => {
+                setEditErr("");
+                try {
+                  await api("/api/payments", { json: { action: "edit", id: editPay.id, amount: ungroup(editPay.amount), method: editPay.method, reason: editPay.reason } });
+                  setEditPay(null);
+                  load();
+                } catch (e: any) { setEditErr(e?.message || "Could not save"); }
+              }}>{tx("common.save", "Save")}</button>
+              <button className="btn btn-secondary" style={{ padding: 9 }} onClick={() => setEditPay(null)}>{tx("docs.cancel", "Cancel")}</button>
+            </div>
+          </div>
+        ) : null}
         <div className="row gap-2">
           <button className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 12px" }} onClick={exportReceived}>
             {tx("acct.exportToExcel", "Export to Excel")}
@@ -316,11 +349,12 @@ export default function MoneyIn() {
                   <th>{tx("pay.method", "Method")}</th>
                   <th>{tx("acct.receipt", "receipt")}</th>
                   <th className="ta-r">{tx("common.amount", "Amount")}</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
                 {receivedFiltered.length === 0 ? (
-                  <tr><td colSpan={6} className="muted">{tx("acct.noPaymentsThisMonth", "No payments this month.")}</td></tr>
+                  <tr><td colSpan={7} className="muted">{tx("acct.noPaymentsThisMonth", "No payments this month.")}</td></tr>
                 ) : receivedFiltered.map((c) => (
                   <tr key={c.ref}>
                     <td>{dmy(c.ts)} <span className="muted">{hm(c.ts)}</span></td>
@@ -333,12 +367,20 @@ export default function MoneyIn() {
                         : <span style={{ color: "var(--c-amber-deep)" }}>{tx("acct.noPhoto", "no photo")}</span>}
                     </td>
                     <td className="ta-r hnum w-700">{money0(c.amount)}</td>
+                    {/* Wrong figure typed in the field? The correction lives
+                        here, next to the number, with a mandatory reason. */}
+                    <td className="ta-r">
+                      <button className="btn btn-ghost" style={{ fontSize: 12, padding: "2px 8px" }}
+                        onClick={() => { setEditErr(""); setEditPay({ id: c.id, ref: c.ref, amount: groupDigits(String(c.amount)), method: c.method, reason: "" }); }}>
+                        ✎ {tx("acct.fix", "Fix")}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr>
-                  <td colSpan={5} className="w-700">
+                  <td colSpan={6} className="w-700">
                     {tx("coll.receivedCount", "{n} payments").replace("{n}", String(receivedFiltered.length))}
                   </td>
                   <td className="ta-r hnum w-700">{money0(receivedTotal)}</td>

@@ -42,6 +42,10 @@ export default function StockPage() {
   const [preview, setPreview] = useState<{ filename: string; rows: any[] } | null>(null);
   const [result, setResult] = useState<{ processed: number; errors: string[] } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  // The ERP inventory import: parsed rows plus the two mapping questions.
+  const [erp, setErp] = useState<{ filename: string; rows: any[]; nameMap: Record<string, string>; whMap: Record<string, string> } | null>(null);
+  const [erpErr, setErpErr] = useState("");
+  const erpRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(() => {
     api("/api/stock").then((r: any) => {
@@ -134,6 +138,78 @@ export default function StockPage() {
     setResult(r);
     setPreview(null);
     load();
+  }
+
+  /* The ERP's inventory export, exactly as downloaded — no editing needed.
+   *
+   * Two decoding facts about that file: the ERP writes it in the old Arabic
+   * Windows encoding (cp1256), which is why the warehouse names come out as
+   * ?????? when opened normally; and dates are written day/month/year. Both
+   * are handled here. Product and warehouse names the app has seen before
+   * are matched from the remembered maps; anything new is asked ONCE below
+   * and remembered for every future upload.
+   */
+  async function onErpFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    setErpErr("");
+    setResult(null);
+    const buf = await f.arrayBuffer();
+    let text: string;
+    try { text = new TextDecoder("utf-8", { fatal: true }).decode(buf); }
+    catch { text = new TextDecoder("windows-1256").decode(buf); }
+    const rows: any[] = [];
+    for (const line of text.split(/\r?\n/).slice(1)) {
+      const c = line.split(",");
+      const name = String(c[1] ?? "").trim();
+      const qty = Number(String(c[5] ?? "").trim());
+      if (!name || !Number.isFinite(qty)) continue;
+      let expiry: string | null = null;
+      const m = String(c[3] ?? "").trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (m) expiry = `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+      rows.push({ name, batch: String(c[2] ?? "").trim(), expiry, warehouse: String(c[4] ?? "").trim(), qty });
+    }
+    if (!rows.length) { setErpErr(tx("stk.erpEmpty", "No stock rows found in that file — is it the inventory export?")); return; }
+    const savedAliases: Record<string, any> = data.erpAliases ?? {};
+    const nameMap: Record<string, string> = {};
+    for (const n of Array.from(new Set<string>(rows.map((r) => r.name)))) {
+      if (n in savedAliases) nameMap[n] = savedAliases[n] == null ? "skip" : String(savedAliases[n]);
+      else {
+        const hit = data.stock.find((s: any) => String(s.name).trim().toLowerCase() === n.toLowerCase());
+        nameMap[n] = hit ? String(hit.productId) : "";
+      }
+    }
+    const savedWh: Record<string, any> = data.erpWarehouseMap ?? {};
+    const locIds = locations.map((l) => l.id);
+    // First-guess the obvious warehouses by the city name inside them.
+    const guess = (w: string) =>
+      w.includes("\u0643\u0631\u0643\u0648\u0643") && locIds.includes("kirkuk") ? "kirkuk"
+      : w.includes("\u062f\u0647\u0648\u0643") && locIds.includes("duhok") ? "duhok"
+      : w.includes("\u0627\u0631\u0628\u064a\u0644") || w.includes("\u0623\u0631\u0628\u064a\u0644") || w.includes("\u0631\u0626\u064a\u0633") ? "main"
+      : "";
+    const whMap: Record<string, string> = {};
+    for (const w of Array.from(new Set<string>(rows.map((r) => r.warehouse)))) {
+      if (w in savedWh) whMap[w] = savedWh[w] == null ? "skip" : String(savedWh[w]);
+      else whMap[w] = guess(w);
+    }
+    setErp({ filename: f.name, rows, nameMap, whMap });
+  }
+
+  async function confirmErp() {
+    if (!erp) return;
+    setErpErr("");
+    const aliases: Record<string, number | null> = {};
+    for (const [n, v] of Object.entries(erp.nameMap)) aliases[n] = v === "" || v === "skip" ? null : Number(v);
+    const warehouseMap: Record<string, string | null> = {};
+    for (const [w, v] of Object.entries(erp.whMap)) warehouseMap[w] = v === "" || v === "skip" ? null : v;
+    try {
+      const r = await api<{ processed: number; errors: string[] }>("/api/stock",
+        { json: { action: "erpImport", filename: erp.filename, rows: erp.rows, aliases, warehouseMap } });
+      setResult(r);
+      setErp(null);
+      load();
+    } catch (e: any) { setErpErr(e?.message || "Import failed"); }
   }
 
   return (
@@ -281,14 +357,14 @@ export default function StockPage() {
       <div className="card gap-3">
         <div className="row" style={{ alignItems: "baseline", gap: 8 }}>
           <h6 className="m0 f1">{tx("stk.stockTransferRequests", "Stock transfer requests")}</h6>
-          {(me.role === "supervisor" || me.role === "admin" || (me.role === "rep" && myCity !== "main")) ? (
+          {(me.role === "supervisor" || me.role === "admin" || me.role === "rep") ? (
             <button className="btn btn-secondary" style={{ fontSize: 12, padding: "5px 12px" }}
               onClick={() => {
                 setAskErr("");
                 if (ask) { setAsk(null); return; }
                 // Seed both ends from what is actually on offer, so neither
                 // <select> can show one city while state holds another.
-                const to = myCity !== "main" ? myCity : (locations.find((l) => l.id !== "main")?.id ?? "");
+                const to = me.role === "rep" ? myCity : (myCity !== "main" ? myCity : (locations.find((l) => l.id !== "main")?.id ?? ""));
                 const from = locations.find((l) => l.id !== to)?.id ?? "main";
                 setAsk({ productId: "", qty: "", fromCity: from, toCity: to, note: "" });
               }}>
@@ -486,10 +562,71 @@ export default function StockPage() {
             </div>
           ) : null}
 
-          <button className="btn btn-secondary p-3" onClick={() => fileRef.current?.click()}>
-            <Icon d={paths.upload} size={14} /> {tx("stk.uploadMainWarehouseCount", "Upload main-warehouse count (.xlsx)")}
-          </button>
+          <div className="two">
+            <button className="btn btn-primary p-3" onClick={() => erpRef.current?.click()}>
+              <Icon d={paths.upload} size={14} /> {tx("stk.importErp", "Import ERP inventory (.csv)")}
+            </button>
+            <button className="btn btn-secondary p-3" onClick={() => fileRef.current?.click()}>
+              <Icon d={paths.upload} size={14} /> {tx("stk.uploadMainWarehouseCount", "Upload main-warehouse count (.xlsx)")}
+            </button>
+          </div>
+          <input ref={erpRef} type="file" accept=".csv,text/csv" className="hidden" onChange={onErpFile} />
           <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={onFile} />
+          {erpErr ? <div className="tag tag-hot self-start">{erpErr}</div> : null}
+          {erp ? (
+            <div className="soft-accent" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+              <div className="row gap-2">
+                <Icon d={paths.file} size={16} stroke="var(--color-accent-700)" />
+                <div style={{ flex: 1, fontSize: 13, fontWeight: 500, color: "var(--color-accent-800)" }}>{erp.filename}</div>
+                <span className="small" style={{ color: "var(--color-accent-700)" }}>
+                  {tx("stk.erpRows", "{n} rows").replace("{n}", String(erp.rows.length))}
+                </span>
+              </div>
+              {/* Warehouses: each one maps to an app location, once, forever. */}
+              <div className="stack-1">
+                <div className="fs-caption w-700">{tx("stk.erpWarehouses", "Warehouses in the file")}</div>
+                {Object.keys(erp.whMap).map((w) => (
+                  <div key={w} className="row" style={{ gap: 8, fontSize: 13 }}>
+                    <span className="f1" dir="auto">{w}</span>
+                    <select className="input" style={{ width: 190, minHeight: 34 }} value={erp.whMap[w]}
+                      onChange={(e) => setErp({ ...erp, whMap: { ...erp.whMap, [w]: e.target.value } })}>
+                      <option value="">{tx("stk.choose", "Choose…")}</option>
+                      {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+                      <option value="skip">{tx("stk.erpSkip", "Don't import")}</option>
+                    </select>
+                  </div>
+                ))}
+              </div>
+              {/* Products the app cannot match by name — link them once. */}
+              {Object.entries(erp.nameMap).some(([, v]) => v === "") ? (
+                <div className="stack-1">
+                  <div className="fs-caption w-700">{tx("stk.erpProducts", "New names — link each to a product (asked once)")}</div>
+                  {Object.keys(erp.nameMap).filter((n) => erp.nameMap[n] === "" || erp.nameMap[n] === "skip").map((n) => (
+                    <div key={n} className="row" style={{ gap: 8, fontSize: 13 }}>
+                      <span className="f1" dir="auto">{n}</span>
+                      <select className="input" style={{ width: 190, minHeight: 34 }} value={erp.nameMap[n]}
+                        onChange={(e) => setErp({ ...erp, nameMap: { ...erp.nameMap, [n]: e.target.value } })}>
+                        <option value="">{tx("stk.choose", "Choose…")}</option>
+                        {data.stock.map((s: any) => <option key={s.productId} value={s.productId}>{s.name}</option>)}
+                        <option value="skip">{tx("stk.erpSkip", "Don't import")}</option>
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="small" style={{ color: "var(--c-green-deep)" }}>
+                  {tx("stk.erpAllMatched", "Every product name is recognised.")}
+                </div>
+              )}
+              <div className="small" style={{ color: "var(--color-accent-800)" }}>
+                {tx("stk.erpReplaceHint", "Applying replaces the counts of the mapped warehouses with the file's balances (a missing product there means zero). Your choices are remembered for next month.")}
+              </div>
+              <div className="two">
+                <button className="btn btn-primary" style={{ padding: 9 }} onClick={confirmErp}>{tx("stk.erpConfirm", "Apply inventory")}</button>
+                <button className="btn btn-secondary" style={{ padding: 9 }} onClick={() => setErp(null)}>{tx("stk.cancel", "Cancel")}</button>
+              </div>
+            </div>
+          ) : null}
           {preview ? (
             <div className="soft-accent" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
               <div className="row gap-2">

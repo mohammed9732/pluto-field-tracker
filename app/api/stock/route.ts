@@ -75,6 +75,8 @@ export async function GET() {
           decidedByName: r.decidedBy ? db.users.find((u) => u.id === r.decidedBy)?.name ?? null : null,
         })),
       canApproveTransfer: user.role === "supervisor" || user.role === "admin",
+      erpAliases: isMgmt ? db.settings.erpProductAliases ?? {} : {},
+      erpWarehouseMap: isMgmt ? db.settings.erpWarehouseMap ?? {} : {},
       canFulfilTransfer: user.role === "accountant" || user.role === "admin",
       expiryWarnMonths: db.settings.expiryWarnMonths ?? 6,
       canSetExpiry: user.role === "accountant" || user.role === "admin",
@@ -146,6 +148,88 @@ export async function POST(req: Request) {
       return Response.json({ ok: true, processed, errors });
     }
 
+    /* The ERP's inventory export, uploaded exactly as downloaded.
+     *
+     * The client has already decoded the file (the ERP writes cp1256 Arabic)
+     * and sends clean rows: {name, batch, expiry, warehouse, qty}. Product
+     * and warehouse names are resolved through the remembered maps in
+     * settings — anything the accountant just decided in the preview arrives
+     * in b.aliases / b.warehouseMap and is merged in first, so next month's
+     * file needs no questions at all.
+     *
+     * Snapshot semantics per warehouse: for every warehouse the file covers,
+     * a linked product that does not appear there holds zero there. Products
+     * the app knows but the ERP does not are left untouched.
+     */
+    if (b.action === "erpImport") {
+      requireUser(["accountant", "admin"]);
+      db.settings.erpProductAliases = { ...(db.settings.erpProductAliases ?? {}), ...(b.aliases ?? {}) };
+      db.settings.erpWarehouseMap = { ...(db.settings.erpWarehouseMap ?? {}), ...(b.warehouseMap ?? {}) };
+      const aliases = db.settings.erpProductAliases ?? {};
+      const whMap = db.settings.erpWarehouseMap ?? {};
+      const locs = locations(db);
+      const errors: string[] = [];
+      const grouped = new Map<string, { qty: number; batch: string | null; expiry: string | null }>();
+      const linked = new Set<number>();
+      const usedLocs = new Set<string>();
+      const unknownNames = new Set<string>();
+      const skippedWh = new Set<string>();
+      for (const r of b.rows ?? []) {
+        const name = String(r.name ?? "").trim();
+        if (!name) continue;
+        let product = null;
+        if (name in aliases) {
+          const pid = aliases[name];
+          if (pid == null) continue; // deliberately skipped by the accountant
+          product = db.products.find((p) => p.id === Number(pid)) ?? null;
+        } else {
+          product = db.products.find((p) => p.name.trim().toLowerCase() === name.toLowerCase()) ?? null;
+        }
+        if (!product) { unknownNames.add(name); continue; }
+        linked.add(product.id);
+        const wh = String(r.warehouse ?? "").trim();
+        const loc = whMap[wh];
+        if (loc == null || !locs.includes(loc as StockLocation)) { skippedWh.add(wh); continue; }
+        usedLocs.add(loc);
+        const qty = Math.max(0, Math.round(Number(r.qty) || 0));
+        const expiry = typeof r.expiry === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.expiry) ? r.expiry : null;
+        const key = product.id + "|" + loc;
+        const g = grouped.get(key) ?? { qty: 0, batch: null, expiry: null };
+        g.qty += qty;
+        // Several batches per warehouse: keep the one expiring SOONEST —
+        // that is the batch the expiry warning has to watch.
+        if (expiry && (!g.expiry || expiry < g.expiry)) {
+          g.expiry = expiry;
+          g.batch = String(r.batch ?? "").trim() || null;
+        } else if (!g.batch && r.batch) {
+          g.batch = String(r.batch).trim() || null;
+        }
+        grouped.set(key, g);
+      }
+      let applied = 0;
+      for (const loc of Array.from(usedLocs)) {
+        for (const pid of Array.from(linked)) {
+          const g = grouped.get(pid + "|" + loc);
+          let s = db.stock.find((x) => x.productId === pid && x.location === (loc as StockLocation));
+          if (!s) {
+            s = { productId: pid, location: loc as StockLocation, qty: 0, batch: null, expiry: null, updatedAt: nowIso(), updatedBy: user.id };
+            db.stock.push(s);
+          }
+          s.qty = g?.qty ?? 0;
+          if (g) { s.batch = g.batch ?? s.batch; s.expiry = g.expiry ?? s.expiry; }
+          s.updatedAt = nowIso();
+          s.updatedBy = user.id;
+          applied++;
+        }
+      }
+      for (const n of Array.from(unknownNames)) errors.push(`"${n}" is not linked to a product — its rows were skipped`);
+      for (const w of Array.from(skippedWh)) errors.push(`Warehouse "${w}" is not mapped — its rows were skipped`);
+      db.stockUploads.push({ id: nextId(db), filename: String(b.filename ?? "erp.csv"), uploadedBy: user.id, at: nowIso(), rowsProcessed: applied, errors });
+      logActivity(db, () => nextId(db), user.id, `imported ERP inventory (${applied} product-location counts)`);
+      saveDb();
+      return Response.json({ ok: true, processed: applied, errors });
+    }
+
     if (b.action === "setBatch") {
       // Expiry arrives with the Excel upload when the accountant has it there,
       // but most of the time it is read off the carton by hand. Without this the
@@ -190,13 +274,15 @@ export async function POST(req: Request) {
       const product = db.products.find((p) => p.id === Number(b.productId));
       const qty = Math.round(Number(b.qty));
       const locs = locations(db);
-      // A rep can only ask for stock to come to their own city.
+      // A rep asks for stock to come to wherever they work from: their own
+      // city's stock if they hold one, otherwise the main warehouse — the
+      // old rule left HQ reps with no way to request anything at all.
       const toCity = user.role === "rep"
-        ? (stockCityIds(db).includes(user.city) ? user.city : null)
+        ? (stockCityIds(db).includes(user.city) ? user.city : "main")
         : (locs.includes(String(b.toCity)) ? String(b.toCity) : null);
       const fromCity = locs.includes(String(b.fromCity)) ? String(b.fromCity) : "main";
       if (!product || !(qty > 0)) return Response.json({ error: "Pick a product and a quantity" }, { status: 400 });
-      if (!toCity) return Response.json({ error: "You do not hold stock in a city of your own" }, { status: 400 });
+      if (!toCity) return Response.json({ error: "Pick where it should go" }, { status: 400 });
       if (toCity === fromCity) return Response.json({ error: "Pick where it should come from" }, { status: 400 });
 
       const req = {

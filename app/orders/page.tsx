@@ -9,6 +9,22 @@ import { Screen, useMe, Spinner } from "@/components/Shell";
 import { api, dmy, hm, money } from "@/lib/fmt";
 import { DoctorLink, CallButton } from "@/components/DoctorLink";
 
+/* Print = load the invoice PDF into an invisible iframe and hand it to the
+ * print dialog. Browsers that refuse (iOS is fussy about printing another
+ * document) get the PDF opened instead — the share sheet there has Print. */
+function printInvoice(fileId: string) {
+  const url = `/api/files?id=${fileId}`;
+  const f = document.createElement("iframe");
+  f.style.cssText = "position:fixed;width:0;height:0;border:0;visibility:hidden";
+  f.src = url;
+  f.onload = () => {
+    try { f.contentWindow?.focus(); f.contentWindow?.print(); }
+    catch { window.open(url, "_blank"); }
+  };
+  document.body.appendChild(f);
+  setTimeout(() => f.remove(), 120000);
+}
+
 const STATUS_TAG: Record<string, [string, string]> = {
   pending: ["Awaiting approval", "tag-warn"],
   approved: ["Approved", "tag-ok"],
@@ -93,10 +109,14 @@ function OrdersInner() {
                 </div>
               ) : null}
               {o.status === "invoiced" && o.invoicePdfId ? (
-                <a className="small" href={"/api/files?id=" + o.invoicePdfId} target="_blank"
-                   style={{ borderTop: "1px solid var(--color-divider)", paddingTop: 6 }}>
-                  {tx("orders.invoiceAttachedOpen", "Invoice attached — open")}
-                </a>
+                <div className="row" style={{ gap: 14, borderTop: "1px solid var(--color-divider)", paddingTop: 6 }}>
+                  <a className="small" href={"/api/files?id=" + o.invoicePdfId} target="_blank">
+                    {tx("orders.invoiceAttachedOpen", "Invoice attached — open")}
+                  </a>
+                  <a className="small w-500" href="#" onClick={(e) => { e.preventDefault(); printInvoice(o.invoicePdfId); }}>
+                    🖨 {tx("orders.printInvoice", "Print")}
+                  </a>
+                </div>
               ) : null}
             </div>
           ))}

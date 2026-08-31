@@ -21,6 +21,7 @@ export async function GET(req: Request) {
     const collections = monthPayments
       .sort((a, b) => b.ts.localeCompare(a.ts))
       .map((p) => ({
+        id: p.id,
         ref: p.ref, ts: p.ts, amount: p.amount, method: p.method, note: p.note,
         doctorId: p.doctorId,
         doctor: db.doctors.find((d) => d.id === p.doctorId)?.name ?? "?",

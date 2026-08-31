@@ -33,6 +33,43 @@ export async function POST(req: Request) {
     const db = getDb();
     const b = await req.json();
 
+    /* The accountant's correction path. Wrong amount or wrong method typed
+     * in the field happens; the fix is an edit that leaves a trail, not a
+     * delete. The reason is mandatory and goes on the record, the collector
+     * is told, and any scheduled collection this payment closed is
+     * recalculated so its shortfall flag stays honest. */
+    if (b.action === "edit") {
+      requireUser(["accountant", "admin"]);
+      const p = db.payments.find((x) => x.id === Number(b.id));
+      if (!p) return Response.json({ error: "Payment not found" }, { status: 404 });
+      if (isClosed(db, p.ts)) return Response.json({ error: closedError(db) }, { status: 400 });
+      const reason = String(b.reason ?? "").trim();
+      if (!reason) return Response.json({ error: "Say why it is being corrected — it goes on the record" }, { status: 400 });
+      const amount = Math.round(Number(String(b.amount ?? "").replace(/,/g, "")));
+      if (!(amount > 0)) return Response.json({ error: "Enter the corrected amount" }, { status: 400 });
+      const method = (b.method === "transfer" ? "transfer" : "cash") as "cash" | "transfer";
+      const changes: string[] = [];
+      if (amount !== p.amount) changes.push(`amount ${p.amount.toLocaleString()} → ${amount.toLocaleString()}`);
+      if (method !== p.method) changes.push(`method ${p.method} → ${method}`);
+      if (!changes.length) return Response.json({ ok: true, unchanged: true });
+      p.amount = amount;
+      p.method = method;
+      const linked = db.collections.find((c) => c.paymentId === p.id);
+      if (linked) {
+        linked.collectedAmount = amount;
+        linked.shortfall = amount < linked.amount;
+      }
+      recordChange(db, () => nextId(db), user.id, "payment", p.id, "corrected",
+        `${changes.join(", ")} — ${reason}`);
+      logActivity(db, () => nextId(db), user.id, `corrected payment ${p.ref}: ${changes.join(", ")}`);
+      if (p.collectedBy !== user.id) {
+        notify(db, () => nextId(db), p.collectedBy,
+          `Your payment ${p.ref} was corrected by ${user.name}: ${changes.join(", ")} (${reason}).`, "/orders?tab=payments", "payment");
+      }
+      saveDb();
+      return Response.json({ ok: true });
+    }
+
     const doctor = db.doctors.find((d) => d.id === Number(b.doctorId));
     if (!doctor) return Response.json({ error: "Pick a doctor" }, { status: 400 });
     // Reps may only record payments for doctors in their own city.
