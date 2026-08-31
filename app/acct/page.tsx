@@ -6,6 +6,9 @@ import { useCallback, useEffect, useState } from "react";
 import { Screen, useMe, Spinner } from "@/components/Shell";
 import { Icon, paths } from "@/components/Icons";
 import { api, dmy, hm, money, money0, monthName } from "@/lib/fmt";
+import { MoneyLine } from "@/components/Charts";
+
+const monthLbl = (p: string) => new Date(p + "-15T12:00:00").toLocaleDateString("en", { month: "short" });
 import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
 import { DoctorLink, CallButton } from "@/components/DoctorLink";
@@ -54,6 +57,16 @@ export default function AcctDashboard() {
           <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--c-coral-deep)" }}>{tx("acct.invoiceQueue", "Invoice queue")}</div>
           <div className="hnum fs-lead">{k.queueCount} {tx("acct.waiting", "waiting")} →</div>
         </Link>
+      </div>
+
+      <div className="card" style={{ gap: 6 }}>
+        <h6 className="m0">{tx("chart.salesGrowth", "Sales & money in — last 12 months")}</h6>
+        <MoneyLine
+          rows={(data.monthly ?? []).map((r: any) => ({ label: monthLbl(r.period), sales: r.sales, collected: r.collected }))}
+          series={[
+            { key: "sales", name: tx("chart.sales", "Sales"), color: "var(--color-accent)" },
+            { key: "collected", name: tx("chart.collected", "Collected"), color: "var(--c-green-deep)" },
+          ]} />
       </div>
 
 

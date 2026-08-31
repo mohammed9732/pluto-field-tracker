@@ -1,4 +1,4 @@
-export type Role = "admin" | "supervisor" | "rep" | "accountant";
+export type Role = "admin" | "supervisor" | "rep" | "accountant" | "collector";
 export type City = string; // city id from settings.cities, or "all"
 
 export interface User {
@@ -13,6 +13,17 @@ export interface User {
   active: boolean;
   productLine?: string | null; // absent or null = sells everything
   lang?: "en" | "ar";          // absent = follow the company default
+  /* Payment collection. Some medical reps never touch money — a dedicated
+     collector does the round instead — so collection features switch off per
+     person. Absent = true (every existing rep collects, as before). */
+  canCollect?: boolean;
+  /* The tiered collection incentive, set by the accountant per person:
+     below the monthly target they earn pctBelow of what they collected,
+     at or above it pctAbove. Absent fields fall back to the company-wide
+     collectionCommissionPct. */
+  collectionTarget?: number | null;
+  collectionPctBelow?: number | null;
+  collectionPctAbove?: number | null;
 }
 
 export interface PriceTier {
@@ -31,6 +42,7 @@ export interface Product {
   tiers: PriceTier[];
   unit: string;
   active: boolean;
+  sortOrder?: number; // admin drag-and-drop order; absent = by id
   // Two reps can work the same city on different ranges. Products carry the
   // line, users carry the line they sell, and ordering is filtered by it.
   // Empty means "everyone", so existing data keeps working untouched.
@@ -159,6 +171,12 @@ export interface Order {
   invoicePdfName: string | null; // invoice document the accountant uploads (optional)
   invoicePdfId: string | null; // stored file id
   invoicedBy: number | null;
+  /* Delivery: the rep (or collector) hands the boxes over and photographs the
+     stamped, signed invoice. That photo is the proof of delivery the
+     accountant files, and it shows up in the documents library. */
+  deliveredAt?: string | null;
+  deliveredBy?: number | null;
+  deliveryPhotoId?: string | null;
   invoicedAt: string | null;
   // Every price the approver changed before approving, kept for review.
   priceEdits?: { productId: number; from: number; to: number; by: number; at: string }[];
@@ -210,7 +228,7 @@ export interface PayrollPaid {
   paidBy: number;
 }
 
-export type StockLocation = string; // "main" (head warehouse) or a city id
+export type StockLocation = string; // a city id — every city is an equal warehouse (the old separate "main" was merged into head office)
 
 export interface StockItem {
   productId: number;
@@ -459,6 +477,7 @@ export interface Terms {
   roleSupervisor: string;
   roleRep: string;
   roleAccountant: string;
+  roleCollector: string;
 }
 
 export const DEFAULT_TERMS: Terms = {
@@ -469,6 +488,7 @@ export const DEFAULT_TERMS: Terms = {
   roleSupervisor: "Supervisor",
   roleRep: "Medical rep",
   roleAccountant: "Accountant",
+  roleCollector: "Collector",
 };
 
 export interface Settings {

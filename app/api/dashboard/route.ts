@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { cityIds, cityName, currentPeriod, fieldTimeMinutes, monthlyAccrual, onApprovedLeave, orderTotal, periodOf, todayStr, visitsOn, weekDates, weekStartOf } from "@/lib/compute";
+import { cityIds, cityName, currentPeriod, fieldTimeMinutes, monthlyAccrual, monthlySeries, onApprovedLeave, orderTotal, periodOf, todayStr, visitsOn, weekDates, weekStartOf } from "@/lib/compute";
 
 export async function GET() {
   try {
@@ -35,9 +35,9 @@ export async function GET() {
     for (const s of db.stock) {
       const p = db.products.find((x) => x.id === s.productId);
       if (!p) continue;
-      const locLabel = s.location === "main" ? "" : ` ${s.location}`;
+      const locLabel = ` ${s.location}`;
       if (s.qty <= db.settings.lowStockThreshold) stockAlerts.push(`${p.name}${locLabel} low (${s.qty})`);
-      else if (s.location === "main" && s.expiry && s.expiry <= soon.toISOString().slice(0, 10)) stockAlerts.push(`${p.name} near expiry (${s.expiry.slice(0, 7)})`);
+      else if (s.expiry && s.expiry <= soon.toISOString().slice(0, 10)) stockAlerts.push(`${p.name}${locLabel} near expiry (${s.expiry.slice(0, 7)})`);
     }
 
     // Visits vs minimum, this week.
@@ -91,6 +91,7 @@ export async function GET() {
     const inField = fieldUsers.filter((u) => fieldTimeMinutes(db, u.id, today).checkedIn).length;
 
     return Response.json({
+      monthly: monthlySeries(db, 12),
       today, period,
       kpis: {
         visitsToday, minToday, onLeaveCount, outOfLocationToday,

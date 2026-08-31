@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { cityName, fieldTimeMinutes, monthlyAccrual, currentPeriod, onApprovedLeave, todayStr, visitsOn, weekStartOf, weekDates } from "@/lib/compute";
+import { cityName, currentPeriod, fieldTimeMinutes, monthlyAccrual, monthlySeries, onApprovedLeave, orderTotal, periodOf, todayStr, visitsOn, weekDates, weekStartOf } from "@/lib/compute";
 
 export async function GET() {
   try {
@@ -54,9 +54,22 @@ export async function GET() {
     }
     const teamVisits = rows.reduce((s, r) => s + r.weekVisits, 0);
     const jointVisits = week.reduce((s, d) => s + db.visits.filter((v) => v.date === d && v.jointVisit).length, 0);
+    const nowPeriod = currentPeriod();
     return Response.json({
       today, rows,
       week: { visits: teamVisits, plan: Math.max(0, planned - leaveAdjust), joint: jointVisits },
+      monthly: monthlySeries(db, 12),
+      // This month's booked sales per person — the supervisor's bar race.
+      repSales: db.users
+        .filter((u) => u.active && (u.role === "rep" || u.role === "supervisor"))
+        .map((u) => ({
+          label: u.name,
+          value: db.orders
+            .filter((o) => o.createdBy === u.id && !o.isSample && (o.status === "approved" || o.status === "invoiced") && periodOf(o.createdAt) === nowPeriod)
+            .reduce((s, o) => s + orderTotal(o), 0),
+        }))
+        .filter((r) => r.value > 0)
+        .sort((a, b) => b.value - a.value),
     });
   } catch (e) {
     return errResponse(e);

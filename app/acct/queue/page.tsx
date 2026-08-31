@@ -31,22 +31,31 @@ export default function AcctQueue() {
   if (!me || !orders) return <Spinner />;
 
   function stockWarning(o: any): string | null {
-    // The seller's own city holds the stock; everyone else draws on the main warehouse.
-    const loc = locations.some((l) => l.id === o.createdByCity && l.id !== "main") ? o.createdByCity : "main";
+    // The seller's own city holds the stock; "all"-city sellers draw on HQ.
+    const loc = locations.some((l) => l.id === o.createdByCity) ? o.createdByCity : (locations[0]?.id ?? "");
     const locLabel = locations.find((l) => l.id === loc)?.name ?? loc;
     for (const it of o.items) {
       const s = stock.find((x) => x.productId === it.productId);
       const have = s?.byLocation?.[loc] ?? 0;
-      if (have - it.qty < 0) return `Invoicing takes ${it.productName} ${locLabel} stock to ${have - it.qty} (warning only)`;
+      if (have - it.qty < 0) return `Not enough ${it.productName} in ${locLabel} (${have} on hand) — invoicing will be refused until stock is moved`;
     }
     return null;
   }
 
   async function invoice(o: any) {
-    const r = await api<{ warnings: string[] }>("/api/orders", {
-      json: { action: "invoice", id: o.id, pdfName: pdfNames[o.id]?.name ?? null, pdfId: pdfNames[o.id]?.id ?? null },
-    });
-    setWarnings(r.warnings ?? []);
+    // The PDF is mandatory — say so here rather than letting the server say it.
+    if (!o.invoicePdfName && !pdfNames[o.id]) {
+      alert(tx("queue.pdfFirst", "Attach the invoice PDF first — the button next to Confirm."));
+      return;
+    }
+    try {
+      await api("/api/orders", {
+        json: { action: "invoice", id: o.id, pdfName: pdfNames[o.id]?.name ?? null, pdfId: pdfNames[o.id]?.id ?? null },
+      });
+      setWarnings([]);
+    } catch (e: any) {
+      alert(e?.message || "Could not invoice it");
+    }
     load();
   }
 

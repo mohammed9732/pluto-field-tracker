@@ -38,7 +38,7 @@ export default function StockPage() {
   const [ask, setAsk] = useState<{ productId: string; qty: string; fromCity: string; toCity: string; note: string } | null>(null);
   const [askErr, setAskErr] = useState("");
   const [checkMsg, setCheckMsg] = useState("");
-  const [transfer, setTransfer] = useState({ productId: "", qty: "", to: "", note: "" });
+  const [transfer, setTransfer] = useState({ productId: "", qty: "", from: "", to: "", note: "" });
   const [preview, setPreview] = useState<{ filename: string; rows: any[] } | null>(null);
   const [result, setResult] = useState<{ processed: number; errors: string[] } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -50,7 +50,11 @@ export default function StockPage() {
   const load = useCallback(() => {
     api("/api/stock").then((r: any) => {
       setData(r);
-      setTransfer((t) => (t.to ? t : { ...t, to: (r.locations ?? []).find((l: any) => l.id !== "main")?.id ?? "" }));
+      setTransfer((t) => (t.to ? t : {
+        ...t,
+        from: r.hqCity ?? r.locations?.[0]?.id ?? "",
+        to: (r.locations ?? []).find((l: any) => l.id !== (r.hqCity ?? r.locations?.[0]?.id))?.id ?? "",
+      }));
     }).catch(() => {});
   }, []);
   useEffect(load, [load]);
@@ -102,8 +106,8 @@ export default function StockPage() {
   }
 
   async function doTransfer() {
-    await api("/api/stock", { json: { action: "transfer", productId: Number(transfer.productId), qty: Number(transfer.qty), from: "main", to: transfer.to, note: transfer.note } });
-    setTransfer({ productId: "", qty: "", to: transfer.to, note: "" });
+    await api("/api/stock", { json: { action: "transfer", productId: Number(transfer.productId), qty: Number(transfer.qty), from: transfer.from, to: transfer.to, note: transfer.note } });
+    setTransfer({ productId: "", qty: "", from: transfer.from, to: transfer.to, note: "" });
     load();
   }
 
@@ -480,7 +484,7 @@ export default function StockPage() {
         )}
       </div>
 
-      {me.role === "rep" && myCity !== "main" && data.weeklyStockCheck ? (
+      {me.role === "rep" && data.weeklyStockCheck ? (
         <div className="card gap-3">
           <h6 className="m0">Weekly stock check — {data.myCityLabel}</h6>
           {data.mustCheck ? (
@@ -508,20 +512,26 @@ export default function StockPage() {
       {isAcct ? (
         <>
           <div className="card gap-3">
-            <h6 className="m0">{tx("stk.transferToACity", "Transfer to a city")}</h6>
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 8 }}>
+            <h6 className="m0">{tx("stk.transferToACity", "Move stock between cities")}</h6>
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: 8 }}>
               <select className="input" value={transfer.productId} onChange={(e) => setTransfer({ ...transfer, productId: e.target.value })}>
                 <option value="">{tx("stk.product2", "Product…")}</option>
-                {data.stock.map((s: any) => <option key={s.productId} value={s.productId}>{s.name} ({s.byLocation?.main ?? 0} in main)</option>)}
+                {data.stock.map((s: any) => <option key={s.productId} value={s.productId}>{s.name} ({s.byLocation?.[transfer.from] ?? 0} {tx("stk.inSource", "at source")})</option>)}
               </select>
               <input className="input" placeholder={tx("stk.qtyPh", "Qty")} inputMode="numeric" value={transfer.qty} onChange={(e) => setTransfer({ ...transfer, qty: e.target.value })} />
+              <select className="input" value={transfer.from} onChange={(e) => {
+                const from = e.target.value;
+                setTransfer({ ...transfer, from, to: transfer.to === from ? (locations.find((l) => l.id !== from)?.id ?? "") : transfer.to });
+              }}>
+                {locations.map((l) => <option key={l.id} value={l.id}>{l.name} →</option>)}
+              </select>
               <select className="input" value={transfer.to} onChange={(e) => setTransfer({ ...transfer, to: e.target.value })}>
-                {locations.filter((l) => l.id !== "main").map((l) => (
+                {locations.filter((l) => l.id !== transfer.from).map((l) => (
                   <option key={l.id} value={l.id}>→ {l.name}</option>
                 ))}
               </select>
             </div>
-            <button className="btn btn-primary" style={{ padding: 9 }} onClick={doTransfer} disabled={!transfer.productId || !transfer.qty}>{tx("stk.recordTransfer", "Record transfer")}</button>
+            <button className="btn btn-primary" style={{ padding: 9 }} onClick={doTransfer} disabled={!transfer.productId || !transfer.qty || !transfer.from || !transfer.to}>{tx("stk.recordTransfer", "Record transfer")}</button>
           </div>
 
           {data.checks?.length ? (
@@ -567,7 +577,7 @@ export default function StockPage() {
               <Icon d={paths.upload} size={14} /> {tx("stk.importErp", "Import ERP inventory (.csv)")}
             </button>
             <button className="btn btn-secondary p-3" onClick={() => fileRef.current?.click()}>
-              <Icon d={paths.upload} size={14} /> {tx("stk.uploadMainWarehouseCount", "Upload main-warehouse count (.xlsx)")}
+              <Icon d={paths.upload} size={14} /> {tx("stk.uploadMainWarehouseCount", "Upload head-office count (.xlsx)")}
             </button>
           </div>
           <input ref={erpRef} type="file" accept=".csv,text/csv" className="hidden" onChange={onErpFile} />

@@ -1,4 +1,5 @@
 "use client";
+import { openImage } from "@/components/Lightbox";
 import { useEffect, useState } from "react";
 import { Screen, useMe, Spinner, PageHead } from "@/components/Shell";
 import { api, dmy, money } from "@/lib/fmt";
@@ -15,7 +16,7 @@ export default function DocsPage() {
   const tx = useT();
   const [data, setData] = useState<any>(null);
   const [q, setQ] = useState("");
-  const [kind, setKind] = useState<"all" | "invoices" | "receipts">("all");
+  const [kind, setKind] = useState<"all" | "invoices" | "receipts" | "deliveries">("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [archive, setArchive] = useState(false);
@@ -56,7 +57,7 @@ export default function DocsPage() {
           value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="row gap-2" style={{ flexWrap: "wrap" }}>
           <div className="seg">
-            {([["all", tx("common.all", "All")], ["invoices", tx("dlib.invoices", "Invoices")], ["receipts", tx("dlib.receipts", "Receipts")]] as const).map(([k, label]) => (
+            {([["all", tx("common.all", "All")], ["invoices", tx("dlib.invoices", "Invoices")], ["receipts", tx("dlib.receipts", "Receipts")], ["deliveries", tx("dlib.deliveries", "Deliveries")]] as const).map(([k, label]) => (
               <label key={k} className="seg-opt">
                 <input type="radio" name="dockind" checked={kind === k} onChange={() => setKind(k)} />{label}
               </label>
@@ -79,9 +80,13 @@ export default function DocsPage() {
           <div className="small muted">{tx("dlib.none", "Nothing matches.")}</div>
         ) : data.rows.map((r: any) => (
           <a key={`${r.kind}-${r.fileId}`} className="listrow" style={{ alignItems: "center", gap: 10, textDecoration: "none", color: "inherit" }}
-            href={`/api/files?id=${r.fileId}`} target="_blank" rel="noreferrer">
-            <span className={`tag ${r.kind === "invoice" ? "tag-chat" : "tag-ok"}`}>
-              {r.kind === "invoice" ? tx("dlib.invoice", "Invoice") : tx("dlib.receipt", "Receipt")}
+            href={`/api/files?id=${r.fileId}`} target="_blank" rel="noreferrer"
+            onClick={(e) => {
+              // Photos open in the in-app viewer; PDFs keep the browser tab.
+              if (r.kind !== "invoice") { e.preventDefault(); openImage(`/api/files?id=${r.fileId}`); }
+            }}>
+            <span className={`tag ${r.kind === "invoice" ? "tag-chat" : r.kind === "delivery" ? "tag-warn" : "tag-ok"}`}>
+              {r.kind === "invoice" ? tx("dlib.invoice", "Invoice") : r.kind === "delivery" ? tx("dlib.delivery", "Delivered") : tx("dlib.receipt", "Receipt")}
             </span>
             <div className="f1min">
               <div className="fs-small w-500">{r.doctorName}</div>

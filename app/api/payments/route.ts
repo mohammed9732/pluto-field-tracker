@@ -11,7 +11,7 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const doctorId = url.searchParams.get("doctorId");
     let payments = db.payments.slice().sort((a, b) => b.ts.localeCompare(a.ts));
-    if (user.role === "rep") payments = payments.filter((p) => p.collectedBy === user.id);
+    if (user.role === "rep" || user.role === "collector") payments = payments.filter((p) => p.collectedBy === user.id);
     if (doctorId) payments = payments.filter((p) => p.doctorId === Number(doctorId));
     return Response.json({
       payments: payments.map((p) => ({
@@ -29,7 +29,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const user = requireUser(["rep", "supervisor", "accountant", "admin"]);
+    const user = requireUser(["rep", "collector", "supervisor", "accountant", "admin"]);
     const db = getDb();
     const b = await req.json();
 
@@ -68,6 +68,12 @@ export async function POST(req: Request) {
       }
       saveDb();
       return Response.json({ ok: true });
+    }
+
+    // A rep whose collection duty is switched off records nothing — their
+    // customers are covered by a dedicated collector.
+    if (user.role === "rep" && (user as any).canCollect === false) {
+      return Response.json({ error: "Payment collection is switched off for you — a collector covers your customers." }, { status: 403 });
     }
 
     const doctor = db.doctors.find((d) => d.id === Number(b.doctorId));

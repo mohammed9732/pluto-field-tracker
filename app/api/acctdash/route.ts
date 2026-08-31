@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { collectionCommission, currentPeriod, orderTotal, periodOf, todayStr } from "@/lib/compute";
+import { collectionCommission, currentPeriod, monthlySeries, orderTotal, periodOf, todayStr } from "@/lib/compute";
 
 // Everything the accountant's money dashboard needs.
 export async function GET(req: Request) {
@@ -54,6 +54,7 @@ export async function GET(req: Request) {
 
     return Response.json({
       period, today,
+      monthly: monthlySeries(db, 12),
       kpis: { salesMTD, collectedMTD, queueCount, collectedToday: monthPayments.filter((p) => p.ts.startsWith(today)).reduce((s, p) => s + p.amount, 0) },
       collections, reconciliation, people,
     });

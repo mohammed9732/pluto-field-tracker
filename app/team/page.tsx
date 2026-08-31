@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Screen, useMe, Spinner, Pips, Meter } from "@/components/Shell";
 import { api, dm, dmy, durationHM, hm, weekdayShort } from "@/lib/fmt";
+import { HBars, MoneyLine } from "@/components/Charts";
+
+const monthLbl = (p: string) => new Date(p + "-15T12:00:00").toLocaleDateString("en", { month: "short" });
 import { Icon, paths } from "@/components/Icons";
 import { DoctorLink, CallButton } from "@/components/DoctorLink";
 
@@ -24,6 +27,19 @@ export default function Team() {
         <h4 style={{ margin: "0 0 2px" }}>{tx("team.teamToday", "Team today")}</h4>
         <div className="small muted fs-caption">{weekdayShort(data.today)} {dmy(data.today)}</div>
       </div>
+
+      <div className="card" style={{ gap: 6 }}>
+        <h6 className="m0">{tx("chart.salesGrowth12", "Sales growth — last 12 months")}</h6>
+        <MoneyLine height={170}
+          rows={(data.monthly ?? []).map((r: any) => ({ label: monthLbl(r.period), sales: r.sales }))}
+          series={[{ key: "sales", name: tx("chart.sales", "Sales"), color: "var(--color-accent)" }]} />
+      </div>
+      {(data.repSales ?? []).length ? (
+        <div className="card" style={{ gap: 8 }}>
+          <h6 className="m0">{tx("chart.whoSoldWhat", "Who sold what — this month")}</h6>
+          <HBars rows={data.repSales} />
+        </div>
+      ) : null}
       {data.rows.map((r: any) => (
         <div key={r.userId} className="card gap-3">
           <div className="row gap-2">

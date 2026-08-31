@@ -52,6 +52,7 @@ export function roleLabel(t: Terms, role: string): string {
   return role === "admin" ? t.roleAdmin
     : role === "supervisor" ? t.roleSupervisor
     : role === "accountant" ? t.roleAccountant
+    : role === "collector" ? (t.roleCollector ?? "Collector")
     : t.roleRep;
 }
 

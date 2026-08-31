@@ -67,6 +67,7 @@ export async function POST(req: Request) {
           dailyMin: num(b.dailyMin, u.dailyMin),
           productLine: b.productLine !== undefined ? (String(b.productLine).trim() || null) : u.productLine,
           active: b.active != null ? !!b.active : u.active,
+          canCollect: b.canCollect != null ? !!b.canCollect : u.canCollect,
         });
         if (b.password) {
           u.password = hashPassword(String(b.password));
@@ -79,6 +80,7 @@ export async function POST(req: Request) {
           phone: String(b.phone), password: hashPassword(String(b.password || "password")),
           baseSalary: num(b.baseSalary, 0), dailyMin: num(b.dailyMin, 5),
           productLine: String(b.productLine ?? "").trim() || null, active: true,
+          canCollect: b.canCollect != null ? !!b.canCollect : true,
         });
       }
       saveDb();
@@ -114,11 +116,29 @@ export async function POST(req: Request) {
           tiers: Array.isArray(b.tiers)
             ? b.tiers.map((t: any) => ({ minQty: Math.round(Number(t.minQty)), price: Math.round(Number(t.price)) })).filter((t: any) => t.minQty > 1 && t.price > 0)
             : [],
+          sortOrder: db.products.reduce((m, p) => Math.max(m, p.sortOrder ?? p.id), 0) + 1,
         });
       }
       saveDb();
       return Response.json({ ok: true });
     }
+    /* The admin dragged the product list into a new order. The order is a
+     * plain integer per product; ensureShape sorts db.products by it on
+     * every load, so ordering screens, stock, catalog and targets all
+     * follow without their own sort calls. */
+    if (b.action === "reorderProducts") {
+      const ids: number[] = Array.isArray(b.ids) ? b.ids.map(Number) : [];
+      if (!ids.length) return Response.json({ error: "Nothing to reorder" }, { status: 400 });
+      ids.forEach((id, i) => {
+        const prod = db.products.find((x) => x.id === id);
+        if (prod) prod.sortOrder = i + 1;
+      });
+      db.products.sort((a, b2) => (a.sortOrder ?? a.id) - (b2.sortOrder ?? b2.id));
+      logActivity(db, () => nextId(db), user.id, "reordered the product list");
+      saveDb();
+      return Response.json({ ok: true });
+    }
+
     // Handover: give one rep's city to another, optionally deactivating him.
     if (b.action === "handover") {
       const from = db.users.find((u) => u.id === Number(b.fromId));

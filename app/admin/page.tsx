@@ -8,6 +8,9 @@ import { useRouter } from "next/navigation";
 import { Screen, useMe, Spinner, Meter } from "@/components/Shell";
 import { Icon, paths } from "@/components/Icons";
 import { api, dmy, money0, weekdayShort } from "@/lib/fmt";
+import { MoneyLine } from "@/components/Charts";
+
+const monthLbl = (p: string) => new Date(p + "-15T12:00:00").toLocaleDateString("en", { month: "short" });
 
 export default function AdminDashboard() {
   const tx = useT();
@@ -62,6 +65,18 @@ export default function AdminDashboard() {
             <span className="hnum" style={{ fontSize: 28, color: k.stockAlerts.length ? "var(--c-coral-deep)" : undefined }}><CountUp value={k.stockAlerts.length} /></span>
             <span className="small muted fs-caption">{k.stockAlerts.slice(0, 2).join(" · ") || "all healthy"}</span>
           </div>
+        </div>
+
+        {/* The growth line the owner asked for: is the company getting
+            bigger, month on month — and is the cash keeping up with sales? */}
+        <div className="card" style={{ gap: 6 }}>
+          <h6 className="m0">{tx("chart.salesGrowth", "Sales & money in — last 12 months")}</h6>
+          <MoneyLine
+            rows={(data.monthly ?? []).map((r: any) => ({ label: monthLbl(r.period), sales: r.sales, collected: r.collected }))}
+            series={[
+              { key: "sales", name: tx("chart.sales", "Sales"), color: "var(--color-accent)" },
+              { key: "collected", name: tx("chart.collected", "Collected"), color: "var(--c-green-deep)" },
+            ]} />
         </div>
 
         <div className="two-col">

@@ -3,16 +3,21 @@ import { requireUser, errResponse } from "@/lib/auth";
 import { cityIds, cityName, hqCityId, logActivity, notify, nowIso, stockCityIds, todayStr, weekStartOf } from "@/lib/compute";
 import { StockLocation } from "@/lib/types";
 
-// Locations = main warehouse + every city the admin has defined.
+// Locations = the cities, nothing else. Every city is an equal warehouse.
 function locations(db: ReturnType<typeof getDb>): StockLocation[] {
-  return ["main", ...stockCityIds(db)];
+  return stockCityIds(db);
 }
 
 function stockView(db: ReturnType<typeof getDb>) {
   const locs = locations(db);
   return db.products.filter((p) => p.active).map((p) => {
     const at = (loc: StockLocation) => db.stock.find((s) => s.productId === p.id && s.location === loc)?.qty ?? 0;
-    const row = db.stock.find((s) => s.productId === p.id && s.location === "main");
+    // The batch the expiry warning must watch is the one expiring SOONEST,
+    // wherever it sits — there is no privileged warehouse any more.
+    const row = db.stock
+      .filter((s) => s.productId === p.id && s.expiry)
+      .sort((a, b) => (a.expiry as string).localeCompare(b.expiry as string))[0]
+      ?? db.stock.find((s) => s.productId === p.id) ?? null;
     const byLocation: Record<string, number> = {};
     for (const l of locs) byLocation[l] = at(l);
     return {
@@ -30,36 +35,31 @@ export async function GET() {
   try {
     const user = requireUser();
     const db = getDb();
-    const isMgmt = user.role !== "rep";
-    // A rep in a city holds that city's stock; Erbil/HQ people work from main.
-    const cityHasOwnStock = stockCityIds(db).includes(user.city);
-    const myCity: StockLocation = user.role === "rep" && cityHasOwnStock ? user.city : "main";
+    const isMgmt = user.role !== "rep" && user.role !== "collector";
+    // Everyone works from a city warehouse now; "all"-city people from HQ.
+    const myCity: StockLocation = cityIds(db).includes(user.city) ? user.city : hqCityId(db);
     const weekStart = weekStartOf(todayStr());
     const myCheckDone = db.stockChecks.some((c) => c.userId === user.id && c.weekStart === weekStart);
     // "Last matched" per location: main = accountant's count upload / edit,
     // city = the last weekly check the accountant accepted or reviewed.
+    // Per city: whichever came later — the accountant's last count/import of
+    // that warehouse, or the last weekly check she reviewed.
     const lastMatched: Record<string, { ts: string | null; by: string | null; kind: string }> = {};
     for (const loc of locations(db)) {
-      if (loc === "main") {
-        const rows = db.stock.filter((x) => x.location === "main");
-        const newest = rows.map((r) => r.updatedAt).sort().pop() ?? null;
-        const who = rows.find((r) => r.updatedAt === newest)?.updatedBy ?? null;
-        lastMatched[loc] = { ts: newest, by: who ? db.users.find((u) => u.id === who)?.name ?? null : null, kind: "count" };
-      } else {
-        const checks = db.stockChecks.filter((c) => c.city === loc && c.reviewedBy).sort((a, b) => a.ts.localeCompare(b.ts));
-        const last = checks[checks.length - 1] ?? null;
-        lastMatched[loc] = last
-          ? { ts: last.ts, by: db.users.find((u) => u.id === last.reviewedBy!)?.name ?? null, kind: "check" }
-          : { ts: null, by: null, kind: "check" };
-      }
+      const rows = db.stock.filter((x) => x.location === loc);
+      const newest = rows.map((r) => r.updatedAt).sort().pop() ?? null;
+      const who = rows.find((r) => r.updatedAt === newest)?.updatedBy ?? null;
+      const checks = db.stockChecks.filter((c) => c.city === loc && c.reviewedBy).sort((a, b) => a.ts.localeCompare(b.ts));
+      const last = checks[checks.length - 1] ?? null;
+      lastMatched[loc] = last && (!newest || last.ts > newest)
+        ? { ts: last.ts, by: db.users.find((u) => u.id === last.reviewedBy!)?.name ?? null, kind: "check" }
+        : { ts: newest, by: who ? db.users.find((u) => u.id === who)?.name ?? null : null, kind: "count" };
     }
     return Response.json({
       lastMatched,
       stock: stockView(db),
-      locations: locations(db).map((id) => ({
-        id,
-        name: id === "main" ? `${cityName(db, hqCityId(db))} (main)` : cityName(db, id),
-      })),
+      locations: locations(db).map((id) => ({ id, name: cityName(db, id) })),
+      hqCity: hqCityId(db),
       myCity,
       lowThreshold: db.settings.lowStockThreshold,
       // Everyone sees the requests that concern them: your own if you asked,
@@ -81,7 +81,7 @@ export async function GET() {
       expiryWarnMonths: db.settings.expiryWarnMonths ?? 6,
       canSetExpiry: user.role === "accountant" || user.role === "admin",
       weeklyStockCheck: db.settings.weeklyStockCheck,
-      mustCheck: db.settings.weeklyStockCheck && user.role === "rep" && myCity !== "main" && !myCheckDone,
+      mustCheck: db.settings.weeklyStockCheck && user.role === "rep" && !myCheckDone,
       myCityLabel: cityName(db, myCity),
       uploads: isMgmt ? db.stockUploads.slice().sort((a, b) => b.at.localeCompare(a.at)).slice(0, 5).map((u) => ({ ...u, uploadedByName: db.users.find((x) => x.id === u.uploadedBy)?.name ?? "?" })) : [],
       transfers: isMgmt ? db.stockTransfers.slice().sort((a, b) => b.ts.localeCompare(a.ts)).slice(0, 15).map((t) => ({
@@ -106,7 +106,7 @@ export async function POST(req: Request) {
     const db = getDb();
     const b = await req.json();
 
-    // Excel stock COUNT — replaces quantities at the MAIN warehouse.
+    // Excel stock COUNT — replaces quantities at the head-office warehouse.
     if (b.action === "upload" || (!b.action && b.rows)) {
       requireUser(["accountant", "admin"]);
       const errors: string[] = [];
@@ -124,9 +124,10 @@ export async function POST(req: Request) {
         }
         const qty = Number(r.qty);
         if (!Number.isFinite(qty) || qty < 0) { errors.push(`Row ${i + 2}: bad quantity "${r.qty}" — skipped`); continue; }
-        let s = db.stock.find((x) => x.productId === product.id && x.location === "main");
+        const hq = hqCityId(db);
+        let s = db.stock.find((x) => x.productId === product.id && x.location === hq);
         if (!s) {
-          s = { productId: product.id, location: "main", qty: 0, batch: null, expiry: null, updatedAt: nowIso(), updatedBy: user.id };
+          s = { productId: product.id, location: hq, qty: 0, batch: null, expiry: null, updatedAt: nowIso(), updatedBy: user.id };
           db.stock.push(s);
         }
         s.qty = qty;
@@ -237,7 +238,7 @@ export async function POST(req: Request) {
       requireUser(["accountant", "admin"]);
       const product = db.products.find((p) => p.id === Number(b.productId));
       if (!product) return Response.json({ error: "Product not found" }, { status: 404 });
-      const loc = String(b.location ?? "main") as StockLocation;
+      const loc = String(b.location ?? hqCityId(db)) as StockLocation;
       if (!locations(db).includes(loc)) return Response.json({ error: "Unknown location" }, { status: 400 });
       const expiry = b.expiry ? String(b.expiry).slice(0, 10) : null;
       if (expiry && !/^\d{4}-\d{2}-\d{2}$/.test(expiry)) {
@@ -275,12 +276,11 @@ export async function POST(req: Request) {
       const qty = Math.round(Number(b.qty));
       const locs = locations(db);
       // A rep asks for stock to come to wherever they work from: their own
-      // city's stock if they hold one, otherwise the main warehouse — the
-      // old rule left HQ reps with no way to request anything at all.
+      // city, or head office when their city is "all".
       const toCity = user.role === "rep"
-        ? (stockCityIds(db).includes(user.city) ? user.city : "main")
+        ? (locs.includes(user.city) ? user.city : hqCityId(db))
         : (locs.includes(String(b.toCity)) ? String(b.toCity) : null);
-      const fromCity = locs.includes(String(b.fromCity)) ? String(b.fromCity) : "main";
+      const fromCity = locs.includes(String(b.fromCity)) ? String(b.fromCity) : hqCityId(db);
       if (!product || !(qty > 0)) return Response.json({ error: "Pick a product and a quantity" }, { status: 400 });
       if (!toCity) return Response.json({ error: "Pick where it should go" }, { status: 400 });
       if (toCity === fromCity) return Response.json({ error: "Pick where it should come from" }, { status: 400 });
@@ -376,7 +376,7 @@ export async function POST(req: Request) {
       const product = db.products.find((p) => p.id === Number(b.productId));
       const qty = Math.round(Number(b.qty));
       const locs = locations(db);
-      const from = locs.includes(b.from) ? b.from : "main";
+      const from = locs.includes(b.from) ? b.from : hqCityId(db);
       const to = locs.includes(b.to) ? b.to : null;
       if (!product || !(qty > 0) || !to || from === to) return Response.json({ error: "Pick a product, quantity, and destination" }, { status: 400 });
       const src = db.stock.find((s) => s.productId === product.id && s.location === from);
@@ -400,8 +400,8 @@ export async function POST(req: Request) {
 
     if (b.action === "submitCheck") {
       requireUser(["rep"]);
-      const city: StockLocation | null = stockCityIds(db).includes(user.city) ? user.city : null;
-      if (!city) return Response.json({ error: "Weekly checks are for reps who hold their own city stock" }, { status: 400 });
+      const city: StockLocation | null = cityIds(db).includes(user.city) ? user.city : null;
+      if (!city) return Response.json({ error: "Weekly checks are for reps assigned to a city" }, { status: 400 });
       const weekStart = weekStartOf(todayStr());
       if (db.stockChecks.some((c) => c.userId === user.id && c.weekStart === weekStart)) {
         return Response.json({ error: "You already submitted this week's check" }, { status: 400 });

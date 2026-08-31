@@ -75,8 +75,15 @@ export default function Home() {
     router.replace("/login");
   }
 
+  const isCollector = me.role === "collector";
   // Everything that isn't part of the daily flow lives in the icon grid.
-  const tiles: { href: string; label: string; icon: keyof typeof paths; badge?: number }[] = [
+  // A collector's grid is the money kit only — no stock, no catalog.
+  const tiles: { href: string; label: string; icon: keyof typeof paths; badge?: number }[] = isCollector ? [
+    { href: "/map", label: tx("nav.map", "Map"), icon: "pin" },
+    { href: "/doctors", label: term(t, "doctorPlural", "nav.doctors"), icon: "pinDot" },
+    ...(data.settings?.spendingsEnabled ? [{ href: "/spendings", label: tx("nav.spendings", "Spendings"), icon: "receipt" as const }] : []),
+    { href: "/leave", label: tx("nav.leave", "Leave"), icon: "away" },
+  ] : [
     { href: "/map", label: tx("nav.map", "Map"), icon: "pin" },
     { href: "/doctors", label: term(t, "doctorPlural", "nav.doctors"), icon: "pinDot" },
     ...(data.settings?.tasksEnabled ? [{ href: "/tasks", label: tx("nav.tasks", "Tasks"), icon: "check" as const, badge: openTasks || undefined }] : []),

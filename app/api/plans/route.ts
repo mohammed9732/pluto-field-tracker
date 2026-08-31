@@ -17,7 +17,15 @@ export async function GET(req: Request) {
     const scope = url.searchParams.get("scope") ?? "mine";
     let plans = db.plans.slice();
     if (scope === "mine") plans = plans.filter((p) => p.userId === user.id);
-    else requireUser(["supervisor", "admin"]);
+    else {
+      /* Split lines of authority: the supervisor answers for sales, so rep
+       * and supervisor plans are theirs; the accountant answers for money,
+       * so COLLECTOR plans go to her. The owner sees everything. */
+      requireUser(["supervisor", "accountant", "admin"]);
+      const roleOf = (id: number) => db.users.find((u) => u.id === id)?.role;
+      if (user.role === "supervisor") plans = plans.filter((p) => roleOf(p.userId) !== "collector");
+      if (user.role === "accountant") plans = plans.filter((p) => roleOf(p.userId) === "collector");
+    }
     plans.sort((a, b) => b.weekStart.localeCompare(a.weekStart));
     const docName = (id: number) => db.doctors.find((d) => d.id === id)?.name ?? "?";
     const isSup = user.role === "supervisor";
@@ -70,7 +78,7 @@ export async function POST(req: Request) {
     const db = getDb();
     const b = await req.json();
     if (b.action === "submit") {
-      requireUser(["rep", "supervisor"]);
+      requireUser(["rep", "collector", "supervisor"]);
       const weekStart = String(b.weekStart ?? nextWeekStart());
       const isSupervisor = user.role === "supervisor";
       const days = (b.days ?? []).map((d: any) => {
@@ -121,17 +129,27 @@ export async function POST(req: Request) {
         };
         db.plans.push(plan);
       }
-      // Whoever decides on this plan should know it is waiting.
-      for (const a of db.users.filter((u) => u.active && (u.role === "supervisor" || u.role === "admin") && u.id !== user.id)) {
-        notify(db, () => nextId(db), a.id, `${user.name} submitted a weekly plan for approval.`, "/approvals", "planStatus");
+      // Whoever decides on this plan should know it is waiting: the
+      // accountant for a collector's plan, the supervisor for everyone else.
+      const approverRole = user.role === "collector" ? "accountant" : "supervisor";
+      for (const a of db.users.filter((u) => u.active && (u.role === approverRole || u.role === "admin") && u.id !== user.id)) {
+        notify(db, () => nextId(db), a.id, `${user.name} submitted a weekly plan for approval.`,
+          user.role === "collector" ? "/acct/collections" : "/approvals", "planStatus");
       }
       saveDb();
       return Response.json({ ok: true, plan });
     }
     if (b.action === "decide") {
-      requireUser(["supervisor", "admin"]);
+      requireUser(["supervisor", "accountant", "admin"]);
       const plan = db.plans.find((p) => p.id === Number(b.id));
       if (!plan || plan.status !== "submitted") return Response.json({ error: "Plan is not awaiting approval" }, { status: 400 });
+      const creator = db.users.find((u) => u.id === plan.userId);
+      if (user.role === "supervisor" && creator?.role === "collector") {
+        return Response.json({ error: "Collector plans are approved by the accountant" }, { status: 403 });
+      }
+      if (user.role === "accountant" && creator?.role !== "collector") {
+        return Response.json({ error: "Rep plans are approved by the supervisor" }, { status: 403 });
+      }
       plan.status = b.decision === "approve" ? "approved" : "returned";
       plan.note = b.note ? String(b.note) : null;
       plan.decidedBy = user.id;

@@ -148,6 +148,25 @@ export function orderTotal(o: Order): number {
   return o.items.reduce((s, it) => s + it.qty * it.price, 0);
 }
 
+/* Month-by-month money for the dashboard charts: booked sales (approved +
+ * invoiced, samples excluded) and cash actually collected, oldest first. */
+export function monthlySeries(db: DB, months = 12) {
+  const periods: string[] = [];
+  let [y, m] = currentPeriod().split("-").map(Number);
+  for (let i = 0; i < months; i++) {
+    periods.unshift(`${y}-${String(m).padStart(2, "0")}`);
+    m -= 1;
+    if (m === 0) { m = 12; y -= 1; }
+  }
+  return periods.map((period) => ({
+    period,
+    sales: db.orders
+      .filter((o) => !o.isSample && (o.status === "approved" || o.status === "invoiced") && periodOf(o.createdAt) === period)
+      .reduce((s, o) => s + orderTotal(o), 0),
+    collected: db.payments.filter((p) => periodOf(p.ts) === period).reduce((s, p) => s + p.amount, 0),
+  }));
+}
+
 // City helpers — cities are admin-managed, so never hard-code them.
 export function cityName(db: DB, id: string | null | undefined): string {
   if (!id) return "";
@@ -158,13 +177,38 @@ export function cityName(db: DB, id: string | null | undefined): string {
 export function cityIds(db: DB): string[] {
   return db.settings.cities.map((c) => c.id);
 }
-// The first city is head office: its stock lives in the main warehouse, so it
-// never gets a separate column. Every other city holds its own stock.
+// The first city is head office — the fallback warehouse for people whose
+// city is "all" (supervisors, the owner).
 export function hqCityId(db: DB): string {
   return db.settings.cities[0]?.id ?? "";
 }
+/* Every city is an equal warehouse — the owner's rule. There used to be a
+ * separate "main" warehouse over and above the cities; it was merged into
+ * head office and if a "Main" warehouse is ever wanted again it is created
+ * as a city named Main, not as special code. */
 export function stockCityIds(db: DB): string[] {
-  return cityIds(db).filter((id) => id !== hqCityId(db));
+  return cityIds(db);
+}
+
+// Which warehouse a person sells from: their own city, or head office when
+// their city is "all".
+export function sellerLocation(db: DB, userId: number): string {
+  const u = db.users.find((x) => x.id === userId);
+  if (!u) return hqCityId(db);
+  return cityIds(db).includes(u.city) ? u.city : hqCityId(db);
+}
+
+/* What can still be promised from a warehouse: what it physically holds minus
+ * what other not-yet-invoiced orders (pending + approved) have already
+ * claimed. Without the reservation, two reps could sell the same last boxes
+ * and the second invoice would take the stock below zero. */
+export function availableStock(db: DB, productId: number, loc: string, excludeOrderId?: number) {
+  const onHand = db.stock.find((s) => s.productId === productId && s.location === loc)?.qty ?? 0;
+  const reserved = db.orders
+    .filter((o) => (o.status === "pending" || o.status === "approved") && !o.isSample && o.id !== excludeOrderId
+      && sellerLocation(db, o.createdBy) === loc)
+    .reduce((s, o) => s + o.items.filter((it) => it.productId === productId).reduce((x, it) => x + it.qty, 0), 0);
+  return { onHand, reserved, available: onHand - reserved };
 }
 // Doctors a user may work with: reps are scoped to their own city.
 /* Which products a person sells.
@@ -228,7 +272,7 @@ export function flagMissedDays(db: DB, seq: () => number, period: string) {
   const cutoff = new Date(today + "T12:00:00");
   cutoff.setDate(cutoff.getDate() - 7);
   const cutoffStr = cutoff.toISOString().slice(0, 10);
-  for (const u of db.users.filter((x) => x.active && (x.role === "rep" || x.role === "supervisor"))) {
+  for (const u of db.users.filter((x) => x.active && (x.role === "rep" || x.role === "supervisor" || x.role === "collector"))) {
     for (const d of workDaysInMonth(period)) {
       if (d >= today || d < cutoffStr) continue;
       if (onApprovedLeave(db, u.id, d)) continue;
@@ -265,7 +309,7 @@ export function payrollFigures(db: DB, userId: number, period: string) {
 }
 
 export function doctorsFor(db: DB, user: { role: string; city: string }) {
-  if (user.role === "rep" && user.city && user.city !== "all") {
+  if ((user.role === "rep" || user.role === "collector") && user.city && user.city !== "all") {
     return db.doctors.filter((d) => d.city === user.city);
   }
   return db.doctors;
@@ -344,12 +388,21 @@ export function salesCommission(db: DB, userId: number, period: string): number 
   return Math.round(monthlySalesValue(db, userId, period) * (db.settings.salesCommissionPct / 100));
 }
 
-// Flat % of payments collected — paid monthly in payroll.
+/* Collection incentive — tiered, per person, set by the accountant.
+ *
+ * Each rep or collector has a monthly collection target and two rates:
+ * below the target they earn pctBelow of everything they collected, at or
+ * above it pctAbove on everything. No per-person plan set = the old flat
+ * company-wide % — so nobody's pay changes until the accountant decides. */
 export function collectionCommission(db: DB, userId: number, period: string): number {
   const u = db.users.find((x) => x.id === userId);
-  if (!u || u.role !== "rep") return 0;
+  if (!u || (u.role !== "rep" && u.role !== "collector")) return 0;
   const collected = db.payments.filter((p) => p.collectedBy === userId && periodOf(p.ts) === period).reduce((s, p) => s + p.amount, 0);
-  return Math.round(collected * (db.settings.collectionCommissionPct / 100));
+  const below = u.collectionPctBelow ?? db.settings.collectionCommissionPct;
+  const above = u.collectionPctAbove ?? below;
+  const target = u.collectionTarget ?? 0;
+  const pct = target > 0 && collected >= target ? above : below;
+  return Math.round(collected * (pct / 100));
 }
 
 // Free sample boxes handed out in a month — reported, never counted as sales.
@@ -478,6 +531,9 @@ export function canSeeFile(db: DB, user: { id: number; role: string; city: strin
   const mine = new Set(doctorsFor(db, user).map((d) => d.id));
   if (db.visits.some((v) => v.photo === fileId && mine.has(v.doctorId))) return true;
   if (db.payments.some((p) => p.photo === fileId && mine.has(p.doctorId))) return true;
+  // Delivery proof and invoices for territory customers — the collector
+  // delivering an order needs the invoice PDF and their own stamped photo.
+  if (db.orders.some((o) => (o.deliveryPhotoId === fileId || o.invoicePdfId === fileId) && mine.has(o.doctorId))) return true;
 
   return false;
 }

@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { ceilingStatus, closedError, isClosed, logActivity, notify, nowIso, orderTotal, priceForQty, productsFor, recordChange, stockCityIds } from "@/lib/compute";
+import { availableStock, ceilingStatus, cityName, closedError, doctorsFor, isClosed, logActivity, notify, nowIso, orderTotal, priceForQty, productsFor, recordChange, sellerLocation } from "@/lib/compute";
 import { OrderItem } from "@/lib/types";
 
 function enrich(db: ReturnType<typeof getDb>, o: any) {
@@ -12,6 +12,7 @@ function enrich(db: ReturnType<typeof getDb>, o: any) {
     createdByName: db.users.find((u) => u.id === o.createdBy)?.name ?? "?",
     createdByCity: db.users.find((u) => u.id === o.createdBy)?.city ?? "erbil",
     approvedByName: o.approvedBy ? db.users.find((u) => u.id === o.approvedBy)?.name ?? "?" : null,
+    deliveredByName: o.deliveredBy ? db.users.find((u) => u.id === o.deliveredBy)?.name ?? "?" : null,
     items: o.items.map((it: OrderItem) => ({
       ...it,
       productName: db.products.find((p) => p.id === it.productId)?.name ?? "?",
@@ -27,7 +28,12 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const scope = url.searchParams.get("scope") ?? "mine";
     let orders = db.orders.slice();
-    if (scope === "mine" || user.role === "rep") {
+    if (user.role === "collector") {
+      // A collector's order list IS the delivery round: invoiced orders for
+      // customers they can reach — undelivered first.
+      const visible = new Set(doctorsFor(db, user).map((d) => d.id));
+      orders = orders.filter((o) => o.status === "invoiced" && visible.has(o.doctorId));
+    } else if (scope === "mine" || user.role === "rep") {
       orders = orders.filter((o) => o.createdBy === user.id);
     } else if (scope === "pending") {
       requireUser(["supervisor", "admin"]);
@@ -109,6 +115,22 @@ export async function POST(req: Request) {
         });
       if (!items.length) return Response.json({ error: "Add at least one product" }, { status: 400 });
       if (!b.doctorId) return Response.json({ error: "Pick a doctor" }, { status: 400 });
+      /* No selling what the warehouse cannot deliver. Available = on hand in
+       * the seller's city minus what other not-yet-invoiced orders already
+       * claim, so two orders cannot race for the same boxes. Applies to reps
+       * AND supervisors — the block protects the warehouse, not the rank. */
+      if (!isSample) {
+        const loc = sellerLocation(db, user.id);
+        for (const it of items) {
+          const a = availableStock(db, it.productId, loc);
+          if (it.qty > a.available) {
+            const pname = db.products.find((pp) => pp.id === it.productId)?.name ?? "?";
+            return Response.json({
+              error: `Only ${Math.max(0, a.available)} × ${pname} available in ${cityName(db, loc)} (${a.onHand} on hand, ${a.reserved} promised to other orders). Ask for a stock transfer first.`,
+            }, { status: 400 });
+          }
+        }
+      }
       /* The owner's rule: a supervisor's own order needs no second
        * signature. It is born approved and goes straight to the accountant's
        * queue — the old separation-of-duties block meant Dr. Alan could not
@@ -220,21 +242,27 @@ export async function POST(req: Request) {
     if (b.action === "invoice") {
       requireUser(["accountant", "admin"]);
       if (order.status !== "approved") return Response.json({ error: "Order must be approved first" }, { status: 400 });
-      // Decrement the SELLER'S stock: Duhok/Kirkuk reps sell from their city stock, everyone else from the main warehouse.
-      const seller = db.users.find((u) => u.id === order.createdBy);
-      const loc = seller && stockCityIds(db).includes(seller.city) ? seller.city : "main";
-      const warnings: string[] = [];
+      // The signed invoice PDF is the document of record — no PDF, no invoice.
+      if (!order.invoicePdfId && !b.pdfId) {
+        return Response.json({ error: "Attach the invoice PDF first — invoicing without the document is closed." }, { status: 400 });
+      }
+      // Decrement the SELLER'S city stock — and never below zero. Stock that
+      // would go negative means the paper and the shelf disagree; that gets
+      // fixed with a transfer or a count, not by invoicing through it.
+      const loc = sellerLocation(db, order.createdBy);
+      const short: string[] = [];
       for (const it of order.items) {
-        const product = db.products.find((p) => p.id === it.productId);
-        let s = db.stock.find((x) => x.productId === it.productId && x.location === loc);
-        if (!s) {
-          s = { productId: it.productId, location: loc as any, qty: 0, batch: null, expiry: null, updatedAt: nowIso(), updatedBy: user.id };
-          db.stock.push(s);
-        }
+        const have = db.stock.find((x) => x.productId === it.productId && x.location === loc)?.qty ?? 0;
+        if (have < it.qty) short.push(`${db.products.find((p) => p.id === it.productId)?.name ?? "?"}: ${have} in ${cityName(db, loc)}, order needs ${it.qty}`);
+      }
+      if (short.length) {
+        return Response.json({ error: `Not enough stock — ${short.join("; ")}. Move stock first.` }, { status: 400 });
+      }
+      for (const it of order.items) {
+        const s = db.stock.find((x) => x.productId === it.productId && x.location === loc)!;
         s.qty -= it.qty;
         s.updatedAt = nowIso();
         s.updatedBy = user.id;
-        if (s.qty < 0) warnings.push(`${product?.name ?? "?"} ${loc} stock is now ${s.qty}`);
       }
       order.status = "invoiced";
       order.invoicedBy = user.id;
@@ -244,7 +272,32 @@ export async function POST(req: Request) {
       notify(db, () => nextId(db), order.createdBy, `Order for ${db.doctors.find((d) => d.id === order.doctorId)?.name ?? "?"} is invoiced${order.invoicePdfName ? " — invoice attached." : "."}`, "/orders", "orderStatus");
       logActivity(db, () => nextId(db), user.id, `invoiced order #${order.id}`);
       saveDb();
-      return Response.json({ ok: true, order: enrich(db, order), warnings });
+      return Response.json({ ok: true, order: enrich(db, order) });
+    }
+
+    /* Delivery. The rep (or a collector on delivery duty) hands the boxes
+     * over, the doctor stamps and signs the paper invoice, and the photo of
+     * that stamped invoice is the proof: required, filed in the documents
+     * library, and announced to the accountant. */
+    if (b.action === "delivered") {
+      requireUser(["rep", "collector", "supervisor", "admin"]);
+      if (order.status !== "invoiced") return Response.json({ error: "Only an invoiced order can be delivered" }, { status: 400 });
+      if (order.deliveredAt) return Response.json({ error: "Already marked delivered" }, { status: 400 });
+      if (!b.photoId) return Response.json({ error: "Photo of the stamped invoice is required" }, { status: 400 });
+      if (order.createdBy !== user.id && user.role !== "admin"
+        && !doctorsFor(db, user).some((d) => d.id === order.doctorId)) {
+        return Response.json({ error: "Not your customer" }, { status: 403 });
+      }
+      order.deliveredAt = nowIso();
+      order.deliveredBy = user.id;
+      order.deliveryPhotoId = String(b.photoId);
+      const docName2 = db.doctors.find((d) => d.id === order.doctorId)?.name ?? "?";
+      for (const a of db.users.filter((u) => u.active && (u.role === "accountant" || u.role === "admin") && u.id !== user.id)) {
+        notify(db, () => nextId(db), a.id, `${user.name} delivered order #${order.id} to ${docName2} — stamped invoice photo attached.`, "/docs", "orderStatus");
+      }
+      logActivity(db, () => nextId(db), user.id, `delivered order #${order.id} to ${docName2}`);
+      saveDb();
+      return Response.json({ ok: true, order: enrich(db, order) });
     }
 
     if (b.action === "attachPdf") {
@@ -295,6 +348,15 @@ export async function POST(req: Request) {
           return { productId: product.id, qty, price: order.isSample ? 0 : priceForQty(product, qty) };
         });
       if (!items.length) return Response.json({ error: "Add at least one product" }, { status: 400 });
+      if (!order.isSample) {
+        const loc2 = sellerLocation(db, user.id);
+        for (const it of items) {
+          const a = availableStock(db, it.productId, loc2, order.id);
+          if (it.qty > a.available) {
+            return Response.json({ error: `Only ${Math.max(0, a.available)} × ${db.products.find((pp) => pp.id === it.productId)?.name ?? "?"} available in ${cityName(db, loc2)}` }, { status: 400 });
+          }
+        }
+      }
       order.items = items;
       logActivity(db, () => nextId(db), user.id, `corrected his own order #${order.id}`);
       saveDb();

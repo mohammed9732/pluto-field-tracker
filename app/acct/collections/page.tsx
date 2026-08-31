@@ -33,11 +33,14 @@ export default function MoneyIn() {
   // A payment being corrected: {id, ref, amount, method, reason}, null = closed.
   const [editPay, setEditPay] = useState<any>(null);
   const [editErr, setEditErr] = useState("");
+  const [colPlans, setColPlans] = useState<any[]>([]);
 
   const load = useCallback(() => {
     api("/api/collections").then(setSched).catch(() => {});
     api("/api/acctdash").then(setDash).catch(() => {});
     api("/api/doctors").then((r: any) => setDoctors(r.doctors)).catch(() => {});
+    // Collector route plans wait on the accountant, not the supervisor.
+    api("/api/plans?scope=all").then((r: any) => setColPlans((r.plans ?? []).filter((p: any) => p.status === "submitted"))).catch(() => {});
   }, []);
   useEffect(load, [load]);
 
@@ -151,6 +154,36 @@ export default function MoneyIn() {
 
       {/* ═══════════ SCHEDULE ═══════════ */}
       {tab === "schedule" ? (<>
+        {colPlans.length ? (
+          <div className="card" style={{ gap: 8, borderColor: "var(--c-violet)" }}>
+            <h6 className="m0" style={{ color: "var(--c-violet-deep)" }}>
+              {tx("coll.collectorPlans", "Collector route plans waiting on you")}
+            </h6>
+            {colPlans.map((pl: any) => (
+              <div key={pl.id} className="listrow" style={{ alignItems: "flex-start", gap: 8 }}>
+                <div className="f1min">
+                  <div className="fs-small w-500">{pl.userName} · {tx("coll.weekOf", "week of")} <span className="hnum">{pl.weekStart}</span></div>
+                  <div className="small muted">
+                    {pl.days.map((day: any) => `${day.day} ${day.doctorNames?.length ?? 0}`).join(" · ")} — {pl.totalVisits} {tx("coll.stops", "stops")}
+                  </div>
+                </div>
+                <div className="row gap-2">
+                  <button className="btn btn-ghost fs-caption" style={{ color: "var(--c-green-deep)" }}
+                    onClick={async () => { await api("/api/plans", { json: { action: "decide", id: pl.id, decision: "approve" } }); load(); }}>
+                    {tx("coll.approve", "Approve")}
+                  </button>
+                  <button className="btn btn-ghost fs-caption" style={{ color: "var(--c-coral-deep)" }}
+                    onClick={async () => {
+                      const note = window.prompt(tx("coll.returnPlanWhy", "What should change?"));
+                      if (note == null) return;
+                      await api("/api/plans", { json: { action: "decide", id: pl.id, decision: "return", note } });
+                      load();
+                    }}>{tx("coll.return", "Return")}</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
         {attention.length ? (
           <div className="card" style={{ gap: 8, borderColor: "var(--c-coral)" }}>
             <h6 className="m0" style={{ color: "var(--c-coral-deep)" }}>

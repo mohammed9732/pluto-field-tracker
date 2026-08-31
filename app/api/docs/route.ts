@@ -28,7 +28,7 @@ export async function GET(req: Request) {
 
     const url = new URL(req.url);
     const q = (url.searchParams.get("q") ?? "").trim().toLowerCase();
-    const kind = url.searchParams.get("kind") ?? "all"; // invoices | receipts | all
+    const kind = url.searchParams.get("kind") ?? "all"; // invoices | receipts | deliveries | all
     const from = url.searchParams.get("from") ?? "";
     const to = url.searchParams.get("to") ?? "";
     const includeArchive = url.searchParams.get("archive") === "1";
@@ -43,14 +43,14 @@ export async function GET(req: Request) {
     const userName = (id: number) => db.users.find((u) => u.id === id)?.name ?? "?";
 
     type Row = {
-      kind: "invoice" | "receipt";
+      kind: "invoice" | "receipt" | "delivery";
       date: string; fileId: string; fileName: string;
       doctorId: number; doctorName: string; byName: string;
       amount: number; refNo: string; archived: boolean;
     };
     const rows: Row[] = [];
 
-    if (kind !== "receipts") {
+    if (kind === "all" || kind === "invoices") {
       for (const o of db.orders) {
         if (!o.invoicePdfId) continue;
         if (!isMgmt && !visible.has(o.doctorId)) continue;
@@ -64,7 +64,22 @@ export async function GET(req: Request) {
         });
       }
     }
-    if (kind !== "invoices") {
+    if (kind === "all" || kind === "deliveries") {
+      // Stamped, signed invoices photographed at the door — proof of delivery.
+      for (const o of db.orders) {
+        if (!o.deliveryPhotoId || !o.deliveredAt) continue;
+        if (!isMgmt && !visible.has(o.doctorId)) continue;
+        const date = o.deliveredAt.slice(0, 10);
+        rows.push({
+          kind: "delivery", date,
+          fileId: o.deliveryPhotoId, fileName: `order-${o.id}-delivered.jpg`,
+          doctorId: o.doctorId, doctorName: docName(o.doctorId), byName: userName(o.deliveredBy ?? o.createdBy),
+          amount: o.items.reduce((s, it) => s + it.qty * it.price, 0),
+          refNo: `#${o.id}`, archived: date < archiveBefore,
+        });
+      }
+    }
+    if (kind === "all" || kind === "receipts") {
       for (const p of db.payments) {
         if (!p.photo) continue;
         if (!isMgmt && !visible.has(p.doctorId)) continue;

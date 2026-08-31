@@ -22,6 +22,8 @@ export default function PayPeople() {
   const me = useMe();
   const [data, setData] = useState<any>(null);
   const [payouts, setPayouts] = useState<any>(null);
+  // Per-person tiered collection plans being edited: userId -> draft fields.
+  const [planDraft, setPlanDraft] = useState<Record<number, { target: string; below: string; above: string }>>({});
 
   const load = useCallback(() => {
     api("/api/money?view=payroll").then(setData).catch(() => {});
@@ -168,6 +170,62 @@ export default function PayPeople() {
           })}
         </div>
       ) : null}
+
+      {/* ---- the collection incentive: target + two rates, per person -- */}
+      <div className="card" style={{ gap: 8 }}>
+        <h6 className="m0">{tx("payroll.collPlan", "Collection incentive — target & rates")}</h6>
+        <div className="small muted">
+          {tx("payroll.collPlanSub", "Below the monthly target they earn the lower % on what they collected; at or above it, the higher % on all of it. Blank = the company-wide rate.")}
+        </div>
+        <div style={{ overflowX: "auto" }}>
+          <table className="table fs-caption" style={{ minWidth: 560 }}>
+            <thead>
+              <tr>
+                <th>{tx("acct.person", "Person")}</th>
+                <th className="ta-r">{tx("payroll.collectedMtd", "Collected")}</th>
+                <th className="ta-r">{tx("payroll.collTarget", "Monthly target")}</th>
+                <th className="ta-r">{tx("payroll.pctBelow", "% below")}</th>
+                <th className="ta-r">{tx("payroll.pctAbove", "% at/above")}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.filter((r) => (r.role === "rep" && r.canCollect) || r.role === "collector").map((r) => {
+                const d = planDraft[r.userId] ?? {
+                  target: r.collectionTarget != null ? String(r.collectionTarget) : "",
+                  below: r.collectionPctBelow != null ? String(r.collectionPctBelow) : "",
+                  above: r.collectionPctAbove != null ? String(r.collectionPctAbove) : "",
+                };
+                const hit = r.collectionTarget && r.collected >= r.collectionTarget;
+                return (
+                  <tr key={r.userId}>
+                    <td className="w-500">{r.name}</td>
+                    <td className="ta-r hnum" style={{ color: hit ? "var(--c-green-deep)" : undefined, fontWeight: hit ? 700 : 400 }}>
+                      {money(r.collected)}{hit ? " ✓" : ""}
+                    </td>
+                    <td className="ta-r"><input className="input hnum" style={{ width: 120, minHeight: 30, textAlign: "end" }} inputMode="numeric"
+                      value={d.target} onChange={(e) => setPlanDraft({ ...planDraft, [r.userId]: { ...d, target: e.target.value } })} /></td>
+                    <td className="ta-r"><input className="input hnum" style={{ width: 64, minHeight: 30, textAlign: "end" }} inputMode="decimal"
+                      value={d.below} onChange={(e) => setPlanDraft({ ...planDraft, [r.userId]: { ...d, below: e.target.value } })} /></td>
+                    <td className="ta-r"><input className="input hnum" style={{ width: 64, minHeight: 30, textAlign: "end" }} inputMode="decimal"
+                      value={d.above} onChange={(e) => setPlanDraft({ ...planDraft, [r.userId]: { ...d, above: e.target.value } })} /></td>
+                    <td className="ta-r">
+                      {planDraft[r.userId] ? (
+                        <button className="btn btn-primary" style={{ fontSize: 12, padding: "4px 12px" }}
+                          onClick={async () => {
+                            await api("/api/money", { json: { action: "collectionPlan", userId: r.userId, target: d.target, below: d.below, above: d.above } });
+                            setPlanDraft((pd) => { const n = { ...pd }; delete n[r.userId]; return n; });
+                            load();
+                          }}>{tx("common.save", "Save")}</button>
+                      ) : null}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* ---- quarterly incentives (was its own Payouts page) ----------- */}
       {payouts ? (

@@ -14,7 +14,7 @@ function distM(lat1: number, lng1: number, lat2: number, lng2: number): number {
 
 export async function GET(req: Request) {
   try {
-    const user = requireUser(["supervisor", "admin", "rep"]);
+    const user = requireUser(["supervisor", "admin", "rep", "collector"]);
     const db = getDb();
     const url = new URL(req.url);
     const date = url.searchParams.get("date") ?? todayStr();

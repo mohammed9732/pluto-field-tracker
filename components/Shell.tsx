@@ -14,7 +14,7 @@ import { ChatDock } from "./ChatDock";
 export interface Me {
   id: number;
   name: string;
-  role: "admin" | "supervisor" | "rep" | "accountant";
+  role: "admin" | "supervisor" | "rep" | "accountant" | "collector";
   city: string;
   phone: string;
   dailyMin: number;
@@ -54,6 +54,14 @@ const NAV: Record<string, { href: string; label: string; tkey?: string; icon: ke
     { href: "/team", label: "Team", tkey: "nav.team", icon: "users" },
     { href: "/approvals", label: "Approvals", tkey: "nav.approvals", icon: "check" },
     { href: "/doctors", label: DOCTORS_LABEL, icon: "pinDot" },
+  ],
+  /* The collector's day is money, not sales: the schedule the accountant
+   * set, the payments they recorded, and a weekly route plan of their own. */
+  collector: [
+    { href: "/home", label: "Home", tkey: "nav.home", icon: "home" },
+    { href: "/plan", label: "Plan", tkey: "nav.plan", icon: "cal" },
+    { href: "/collections", label: "Collections", tkey: "coll.title", icon: "card" },
+    { href: "/orders", label: "Payments", tkey: "orders.payments", icon: "receipt" },
   ],
   accountant: [
     { href: "/acct", label: "Money", tkey: "nav.money", icon: "chart" },

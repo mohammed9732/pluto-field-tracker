@@ -71,8 +71,11 @@ export async function GET(req: Request) {
       return Response.json({
         rows,
         canEdit: isMgmt,
-        reps: db.users.filter((u) => u.active && (u.role === "rep" || u.role === "supervisor"))
-          .map((u) => ({ id: u.id, name: u.name, city: u.city })),
+        // Who can be sent to collect: collectors, supervisors, and the reps
+        // whose collection duty has not been switched off.
+        reps: db.users.filter((u) => u.active
+            && (u.role === "collector" || u.role === "supervisor" || (u.role === "rep" && u.canCollect !== false)))
+          .map((u) => ({ id: u.id, name: u.name, city: u.city, role: u.role })),
       });
     }
 

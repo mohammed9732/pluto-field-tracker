@@ -27,6 +27,37 @@ function ensureShape(db: DB) {
       (db as any)[key] = [];
     }
   }
+
+  /* Migration: the app used to keep a separate "main" warehouse above the
+   * cities. The owner killed it — every city is an equal warehouse — so
+   * whatever main held belongs to head office (the first city). Runs once:
+   * after this no stock row, transfer, or ERP mapping says "main" again. */
+  const hq = db.settings.cities?.[0]?.id;
+  if (hq && db.stock.some((x) => x.location === "main")) {
+    for (const s of db.stock.filter((x) => x.location === "main")) {
+      const dst = db.stock.find((x) => x.productId === s.productId && x.location === hq);
+      if (dst) {
+        dst.qty += s.qty;
+        if (s.expiry && (!dst.expiry || s.expiry < dst.expiry)) { dst.expiry = s.expiry; dst.batch = s.batch ?? dst.batch; }
+        db.stock = db.stock.filter((x) => x !== s);
+      } else {
+        s.location = hq;
+      }
+    }
+    for (const t of db.stockTransfers) {
+      if (t.from === "main") t.from = hq;
+      if (t.to === "main") t.to = hq;
+    }
+    for (const r of db.transferRequests) {
+      if (r.fromCity === "main") r.fromCity = hq;
+      if (r.toCity === "main") r.toCity = hq;
+    }
+    const wh = db.settings.erpWarehouseMap ?? {};
+    for (const k of Object.keys(wh)) if (wh[k] === "main") wh[k] = hq;
+  }
+  // Product order: sort once by the admin's drag-and-drop order so every
+  // list in the app — ordering, stock, catalog, targets — follows it free.
+  db.products.sort((a, b) => (a.sortOrder ?? a.id) - (b.sortOrder ?? b.id));
 }
 
 export function getDb(): DB {

@@ -82,7 +82,7 @@ export async function GET() {
 // POST { action: "checkin" | "checkout" | "ping", lat, lng, accuracy }
 export async function POST(req: Request) {
   try {
-    const user = requireUser(["rep", "supervisor", "admin"]);
+    const user = requireUser(["rep", "collector", "supervisor", "admin"]);
     const db = getDb();
     const body = await req.json();
     const { action, lat = null, lng = null, accuracy = null } = body;

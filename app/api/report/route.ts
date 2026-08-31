@@ -59,7 +59,7 @@ export async function GET(req: Request) {
 
     // (f) stock & expiry
     const stock = db.stock.map((s) => ({
-      product: `${db.products.find((p) => p.id === s.productId)?.name ?? "?"}${s.location === "main" ? "" : ` (${s.location})`}`,
+      product: `${db.products.find((p) => p.id === s.productId)?.name ?? "?"} (${s.location})`,
       qty: s.qty, expiry: s.expiry,
       low: s.qty <= db.settings.lowStockThreshold,
       nearExpiry: !!s.expiry && s.expiry <= new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString().slice(0, 10),

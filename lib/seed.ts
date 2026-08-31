@@ -288,10 +288,10 @@ orders.push(mkOrder(SAMI, D("Dr. Shirin Ahmed"), aug(14, "10:20"), [it(CLAPIO_L,
 
   // ---- stock ---------------------------------------------------------------
   const stock: DB["stock"] = [
-    { productId: CLAPIO_L, location: "main", qty: 142, batch: "CL-2603", expiry: "2027-03-31", updatedAt: aug(1, "09:00"), updatedBy: ZHILAN },
-    { productId: CLAPIO_CH, location: "main", qty: 4, batch: "CC-2701", expiry: "2027-01-31", updatedAt: aug(1, "09:00"), updatedBy: ZHILAN },
-    { productId: REVITA, location: "main", qty: 67, batch: "RV-2610", expiry: "2026-10-31", updatedAt: aug(1, "09:00"), updatedBy: ZHILAN },
-    { productId: DERMAFIX, location: "main", qty: 210, batch: null, expiry: "2028-05-31", updatedAt: aug(1, "09:00"), updatedBy: ZHILAN },
+    { productId: CLAPIO_L, location: "erbil", qty: 142, batch: "CL-2603", expiry: "2027-03-31", updatedAt: aug(1, "09:00"), updatedBy: ZHILAN },
+    { productId: CLAPIO_CH, location: "erbil", qty: 4, batch: "CC-2701", expiry: "2027-01-31", updatedAt: aug(1, "09:00"), updatedBy: ZHILAN },
+    { productId: REVITA, location: "erbil", qty: 67, batch: "RV-2610", expiry: "2026-10-31", updatedAt: aug(1, "09:00"), updatedBy: ZHILAN },
+    { productId: DERMAFIX, location: "erbil", qty: 210, batch: null, expiry: "2028-05-31", updatedAt: aug(1, "09:00"), updatedBy: ZHILAN },
     { productId: CLAPIO_L, location: "duhok", qty: 18, batch: "CL-2603", expiry: "2027-03-31", updatedAt: aug(10, "09:00"), updatedBy: ZHILAN },
     { productId: CLAPIO_CH, location: "duhok", qty: 6, batch: "CC-2701", expiry: "2027-01-31", updatedAt: aug(10, "09:00"), updatedBy: ZHILAN },
     { productId: REVITA, location: "duhok", qty: 10, batch: "RV-2610", expiry: "2026-10-31", updatedAt: aug(10, "09:00"), updatedBy: ZHILAN },
@@ -299,8 +299,8 @@ orders.push(mkOrder(SAMI, D("Dr. Shirin Ahmed"), aug(14, "10:20"), [it(CLAPIO_L,
     { productId: REVITA, location: "kirkuk", qty: 14, batch: "RV-2610", expiry: "2026-10-31", updatedAt: aug(10, "09:00"), updatedBy: ZHILAN },
   ];
   const stockTransfers: DB["stockTransfers"] = [
-    { id: id(), productId: CLAPIO_L, qty: 20, from: "main", to: "duhok", by: ZHILAN, ts: aug(10, "09:00"), note: "Weekly refill" },
-    { id: id(), productId: CLAPIO_L, qty: 15, from: "main", to: "kirkuk", by: ZHILAN, ts: aug(10, "09:10"), note: "Weekly refill" },
+    { id: id(), productId: CLAPIO_L, qty: 20, from: "erbil", to: "duhok", by: ZHILAN, ts: aug(10, "09:00"), note: "Weekly refill" },
+    { id: id(), productId: CLAPIO_L, qty: 15, from: "erbil", to: "kirkuk", by: ZHILAN, ts: aug(10, "09:10"), note: "Weekly refill" },
   ];
   const stockChecks: DB["stockChecks"] = [
     {

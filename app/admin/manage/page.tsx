@@ -15,6 +15,9 @@ export default function Manage() {
   const [editProduct, setEditProduct] = useState<any>(null);
   const [handover, setHandover] = useState<{ fromId: string; toId: string; deactivate: boolean } | null>(null);
   const [hoErr, setHoErr] = useState("");
+  // Drag-and-drop product ordering: a local copy while dragging, saved on drop.
+  const [prods, setProds] = useState<any[] | null>(null);
+  const [drag, setDrag] = useState<number | null>(null);
 
   const load = useCallback(() => {
     api("/api/admin").then(setData).catch(() => {});
@@ -78,7 +81,7 @@ export default function Manage() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
               <div className="field m0"><label>{tx("manage.role", "Role")}</label>
                 <select className="input" value={editUser.role} onChange={(e) => setEditUser({ ...editUser, role: e.target.value })}>
-                  <option value="rep">Rep</option><option value="supervisor">{tx("manage.supervisor", "Supervisor")}</option><option value="accountant">{tx("manage.accountant", "Accountant")}</option><option value="admin">{tx("manage.admin", "Admin")}</option>
+                  <option value="rep">Rep</option><option value="collector">{tx("manage.collector", "Collector")}</option><option value="supervisor">{tx("manage.supervisor", "Supervisor")}</option><option value="accountant">{tx("manage.accountant", "Accountant")}</option><option value="admin">{tx("manage.admin", "Admin")}</option>
                 </select>
               </div>
               <div className="field m0"><label>{tx("manage.city", "City")}</label>
@@ -107,6 +110,12 @@ export default function Manage() {
                 <span className="dot" />{tx("manage.active", "Active")}
               </label>
             </div>
+            {editUser.role === "rep" ? (
+              <label className="radio fs-small">
+                <input type="checkbox" checked={editUser.canCollect !== false} onChange={(e) => setEditUser({ ...editUser, canCollect: e.target.checked })} />
+                <span className="dot" />{tx("manage.canCollect", "Collects payments — off when a dedicated collector covers their customers")}
+              </label>
+            ) : null}
             <div className="two">
               <button className="btn btn-primary" style={{ padding: 9 }} onClick={saveUser}>{tx("manage.save", "Save")}</button>
               <button className="btn btn-secondary" style={{ padding: 9 }} onClick={() => setEditUser(null)}>{tx("manage.cancel", "Cancel")}</button>
@@ -179,11 +188,34 @@ Continue anyway?`)) return;
           <h6 style={{ margin: 0, color: "var(--color-neutral-600)", flex: 1 }}>Products &amp; prices</h6>
           {canEdit ? <button className="btn btn-primary" style={{ fontSize: 12, padding: "6px 12px" }} onClick={() => setEditProduct({ name: "", sku: "", unitPrice: "", unit: "box" })}>＋ Add product</button> : null}
         </div>
+        {canEdit ? <div className="small muted">{tx("manage.dragToReorder", "Drag rows to set the order reps see products in — everywhere in the app.")}</div> : null}
         <table className="table fs-small">
-          <thead><tr><th>{tx("manage.product", "Product")}</th><th>SKU</th><th className="ta-r">{tx("manage.unitPrice", "Unit price")}</th><th></th></tr></thead>
+          <thead><tr>{canEdit ? <th style={{ width: 26 }}></th> : null}<th>{tx("manage.product", "Product")}</th><th>SKU</th><th className="ta-r">{tx("manage.unitPrice", "Unit price")}</th><th></th></tr></thead>
           <tbody>
-            {data.products.map((p: any) => (
-              <tr key={p.id}>
+            {(prods ?? data.products).map((p: any) => (
+              <tr key={p.id}
+                draggable={canEdit}
+                onDragStart={() => setDrag(p.id)}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (drag == null || drag === p.id) return;
+                  const list = (prods ?? data.products).slice();
+                  const fromIdx = list.findIndex((x: any) => x.id === drag);
+                  const toIdx = list.findIndex((x: any) => x.id === p.id);
+                  list.splice(toIdx, 0, list.splice(fromIdx, 1)[0]);
+                  setProds(list);
+                }}
+                onDrop={async () => {
+                  if (drag != null && prods) {
+                    await api("/api/admin", { json: { action: "reorderProducts", ids: prods.map((x: any) => x.id) } });
+                    setProds(null);
+                    load();
+                  }
+                  setDrag(null);
+                }}
+                onDragEnd={() => setDrag(null)}
+                style={{ opacity: drag === p.id ? 0.4 : 1 }}>
+                {canEdit ? <td style={{ cursor: "grab", color: "var(--color-neutral-400)", userSelect: "none" }} title="Drag to reorder">⠿</td> : null}
                 <td style={{ fontWeight: 500 }}>{p.name}</td>
                 <td className="muted">{p.sku}</td>
                 <td className="ta-r">
