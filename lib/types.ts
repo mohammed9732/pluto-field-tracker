@@ -331,6 +331,9 @@ export interface Message {
   replyToId?: number | null; // quoted message, same channel
   // One reaction per person per message, WhatsApp-style.
   reactions?: { emoji: string; userId: number }[];
+  // kind "meet" only: fileName holds the scheduled start (ISO minute) when
+  // the meeting is for later; remindedAt marks that the start-time push went.
+  remindedAt?: string | null;
 }
 
 export interface PlanDay {

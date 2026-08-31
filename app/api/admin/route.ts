@@ -179,17 +179,25 @@ export async function POST(req: Request) {
       if (b.id) {
         const g = db.chatGroups.find((x) => x.id === Number(b.id));
         if (!g) return Response.json({ error: "Group not found" }, { status: 404 });
+        // "Everyone" manages itself — editing it silently reverted, which
+        // read as "editing groups is broken". Refuse loudly instead.
+        if (g.name === "Everyone") {
+          return Response.json({ error: "Everyone updates itself — every active user is always in it" }, { status: 400 });
+        }
         if (!g.builtin && b.name) g.name = String(b.name);
         if (Array.isArray(b.memberIds)) {
           g.memberIds = b.memberIds.map(Number).filter((id: number) => db.users.some((u) => u.id === id && u.active));
-          if (g.name === "Everyone") g.memberIds = db.users.filter((u) => u.active).map((u) => u.id);
         }
       } else {
-        if (!b.name) return Response.json({ error: "Group needs a name" }, { status: 400 });
-        db.chatGroups.push({
-          id: nextId(db), name: String(b.name), builtin: false,
-          memberIds: Array.isArray(b.memberIds) ? b.memberIds.map(Number).filter((id: number) => db.users.some((u) => u.id === id && u.active)) : [],
-        });
+        if (!String(b.name ?? "").trim()) return Response.json({ error: "Group needs a name" }, { status: 400 });
+        const memberIds: number[] = Array.isArray(b.memberIds)
+          ? b.memberIds.map(Number).filter((id: number) => db.users.some((u) => u.id === id && u.active))
+          : [];
+        /* The creator joins their own group automatically. Without this the
+         * owner made a group, opened chat, and could not see it — a group
+         * only appears to its MEMBERS, and he had not ticked himself. */
+        if (!memberIds.includes(user.id)) memberIds.push(user.id);
+        db.chatGroups.push({ id: nextId(db), name: String(b.name).trim(), builtin: false, memberIds });
       }
       saveDb();
       return Response.json({ ok: true, chatGroups: db.chatGroups });

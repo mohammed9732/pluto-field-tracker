@@ -99,6 +99,7 @@ export default function ControlPanel() {
   const [closeBusy, setCloseBusy] = useState(false);
   const [demoBusy, setDemoBusy] = useState(false);
   const [demoMsg, setDemoMsg] = useState("");
+  const [groupErr, setGroupErr] = useState("");
 
   const load = useCallback(() => {
     api("/api/settings").then((r: any) => setSettings(r.settings)).catch(() => {});
@@ -492,7 +493,11 @@ export default function ControlPanel() {
                 <div className="fs-small w-500">{g.name}{g.builtin ? <span className="small muted"> · built-in</span> : ""}</div>
                 <div className="small muted">{g.memberIds.map((id: number) => users.find((u) => u.id === id)?.name?.split(" ")[0] ?? "?").join(", ") || "no members"}</div>
               </div>
-              <button className="btn btn-ghost fs-caption" onClick={() => setEditGroup({ ...g, memberIds: [...g.memberIds] })}>{tx("settings.edit", "Edit")}</button>
+              {g.name === "Everyone" ? (
+                <span className="small muted">{tx("settings.everyoneAuto", "updates itself")}</span>
+              ) : (
+                <button className="btn btn-ghost fs-caption" onClick={() => { setGroupErr(""); setEditGroup({ ...g, memberIds: [...g.memberIds] }); }}>{tx("settings.edit", "Edit")}</button>
+              )}
               {!g.builtin ? (
                 <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-coral-deep)" }}
                   onClick={async () => { if (window.confirm(`Delete group "${g.name}"?`)) { await api("/api/admin", { json: { action: "deleteGroup", id: g.id } }); load(); } }}>
@@ -502,7 +507,8 @@ export default function ControlPanel() {
             </div>
           ))}
           <button className="btn btn-secondary" style={{ fontSize: 12, padding: "6px 12px", alignSelf: "flex-start" }}
-            onClick={() => setEditGroup({ name: "", memberIds: [] })}>＋ New group</button>
+            onClick={() => { setGroupErr(""); setEditGroup({ name: "", memberIds: me ? [me.id] : [] }); }}>＋ New group</button>
+          <div className="small muted">{tx("settings.groupCreatorIncluded", "You are included in every group you create — a group is only visible to its members.")}</div>
         </div>
         {editGroup ? (
           <div className="card gap-3">
@@ -520,9 +526,17 @@ export default function ControlPanel() {
                 </button>
               ))}
             </div>
+            {groupErr ? <div className="tag tag-hot self-start">{groupErr}</div> : null}
             <div className="two">
-              <button className="btn btn-primary" style={{ padding: 9 }}
-                onClick={async () => { await api("/api/admin", { json: { action: "saveGroup", ...editGroup } }); setEditGroup(null); load(); }}>{tx("settings.saveGroup", "Save group")}</button>
+              <button className="btn btn-primary" style={{ padding: 9 }} disabled={!editGroup.name?.trim()}
+                onClick={async () => {
+                  setGroupErr("");
+                  try {
+                    await api("/api/admin", { json: { action: "saveGroup", ...editGroup } });
+                    setEditGroup(null);
+                    load();
+                  } catch (e: any) { setGroupErr(e?.message || "Could not save the group"); }
+                }}>{tx("settings.saveGroup", "Save group")}</button>
               <button className="btn btn-secondary" style={{ padding: 9 }} onClick={() => setEditGroup(null)}>{tx("settings.cancel", "Cancel")}</button>
             </div>
           </div>

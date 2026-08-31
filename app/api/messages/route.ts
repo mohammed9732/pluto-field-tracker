@@ -1,6 +1,8 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
 import { notifyOnce, nowIso } from "@/lib/compute";
+
+export const dynamic = "force-dynamic";
 import { User, DB } from "@/lib/types";
 
 // Channels = admin-built groups the user belongs to + DMs allowed by policy.
@@ -36,6 +38,23 @@ export async function GET(req: Request) {
     const after = Number(url.searchParams.get("after") ?? 0);
     if (!allowed.some((c) => c.id === channel)) return Response.json({ error: "No access to that channel" }, { status: 403 });
     const name = (id: number) => db.users.find((u) => u.id === id)?.name ?? "?";
+    /* Scheduled meetings ring when their time comes. No cron in a JSON-file
+     * app — the moment somebody's chat polls is the moment the bell matters.
+     * remindedAt guards the push so it goes exactly once. */
+    let remindersSent = false;
+    for (const m of db.messages.filter((x) => x.channel === channel && x.kind === "meet" && x.fileName && !x.remindedAt)) {
+      if (m.fileName! > nowIso()) continue;
+      const members = channel.startsWith("dm-")
+        ? channel.split("-").slice(1).map(Number)
+        : db.chatGroups.filter((g) => `g-${g.id}` === channel).flatMap((g) => g.memberIds);
+      for (const id of Array.from(new Set(members))) {
+        notifyOnce(db, () => nextId(db), id, `📹 Scheduled video meeting is starting now — tap to join.`,
+          `/chat?channel=${channel}`, channel.startsWith("dm-") ? "dm" : "group");
+      }
+      m.remindedAt = nowIso();
+      remindersSent = true;
+    }
+    if (remindersSent) saveDb();
     const messages = db.messages
       .filter((m) => m.channel === channel && m.id > after)
       .sort((a, b) => a.ts.localeCompare(b.ts))
@@ -98,9 +117,13 @@ export async function POST(req: Request) {
     if (kind !== "text" && kind !== "meet" && !b.fileId) return Response.json({ error: "Missing file" }, { status: 400 });
     // A quoted reply must point at a message in the same room.
     const replyTo = b.replyToId ? db.messages.find((m) => m.id === Number(b.replyToId) && m.channel === channel) : null;
+    // For a scheduled meeting the start time rides in fileName (ISO minute).
+    const meetAt = kind === "meet" && b.scheduledFor && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(String(b.scheduledFor))
+      ? String(b.scheduledFor).slice(0, 16) : null;
     const msg = {
       id: nextId(db), channel, senderId: user.id, body, ts: nowIso(),
-      kind: kind as any, fileId: b.fileId ?? null, fileName: b.fileName ?? null,
+      kind: kind as any, fileId: b.fileId ?? null,
+      fileName: kind === "meet" ? meetAt : (b.fileName ?? null),
       duration: b.duration != null ? Math.round(Number(b.duration)) : null,
       replyToId: replyTo ? replyTo.id : null,
     };
@@ -116,7 +139,7 @@ export async function POST(req: Request) {
     const preview = kind === "text"
       ? (body.length > 60 ? body.slice(0, 57) + "…" : body)
       : kind === "image" ? "sent a photo" : kind === "voice" ? "sent a voice note"
-      : kind === "meet" ? "📹 started a video meeting — tap to join" : "sent a file";
+      : kind === "meet" ? (meetAt ? `📹 scheduled a video meeting for ${meetAt.slice(0, 10)} ${meetAt.slice(11, 16)}` : "📹 started a video meeting — tap to join") : "sent a file";
     for (const id of Array.from(new Set(recipients))) {
       notifyOnce(db, () => nextId(db), id,
         channel.startsWith("dm-") ? `${user.name}: ${preview}` : `${label} · ${user.name}: ${preview}`,

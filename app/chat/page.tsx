@@ -22,6 +22,8 @@ function ChatInner() {
   const [actionsFor, setActionsFor] = useState<any | null>(null); // long-pressed message
   const [replyTo, setReplyTo] = useState<any | null>(null);       // quoted draft
   const [meetRoom, setMeetRoom] = useState<string | null>(null);  // open video overlay
+  const [meetMenu, setMeetMenu] = useState(false);                // start-or-schedule sheet
+  const [meetWhen, setMeetWhen] = useState("");                   // datetime-local draft
   const lpTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [recording, setRecording] = useState(false);
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
@@ -95,15 +97,30 @@ function ChatInner() {
   }
 
   /* One video room per press, named unguessably; the message card is the
-   * invitation and the push notification rings everyone else. Jitsi on a
-   * free public server — no accounts, no app to install. */
-  async function startMeeting() {
+   * invitation and the push notification rings everyone else.
+   *
+   * The server is fairmeeting.net, and both halves of that choice were
+   * tested rather than assumed:
+   *   - meet.ffmuc.net (the first pick) sends frame-ancestors 'self', so it
+   *     painted a BLACK SCREEN inside the app — the bug the owner reported.
+   *   - framatalk.org embeds, but now demands a logged-in host ("En attente
+   *     de l'hôte"), which is useless for a team with no accounts.
+   * fairmeeting.net embeds cleanly AND drops you straight into the room.
+   * If it ever misbehaves, "Open in browser" in the call header is the
+   * escape hatch, and swapping this one constant moves every call. */
+  const MEET_BASE = "https://fairmeeting.net";
+  const meetUrl = (room: string) =>
+    `${MEET_BASE}/${room}#userInfo.displayName=%22${encodeURIComponent(me?.name ?? "")}%22&config.prejoinConfig.enabled=false&config.defaultLanguage=%22en%22`;
+
+  async function startMeeting(scheduledFor?: string) {
     const room = `pluto-${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 6)}`;
+    setMeetMenu(false);
+    setMeetWhen("");
     try {
-      const r = await api("/api/messages", { json: { channel, kind: "meet", body: room } });
+      const r = await api("/api/messages", { json: { channel, kind: "meet", body: room, scheduledFor: scheduledFor ?? null } });
       setMessages((prev) => [...prev, r.message]);
       lastId.current = Math.max(lastId.current, r.message.id);
-      setMeetRoom(room);
+      if (!scheduledFor) setMeetRoom(room);
     } catch {}
   }
 
@@ -166,7 +183,7 @@ function ChatInner() {
           <div className="hnum" style={{ fontSize: 22, lineHeight: 1.05 }}>{tx("chat.chat", "Chat")}</div>
           <div className="small muted">{channels.find((c) => c.id === channel)?.label ?? ""}</div>
         </div>
-        <button className="btn btn-secondary btn-icon" style={{ flex: "none" }} onClick={startMeeting}
+        <button className="btn btn-secondary btn-icon" style={{ flex: "none" }} onClick={() => setMeetMenu(true)}
           title={tx("chat.startMeeting", "Start a video meeting")} aria-label={tx("chat.startMeeting", "Start a video meeting")}>
           <Icon d="M15 10l5-3v10l-5-3M3 6h12v12H3Z" size={16} />
         </button>
@@ -233,12 +250,22 @@ function ChatInner() {
                 <span style={{ fontSize: 20 }}>📹</span>
                 <div>
                   <div className="fs-small w-700">{tx("chat.videoMeeting", "Video meeting")}</div>
-                  <div style={{ fontSize: 11.5 }}>{m.senderName}</div>
+                  <div style={{ fontSize: 11.5 }}>
+                    {m.senderName}
+                    {m.fileName ? <> · 🗓 <b className="hnum">{m.fileName.slice(8, 10)}-{m.fileName.slice(5, 7)} {m.fileName.slice(11, 16)}</b></> : null}
+                  </div>
                 </div>
-                <button className="btn btn-primary" style={{ fontSize: 12.5, padding: "6px 16px", background: "var(--c-green-deep)", borderColor: "var(--c-green-deep)" }}
-                  onClick={() => setMeetRoom(m.body)}>
-                  {tx("chat.join", "Join")}
-                </button>
+                {meetRoom === m.body ? (
+                  <button className="btn btn-primary" style={{ fontSize: 12.5, padding: "6px 16px", background: "var(--c-coral-deep)", borderColor: "var(--c-coral-deep)" }}
+                    onClick={() => setMeetRoom(null)}>
+                    {tx("chat.leave", "Leave")}
+                  </button>
+                ) : (
+                  <button className="btn btn-primary" style={{ fontSize: 12.5, padding: "6px 16px", background: "var(--c-green-deep)", borderColor: "var(--c-green-deep)" }}
+                    onClick={() => setMeetRoom(m.body)}>
+                    {tx("chat.join", "Join")}
+                  </button>
+                )}
               </div>
             ) : m.kind === "image" && m.fileId ? (
               <div onClick={() => openImage(`/api/files?id=${m.fileId}`)} className={m.mine ? "bubble-out" : "bubble-in"} style={{ padding: 4, background: m.mine ? "var(--c-violet)" : undefined, cursor: "pointer" }}>
@@ -317,6 +344,27 @@ function ChatInner() {
       </div>
       <div className="hint" style={{ textAlign: "center" }}>Empty field shows the mic — tap to record, tap again to send. Type and the same button becomes send.</div>
 
+      {/* Start-or-schedule sheet for video meetings. */}
+      {meetMenu ? (
+        <div onClick={() => setMeetMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(10,10,12,.3)", display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 14 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--color-surface)", borderRadius: 20, padding: 14, width: "100%", maxWidth: 400, display: "flex", flexDirection: "column", gap: 10, paddingBottom: "calc(14px + env(safe-area-inset-bottom, 0px))", boxShadow: "0 -4px 30px rgba(0,0,0,.15)" }}>
+            <button className="btn btn-primary" style={{ padding: 12, background: "var(--c-green-deep)", borderColor: "var(--c-green-deep)" }}
+              onClick={() => startMeeting()}>
+              📹 {tx("chat.startNow", "Start a meeting now")}
+            </button>
+            <div className="row" style={{ gap: 8 }}>
+              <input className="input" type="datetime-local" value={meetWhen}
+                onChange={(e) => setMeetWhen(e.target.value)} style={{ flex: 1, minHeight: 42 }} />
+              <button className="btn btn-secondary" style={{ padding: "0 16px" }} disabled={!meetWhen}
+                onClick={() => startMeeting(meetWhen)}>
+                🗓 {tx("chat.schedule", "Schedule")}
+              </button>
+            </div>
+            <div className="small muted">{tx("chat.scheduleHint", "A scheduled meeting posts its card now and rings everyone when the time comes.")}</div>
+          </div>
+        </div>
+      ) : null}
+
       {/* Long-press action sheet: react, reply, or jump to their DM. */}
       {actionsFor ? (
         <div onClick={() => setActionsFor(null)} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(10,10,12,.3)", display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 14 }}>
@@ -340,17 +388,27 @@ function ChatInner() {
         </div>
       ) : null}
 
-      {/* The video room, inside the app. A free public Jitsi server — no
-          accounts, nothing to install; × in the corner comes back to chat. */}
+      {/* The video room, inside the app: a slim header with Leave and an
+          open-in-browser escape hatch, the call itself underneath. Mic,
+          camera, screen-share and hang-up live in Jitsi's own bar. */}
       {meetRoom ? (
-        <div style={{ position: "fixed", inset: 0, zIndex: 400, background: "#000" }}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 400, background: "#000", display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "calc(env(safe-area-inset-top, 0px) + 8px) 12px 8px" }}>
+            <span style={{ color: "#fff", fontSize: 13, fontWeight: 600, flex: 1 }}>📹 {tx("chat.videoMeeting", "Video meeting")}</span>
+            <button onClick={() => window.open(meetUrl(meetRoom), "_blank")}
+              style={{ border: "1px solid rgba(255,255,255,.35)", background: "none", color: "#fff", borderRadius: 999, padding: "6px 14px", fontSize: 12, cursor: "pointer" }}>
+              {tx("chat.openInBrowser", "Open in browser")}
+            </button>
+            <button onClick={() => setMeetRoom(null)}
+              style={{ border: "none", background: "var(--c-coral-deep)", color: "#fff", borderRadius: 999, padding: "6px 18px", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
+              {tx("chat.leave", "Leave")}
+            </button>
+          </div>
           <iframe
-            src={`https://meet.ffmuc.net/${meetRoom}#userInfo.displayName=%22${encodeURIComponent(me.name)}%22&config.prejoinConfig.enabled=false`}
+            src={meetUrl(meetRoom)}
             allow="camera; microphone; fullscreen; display-capture; autoplay"
-            style={{ width: "100%", height: "100%", border: 0 }}
+            style={{ width: "100%", flex: 1, border: 0 }}
           />
-          <button onClick={() => setMeetRoom(null)} aria-label="Close"
-            style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 10px)", insetInlineEnd: 12, width: 42, height: 42, borderRadius: 999, border: "none", background: "rgba(255,255,255,.2)", color: "#fff", fontSize: 22, cursor: "pointer" }}>×</button>
         </div>
       ) : null}
     </Screen>
