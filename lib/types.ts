@@ -324,10 +324,13 @@ export interface Message {
   senderId: number;
   body: string;
   ts: string;
-  kind: "text" | "image" | "file" | "voice";
+  kind: "text" | "image" | "file" | "voice" | "meet";
   fileId: string | null;
   fileName: string | null;
   duration: number | null; // seconds, voice only
+  replyToId?: number | null; // quoted message, same channel
+  // One reaction per person per message, WhatsApp-style.
+  reactions?: { emoji: string; userId: number }[];
 }
 
 export interface PlanDay {
@@ -532,7 +535,9 @@ export interface Settings {
   supervisorVisitLabel: string; // "Client meeting"
   dmPolicy: "management" | "none" | "all"; // who reps may direct-message
   managementSeesAllTasks: boolean;
-  samplesEnabled: boolean;      // reps can mark an order as a free sample
+  samplesEnabled: boolean;      // master switch for free samples
+  samplesForReps: boolean;        // reps may request samples
+  samplesForSupervisors: boolean; // supervisors may request samples
   competitorTracking: boolean;  // capture competitor info during visits
   dailySummaryHour: number;     // 24h; owner + supervisor get an end-of-day summary
   editWindowMinutes: number;    // how long a rep may fix his own visit/order

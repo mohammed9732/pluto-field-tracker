@@ -2,13 +2,13 @@
 import { enqueue, isOffline, newRef } from "@/lib/outbox";
 import { useT } from "@/lib/i18n";
 import { useTerms, lower } from "@/lib/terms";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Screen, useMe, Spinner, PageHead } from "@/components/Shell";
 import { DoctorPicker, DoctorCard, Doc } from "@/components/DoctorPicker";
 import { api, money } from "@/lib/fmt";
 
-interface Line { productId: number; name: string; unit: string; listPrice: number; tiers: { minQty: number; price: number }[]; price: string; qty: number; line: string | null }
+interface Line { productId: number; name: string; unit: string; listPrice: number; tiers: { minQty: number; price: number }[]; price: string; qty: number; line: string | null; left: number }
 
 /* One light shade per product line, assigned by order of appearance so the
  * sections keep their colors as the admin re-drags products. Identity never
@@ -33,17 +33,28 @@ function NewOrderInner() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [canEditPrice, setCanEditPrice] = useState(false);
-  const [samplesOn, setSamplesOn] = useState(false);
+  const [sampleCfg, setSampleCfg] = useState({ enabled: false, reps: true, sups: true });
   const [isSample, setIsSample] = useState(false);
+  // Hold-to-add: a held +/- fires ×10 steps so 50 boxes is one press, not 50.
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdRepeat = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    api("/api/settings").then((r: any) => { setCanEditPrice(!!r.settings.repPriceEdit); setSamplesOn(!!r.settings.samplesEnabled); }).catch(() => {});
+    api("/api/settings").then((r: any) => {
+      setCanEditPrice(!!r.settings.repPriceEdit);
+      setSampleCfg({
+        enabled: !!r.settings.samplesEnabled,
+        reps: r.settings.samplesForReps !== false,
+        sups: r.settings.samplesForSupervisors !== false,
+      });
+    }).catch(() => {});
     const docId = params.get("doctorId");
     const reorder = params.get("reorder");
     api<{ products: any[] }>("/api/targets").then(async (r) => {
       let lines: Line[] = r.products.map((p) => ({
         productId: p.id, name: p.name, unit: p.unit, listPrice: p.unitPrice,
         tiers: p.tiers ?? [], price: "", qty: 0, line: p.line ?? null,
+        left: (r as any).stockLeft?.[p.id] ?? 9999,
       }));
       if (docId && reorder) {
         try {
@@ -64,6 +75,9 @@ function NewOrderInner() {
   }, [params]);
 
   if (!me) return <Spinner />;
+  // The sample tick obeys the owner's per-role switches.
+  const samplesOn = sampleCfg.enabled
+    && (me.role === "rep" ? sampleCfg.reps : me.role === "supervisor" ? sampleCfg.sups : true);
   // The server refuses a rep's order at a red customer; say so up front
   // rather than letting them build a basket that bounces. Supervisors and
   // the owner pass — the banner tells them they are ordering past the limit.
@@ -74,7 +88,20 @@ function NewOrderInner() {
   const total = lines.reduce((s, l) => s + l.qty * effective(l), 0);
 
   function bump(i: number, delta: number) {
-    setLines((ls) => ls.map((l, j) => (j === i ? { ...l, qty: Math.max(0, l.qty + delta) } : l)));
+    // Never past what the warehouse can deliver — the + stops at the cap.
+    setLines((ls) => ls.map((l, j) => (j === i ? { ...l, qty: Math.min(l.left, Math.max(0, l.qty + delta)) } : l)));
+  }
+  function pressStart(i: number, delta: number) {
+    bump(i, delta);
+    holdTimer.current = setTimeout(() => {
+      holdRepeat.current = setInterval(() => bump(i, delta * 10), 250);
+    }, 450);
+  }
+  function pressEnd() {
+    if (holdTimer.current) clearTimeout(holdTimer.current);
+    if (holdRepeat.current) clearInterval(holdRepeat.current);
+    holdTimer.current = null;
+    holdRepeat.current = null;
   }
 
   async function submit() {
@@ -162,9 +189,17 @@ function NewOrderInner() {
                   </div>
                 ) : null}
                 {sec.items.map(({ l, i }) => (
-              <div key={l.productId} className="listrow" style={{ padding: "10px 0" }}>
+              <div key={l.productId} className="listrow" style={{ padding: "10px 0", opacity: l.left <= 0 ? 0.45 : 1 }}>
                 <div className="f1min">
-                  <div className="fs-small w-500">{l.name}</div>
+                  <div className="fs-small w-500">{l.name}
+                    {l.left <= 0 ? (
+                      <span className="tag tag-hot" style={{ marginInlineStart: 8, fontSize: 10.5, padding: "1px 8px" }}>{tx("neworder.outOfStock", "Out of stock")}</span>
+                    ) : l.left < 9999 ? (
+                      <span className="small hnum" style={{ marginInlineStart: 8, color: l.qty >= l.left ? "var(--c-coral-deep)" : "var(--color-neutral-500)", fontWeight: l.qty >= l.left ? 700 : 400 }}>
+                        {tx("neworder.left", "{n} left").replace("{n}", String(l.left))}
+                      </span>
+                    ) : null}
+                  </div>
                   <div className="row" style={{ gap: 5, fontSize: 12, color: "var(--color-neutral-600)" }}>
                     {canEditPrice ? (
                       <input
@@ -183,9 +218,18 @@ function NewOrderInner() {
                     <span>IQD / {l.unit}{l.tiers.length ? ` · ${l.tiers.map((t) => `${t.minQty}+ ${t.price.toLocaleString()}`).join(" · ")}` : ""}</span>
                   </div>
                 </div>
-                <button className="btn btn-secondary btn-icon" style={{ }} onClick={() => bump(i, -1)}>−</button>
+                <button className="btn btn-secondary btn-icon" disabled={l.left <= 0 || l.qty <= 0}
+                  onPointerDown={() => l.left > 0 && l.qty > 0 && pressStart(i, -1)}
+                  onPointerUp={pressEnd} onPointerLeave={pressEnd} onPointerCancel={pressEnd}
+                  onContextMenu={(e) => e.preventDefault()}>−</button>
                 <span className="hnum" style={{ width: 28, textAlign: "center", fontSize: 18, color: l.qty > 0 ? "var(--color-accent-700)" : "var(--color-neutral-400)" }}>{l.qty}</span>
-                <button className="btn btn-secondary btn-icon" style={{ }} onClick={() => bump(i, 1)}>＋</button>
+                {/* At the cap the + turns red and goes dead — the warehouse
+                    has nothing more to promise. Hold either button for ×10. */}
+                <button className="btn btn-secondary btn-icon" disabled={l.left <= 0 || l.qty >= l.left}
+                  style={l.qty >= l.left && l.left > 0 ? { borderColor: "var(--c-coral)", color: "var(--c-coral-deep)", background: "var(--c-coral-soft)" } : {}}
+                  onPointerDown={() => l.qty < l.left && pressStart(i, 1)}
+                  onPointerUp={pressEnd} onPointerLeave={pressEnd} onPointerCancel={pressEnd}
+                  onContextMenu={(e) => e.preventDefault()}>＋</button>
               </div>
                 ))}
               </div>

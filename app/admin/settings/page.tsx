@@ -42,7 +42,9 @@ const togglesFor = (t: typeof DEFAULT_TERMS): [string, string, string][] => [
   ["paymentReceiptRequired", "Require receipt photo on payments", "Reps must photograph the signed physical receipt"],
   ["managementSeesAllTasks", "Supervisor & accountant see all tasks", "Everything assigned to reps by anyone, not just their own"],
   ["weeklyStockCheck", "Weekly stock check", "City reps must count their own stock by Thursday"],
-  ["samplesEnabled", "Free samples", "Reps can mark an order as a sample — free, no target credit, stock still moves"],
+  ["samplesEnabled", "Free samples", "Master switch — sample orders: free, no target credit, stock still moves"],
+  ["samplesForReps", "Samples for reps", "Reps see the free-sample tick on the order sheet"],
+  ["samplesForSupervisors", "Samples for supervisors", "Supervisors see the free-sample tick on the order sheet"],
   ["competitorTracking", "Competitor tracking", "Capture competitor info during visits and on the market intel page"],
   ["docLibraryForField", "Documents library for field staff", `Invoices and receipts, searchable. You and the ${lower(t.roleAccountant)} always have it; this opens it to ${lower(t.roleSupervisor)}s and ${lower(t.roleRep)}s — ${lower(t.roleRep)}s see their own ${lower(t.doctorPlural)} only`],
 ];

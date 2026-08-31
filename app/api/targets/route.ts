@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { currentPeriod, monthlyAccrual, productsFor, quarterAccrual, currentQuarter } from "@/lib/compute";
+import { availableStock, cityName, currentPeriod, currentQuarter, monthlyAccrual, productsFor, quarterAccrual, sellerLocation } from "@/lib/compute";
 
 export async function GET(req: Request) {
   try {
@@ -17,7 +17,17 @@ export async function GET(req: Request) {
     const subject = db.users.find((u) => u.id === userId) ?? user;
     const accrual = monthlyAccrual(db, userId, period);
     const quarter = quarterAccrual(db, userId, currentQuarter());
-    return Response.json({ targets, accrual, quarter: { name: currentQuarter(), ...quarter }, products: productsFor(db, subject) });
+    // What the order sheet may promise: per product, what is still
+    // available in the CURRENT user's own warehouse — on hand minus what
+    // other pending/approved orders already claim. The sheet blocks the +
+    // at this number so an order that would bounce is never even built.
+    const loc = sellerLocation(db, user.id);
+    const stockLeft: Record<number, number> = {};
+    for (const p of productsFor(db, user)) stockLeft[p.id] = Math.max(0, availableStock(db, p.id, loc).available);
+    return Response.json({
+      targets, accrual, quarter: { name: currentQuarter(), ...quarter },
+      products: productsFor(db, subject), stockLeft, stockCity: cityName(db, loc),
+    });
   } catch (e) {
     return errResponse(e);
   }

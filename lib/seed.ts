@@ -71,6 +71,8 @@ export function buildSeed(): DB {
     dmPolicy: "management",
     managementSeesAllTasks: true,
     samplesEnabled: true,
+    samplesForReps: true,
+    samplesForSupervisors: true,
     competitorTracking: true,
     dailySummaryHour: 18,
     editWindowMinutes: 60,

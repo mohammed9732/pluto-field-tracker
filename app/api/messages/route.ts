@@ -35,12 +35,30 @@ export async function GET(req: Request) {
     const channel = url.searchParams.get("channel") ?? allowed[0]?.id ?? "";
     const after = Number(url.searchParams.get("after") ?? 0);
     if (!allowed.some((c) => c.id === channel)) return Response.json({ error: "No access to that channel" }, { status: 403 });
+    const name = (id: number) => db.users.find((u) => u.id === id)?.name ?? "?";
     const messages = db.messages
       .filter((m) => m.channel === channel && m.id > after)
       .sort((a, b) => a.ts.localeCompare(b.ts))
       .slice(-100)
-      .map((m) => ({ ...m, senderName: db.users.find((u) => u.id === m.senderId)?.name ?? "?", mine: m.senderId === user.id }));
-    return Response.json({ channels: allowed, channel, messages, me: user.id });
+      .map((m) => {
+        const orig = m.replyToId ? db.messages.find((x) => x.id === m.replyToId) : null;
+        return {
+          ...m, senderName: name(m.senderId), mine: m.senderId === user.id,
+          replyTo: orig ? {
+            id: orig.id, senderName: name(orig.senderId),
+            preview: orig.kind === "text" ? orig.body.slice(0, 80) : orig.kind,
+          } : null,
+        };
+      });
+    /* Reactions travel separately from the incremental message stream: a
+     * reaction lands on an OLD message, which `after` would never re-send.
+     * Shipping the channel's full reaction map on every poll keeps them
+     * live at trivial cost. */
+    const reactions: Record<number, { emoji: string; userId: number; name: string }[]> = {};
+    for (const m of db.messages.filter((x) => x.channel === channel).slice(-100)) {
+      if (m.reactions?.length) reactions[m.id] = m.reactions.map((r) => ({ ...r, name: name(r.userId) }));
+    }
+    return Response.json({ channels: allowed, channel, messages, reactions, me: user.id });
   } catch (e) {
     return errResponse(e);
   }
@@ -52,17 +70,39 @@ export async function POST(req: Request) {
     const db = getDb();
     const b = await req.json();
     const allowed = channelsFor(user, db).map((c) => c.id);
+
+    /* React to a message: one emoji per person, tap the same one to take it
+     * back, a different one to change it. The set is fixed — a reaction is
+     * a wink, not a message. */
+    if (b.action === "react") {
+      const EMOJIS = ["🤑", "💸", "😂", "❤️", "😢", "👍", "🎉"];
+      const target = db.messages.find((m) => m.id === Number(b.id));
+      if (!target || !allowed.includes(target.channel)) return Response.json({ error: "Message not found" }, { status: 404 });
+      const emoji = String(b.emoji ?? "");
+      if (!EMOJIS.includes(emoji)) return Response.json({ error: "Unknown reaction" }, { status: 400 });
+      const list = target.reactions ?? [];
+      const mine = list.find((r) => r.userId === user.id);
+      target.reactions = mine && mine.emoji === emoji
+        ? list.filter((r) => r.userId !== user.id)
+        : [...list.filter((r) => r.userId !== user.id), { emoji, userId: user.id }];
+      saveDb();
+      return Response.json({ ok: true });
+    }
+
     const channel = String(b.channel ?? "");
     if (!allowed.includes(channel)) return Response.json({ error: "No access to that channel" }, { status: 403 });
-    const kind = ["image", "file", "voice"].includes(b.kind) ? b.kind : "text";
-    if (kind !== "text" && !db.settings.chatAttachments) return Response.json({ error: "Attachments are switched off" }, { status: 403 });
+    const kind = ["image", "file", "voice", "meet"].includes(b.kind) ? b.kind : "text";
+    if (kind !== "text" && kind !== "meet" && !db.settings.chatAttachments) return Response.json({ error: "Attachments are switched off" }, { status: 403 });
     const body = String(b.body ?? "").trim();
-    if (!body && kind === "text") return Response.json({ error: "Empty message" }, { status: 400 });
-    if (kind !== "text" && !b.fileId) return Response.json({ error: "Missing file" }, { status: 400 });
+    if (!body && (kind === "text" || kind === "meet")) return Response.json({ error: "Empty message" }, { status: 400 });
+    if (kind !== "text" && kind !== "meet" && !b.fileId) return Response.json({ error: "Missing file" }, { status: 400 });
+    // A quoted reply must point at a message in the same room.
+    const replyTo = b.replyToId ? db.messages.find((m) => m.id === Number(b.replyToId) && m.channel === channel) : null;
     const msg = {
       id: nextId(db), channel, senderId: user.id, body, ts: nowIso(),
       kind: kind as any, fileId: b.fileId ?? null, fileName: b.fileName ?? null,
       duration: b.duration != null ? Math.round(Number(b.duration)) : null,
+      replyToId: replyTo ? replyTo.id : null,
     };
     db.messages.push(msg);
     // Everyone in the channel except the sender.
@@ -75,7 +115,8 @@ export async function POST(req: Request) {
           .filter((id) => id !== user.id);
     const preview = kind === "text"
       ? (body.length > 60 ? body.slice(0, 57) + "…" : body)
-      : kind === "image" ? "sent a photo" : kind === "voice" ? "sent a voice note" : "sent a file";
+      : kind === "image" ? "sent a photo" : kind === "voice" ? "sent a voice note"
+      : kind === "meet" ? "📹 started a video meeting — tap to join" : "sent a file";
     for (const id of Array.from(new Set(recipients))) {
       notifyOnce(db, () => nextId(db), id,
         channel.startsWith("dm-") ? `${user.name}: ${preview}` : `${label} · ${user.name}: ${preview}`,
@@ -84,7 +125,11 @@ export async function POST(req: Request) {
     }
 
     saveDb();
-    return Response.json({ ok: true, message: { ...msg, senderName: user.name, mine: true } });
+    const orig = msg.replyToId ? db.messages.find((x) => x.id === msg.replyToId) : null;
+    return Response.json({ ok: true, message: {
+      ...msg, senderName: user.name, mine: true,
+      replyTo: orig ? { id: orig.id, senderName: db.users.find((u) => u.id === orig.senderId)?.name ?? "?", preview: orig.kind === "text" ? orig.body.slice(0, 80) : orig.kind } : null,
+    } });
   } catch (e) {
     return errResponse(e);
   }

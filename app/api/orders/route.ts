@@ -66,6 +66,16 @@ export async function POST(req: Request) {
         const already = db.orders.find((o) => o.clientRef === String(b.clientRef));
         if (already) return Response.json({ ok: true, order: enrich(db, already), duplicate: true });
       }
+      // Samples are switchable per role — the owner flips them off for
+      // reps or supervisors whenever he wants, and the server says no
+      // loudly rather than silently charging for a "sample".
+      if (b.isSample) {
+        const roleOk = db.settings.samplesEnabled
+          && (user.role === "rep" ? db.settings.samplesForReps !== false
+            : user.role === "supervisor" ? db.settings.samplesForSupervisors !== false
+            : true);
+        if (!roleOk) return Response.json({ error: "Free samples are switched off for you" }, { status: 403 });
+      }
       const isSample = !!b.isSample && db.settings.samplesEnabled;
 
       /* The ceiling. Checked before anything is built: a rep at a red

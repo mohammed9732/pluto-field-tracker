@@ -42,12 +42,42 @@ export function monthName(period: string): string {
   const locale = getLang() === "ar" ? "ar-EG" : "en-US";
   return new Date(y, m - 1, 1).toLocaleString(locale, { month: "long", year: "numeric" });
 }
+/* Why pages open instantly on the second visit.
+ *
+ * Every screen fetches its data from Railway, and from Iraq that round trip
+ * is what made each page feel slow. GETs are cached in memory: a screen you
+ * have already seen paints immediately from the cache while a background
+ * fetch quietly updates it for the next visit. Any POST clears the whole
+ * cache — after an action, everything reads fresh, so a stale list can
+ * never swallow the order you just placed. Chat and the notification bell
+ * are never cached: they are the two things that must always be live. */
+const GET_CACHE = new Map<string, { ts: number; data: any }>();
+const NEVER_CACHE = ["/api/messages", "/api/notify"];
+const CACHE_MS = 5 * 60_000;
+
 export async function api<T = any>(path: string, opts?: RequestInit & { json?: any }): Promise<T> {
   const init: RequestInit = { ...opts };
   if (opts?.json !== undefined) {
     init.method = init.method ?? "POST";
     init.headers = { "Content-Type": "application/json", ...(opts.headers || {}) };
     init.body = JSON.stringify(opts.json);
+    GET_CACHE.clear();
+    const res = await fetch(path, init);
+    if (!res.ok) {
+      let msg = "Request failed";
+      try { msg = (await res.json()).error ?? msg; } catch {}
+      throw new Error(msg);
+    }
+    return res.json();
+  }
+  const cacheable = typeof window !== "undefined" && !NEVER_CACHE.some((p) => path.startsWith(p));
+  const hit = cacheable ? GET_CACHE.get(path) : undefined;
+  if (hit && Date.now() - hit.ts < CACHE_MS) {
+    // Serve the cached copy NOW; refresh behind the scenes for next time.
+    fetch(path).then(async (res) => {
+      if (res.ok) GET_CACHE.set(path, { ts: Date.now(), data: await res.json() });
+    }).catch(() => {});
+    return hit.data as T;
   }
   const res = await fetch(path, init);
   if (!res.ok) {
@@ -55,7 +85,9 @@ export async function api<T = any>(path: string, opts?: RequestInit & { json?: a
     try { msg = (await res.json()).error ?? msg; } catch {}
     throw new Error(msg);
   }
-  return res.json();
+  const data = await res.json();
+  if (cacheable) GET_CACHE.set(path, { ts: Date.now(), data });
+  return data;
 }
 
 /* Money typed into a form.
