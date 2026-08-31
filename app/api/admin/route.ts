@@ -66,6 +66,9 @@ export async function POST(req: Request) {
           baseSalary: num(b.baseSalary, u.baseSalary),
           dailyMin: num(b.dailyMin, u.dailyMin),
           productLine: b.productLine !== undefined ? (String(b.productLine).trim() || null) : u.productLine,
+          productLines: Array.isArray(b.productLines)
+            ? b.productLines.map(String).map((l: string) => l.trim()).filter(Boolean)
+            : u.productLines,
           active: b.active != null ? !!b.active : u.active,
           canCollect: b.canCollect != null ? !!b.canCollect : u.canCollect,
         });
@@ -79,7 +82,11 @@ export async function POST(req: Request) {
           id: nextId(db), name: String(b.name), role: b.role ?? "rep", city: b.city ?? "erbil",
           phone: String(b.phone), password: hashPassword(String(b.password || "password")),
           baseSalary: num(b.baseSalary, 0), dailyMin: num(b.dailyMin, 5),
-          productLine: String(b.productLine ?? "").trim() || null, active: true,
+          productLine: null,
+          productLines: Array.isArray(b.productLines)
+            ? b.productLines.map(String).map((l: string) => l.trim()).filter(Boolean)
+            : null,
+          active: true,
           canCollect: b.canCollect != null ? !!b.canCollect : true,
         });
       }

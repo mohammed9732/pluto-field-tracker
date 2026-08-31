@@ -106,7 +106,18 @@ export default function PayPeople() {
                   <td className="ta-r hnum" style={{ fontWeight: 700 }}>{money(r.total)}</td>
                   <td className="ta-r">
                     {r.paid ? (
-                      <span className="tag tag-ok" title={`${dmy(r.paid.paidAt)} · ${r.paid.paidByName}`}>{tx("payroll.paid", "Paid")}</span>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        <span className="tag tag-ok" title={`${dmy(r.paid.paidAt)} · ${r.paid.paidByName}`}>{tx("payroll.paid", "Paid")}</span>
+                        {/* The undo: removes the payment record so Pay comes
+                            back; the history keeps who undid it. */}
+                        <button className="btn btn-ghost" style={{ fontSize: 11, padding: "2px 6px", color: "var(--c-coral-deep)" }}
+                          title={tx("payroll.undoPay", "Undo this payment")}
+                          onClick={async () => {
+                            if (!window.confirm(tx("payroll.undoPayConfirm", "Undo {name}'s wage payment? The Pay button comes back and the undo is recorded.").replace("{name}", r.name))) return;
+                            await api("/api/money", { json: { action: "unpay", kind: "payroll", userId: r.userId, period: data.period } });
+                            load();
+                          }}>↩</button>
+                      </span>
                     ) : (
                       <button className="btn btn-primary" style={{ fontSize: 12, padding: "6px 14px" }} onClick={() => pay(r)}>
                         {tx("payroll.payBtn", "Pay")}
@@ -246,7 +257,16 @@ export default function PayPeople() {
               </div>
               <span className="hnum fs-small" style={{ fontWeight: 700 }}>{money(r.total)}</span>
               {r.paid ? (
-                <span className="tag tag-ok" title={`${dmy(r.paid.paidAt)} · ${r.paid.paidByName}`}>{tx("payouts.paid", "Paid")}</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <span className="tag tag-ok" title={`${dmy(r.paid.paidAt)} · ${r.paid.paidByName}`}>{tx("payouts.paid", "Paid")}</span>
+                  <button className="btn btn-ghost" style={{ fontSize: 11, padding: "2px 6px", color: "var(--c-coral-deep)" }}
+                    title={tx("payroll.undoPay", "Undo this payment")}
+                    onClick={async () => {
+                      if (!window.confirm(tx("payroll.undoPayoutConfirm", "Undo {name}'s quarterly payout? The Pay button comes back and the undo is recorded.").replace("{name}", r.name))) return;
+                      await api("/api/money", { json: { action: "unpay", kind: "payout", userId: r.userId, quarter: payouts.quarter } });
+                      load();
+                    }}>↩</button>
+                </span>
               ) : r.paidWithWages ? (
                 <span className="tag tag-ok">{tx("payouts.withWages", "With wages")} {dmy(r.paidWithWages)}</span>
               ) : (

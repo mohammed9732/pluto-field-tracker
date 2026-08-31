@@ -58,6 +58,10 @@ function ensureShape(db: DB) {
   // Product order: sort once by the admin's drag-and-drop order so every
   // list in the app — ordering, stock, catalog, targets — follows it free.
   db.products.sort((a, b) => (a.sortOrder ?? a.id) - (b.sortOrder ?? b.id));
+  // Migration: the single productLine grew into a list of lines.
+  for (const u of db.users) {
+    if (u.productLines === undefined && u.productLine) u.productLines = [u.productLine];
+  }
 }
 
 export function getDb(): DB {

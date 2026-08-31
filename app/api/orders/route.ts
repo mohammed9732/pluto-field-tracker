@@ -300,6 +300,41 @@ export async function POST(req: Request) {
       return Response.json({ ok: true, order: enrich(db, order) });
     }
 
+    /* The accountant's undo. An order invoiced by mistake goes back to the
+     * queue: the stock returns to the seller's warehouse, the PDF stays
+     * attached (re-invoicing should not need a re-upload), and the change
+     * is written to the record — an undo is never an eraser. Once the order
+     * is delivered, or the month is closed, the door is shut. */
+    if (b.action === "uninvoice") {
+      requireUser(["accountant", "admin"]);
+      if (order.status !== "invoiced") return Response.json({ error: "Order is not invoiced" }, { status: 400 });
+      if (order.deliveredAt) return Response.json({ error: "Already delivered — use Return instead, the goods are out" }, { status: 400 });
+      if (isClosed(db, order.invoicedAt ?? order.createdAt)) {
+        return Response.json({ error: closedError(db) }, { status: 400 });
+      }
+      const loc = sellerLocation(db, order.createdBy);
+      for (const it of order.items) {
+        let s = db.stock.find((x) => x.productId === it.productId && x.location === loc);
+        if (!s) {
+          s = { productId: it.productId, location: loc, qty: 0, batch: null, expiry: null, updatedAt: nowIso(), updatedBy: user.id };
+          db.stock.push(s);
+        }
+        s.qty += it.qty;
+        s.updatedAt = nowIso();
+        s.updatedBy = user.id;
+      }
+      order.status = "approved";
+      order.invoicedBy = null;
+      order.invoicedAt = null;
+      recordChange(db, () => nextId(db), user.id, "order", order.id, "invoice undone",
+        `stock returned to ${cityName(db, loc)}`);
+      notify(db, () => nextId(db), order.createdBy,
+        `The invoice on order #${order.id} was undone by ${user.name} — it is back in the queue.`, "/orders", "orderStatus");
+      logActivity(db, () => nextId(db), user.id, `undid the invoice on order #${order.id}`);
+      saveDb();
+      return Response.json({ ok: true, order: enrich(db, order) });
+    }
+
     if (b.action === "attachPdf") {
       requireUser(["accountant", "admin"]);
       order.invoicePdfName = String(b.pdfName ?? "invoice.pdf");

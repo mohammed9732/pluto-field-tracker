@@ -85,6 +85,31 @@ export async function POST(req: Request) {
 
     /* The tiered collection incentive, per person: a monthly target, a rate
      * below it, a rate at/above it. The accountant owns these numbers. */
+    /* Undo a wage or payout payment recorded by mistake. The record is
+     * removed so the Pay button comes back, and the undo itself is written
+     * to the person's history — who undid it, and when. */
+    if (b.action === "unpay") {
+      const target = db.users.find((u) => u.id === Number(b.userId));
+      if (!target) return Response.json({ error: "Person not found" }, { status: 404 });
+      if (b.kind === "payout") {
+        const i = db.payoutsPaid.findIndex((x) => x.userId === target.id && x.quarter === String(b.quarter));
+        if (i < 0) return Response.json({ error: "No payout payment recorded" }, { status: 404 });
+        const rec = db.payoutsPaid[i];
+        db.payoutsPaid.splice(i, 1);
+        recordChange(db, () => seqNext(db), user.id, "payment", target.id, "payout payment undone",
+          `${rec.amount.toLocaleString()} IQD for ${rec.quarter}`);
+      } else {
+        const i = db.payrollPaid.findIndex((x) => x.userId === target.id && x.period === String(b.period));
+        if (i < 0) return Response.json({ error: "No wage payment recorded" }, { status: 404 });
+        const rec = db.payrollPaid[i];
+        db.payrollPaid.splice(i, 1);
+        recordChange(db, () => seqNext(db), user.id, "payment", target.id, "wage payment undone",
+          `${rec.amount.toLocaleString()} IQD for ${rec.period}`);
+      }
+      saveDb();
+      return Response.json({ ok: true });
+    }
+
     if (b.action === "collectionPlan") {
       const target = db.users.find((u) => u.id === Number(b.userId));
       if (!target) return Response.json({ error: "Person not found" }, { status: 404 });

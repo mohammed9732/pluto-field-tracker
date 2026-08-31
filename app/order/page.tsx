@@ -8,7 +8,12 @@ import { Screen, useMe, Spinner, PageHead } from "@/components/Shell";
 import { DoctorPicker, DoctorCard, Doc } from "@/components/DoctorPicker";
 import { api, money } from "@/lib/fmt";
 
-interface Line { productId: number; name: string; unit: string; listPrice: number; tiers: { minQty: number; price: number }[]; price: string; qty: number }
+interface Line { productId: number; name: string; unit: string; listPrice: number; tiers: { minQty: number; price: number }[]; price: string; qty: number; line: string | null }
+
+/* One light shade per product line, assigned by order of appearance so the
+ * sections keep their colors as the admin re-drags products. Identity never
+ * rides on the tint alone — every section is also named in its header. */
+const LINE_TINTS = ["var(--c-teal-soft)", "var(--c-amber-soft)", "var(--c-violet-soft)", "var(--c-green-soft)", "var(--c-pink-soft)", "var(--c-coral-soft)"];
 
 // Tier price for a quantity — matches the server's rule.
 function tierPrice(l: Line, qty: number): number {
@@ -38,7 +43,7 @@ function NewOrderInner() {
     api<{ products: any[] }>("/api/targets").then(async (r) => {
       let lines: Line[] = r.products.map((p) => ({
         productId: p.id, name: p.name, unit: p.unit, listPrice: p.unitPrice,
-        tiers: p.tiers ?? [], price: "", qty: 0,
+        tiers: p.tiers ?? [], price: "", qty: 0, line: p.line ?? null,
       }));
       if (docId && reorder) {
         try {
@@ -134,8 +139,29 @@ function NewOrderInner() {
               </div>
             </label>
           ) : null}
-          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-            {lines.map((l, i) => (
+          {/* The sheet, sectioned by product line so a rep carrying two
+              ranges never mixes them up. Grouped by first appearance, so the
+              admin's drag order still decides what comes first. */}
+          {(() => {
+            const sections: { line: string | null; items: { l: Line; i: number }[] }[] = [];
+            lines.forEach((l, i) => {
+              let sec = sections.find((s) => s.line === (l.line ?? null));
+              if (!sec) { sec = { line: l.line ?? null, items: [] }; sections.push(sec); }
+              sec.items.push({ l, i });
+            });
+            const named = sections.filter((s) => s.line).map((s) => s.line);
+            const single = sections.length === 1 && !sections[0].line;
+            return sections.map((sec) => (
+              <div key={sec.line ?? "·"} style={single ? undefined : {
+                background: sec.line ? LINE_TINTS[named.indexOf(sec.line) % LINE_TINTS.length] : "transparent",
+                borderRadius: 14, padding: "4px 12px", marginBottom: 6,
+              }}>
+                {!single ? (
+                  <div className="fs-caption w-700" style={{ padding: "8px 0 2px", letterSpacing: ".06em", textTransform: "uppercase", color: "var(--color-neutral-700)" }}>
+                    {sec.line ?? tx("neworder.otherProducts", "Other products")}
+                  </div>
+                ) : null}
+                {sec.items.map(({ l, i }) => (
               <div key={l.productId} className="listrow" style={{ padding: "10px 0" }}>
                 <div className="f1min">
                   <div className="fs-small w-500">{l.name}</div>
@@ -161,8 +187,10 @@ function NewOrderInner() {
                 <span className="hnum" style={{ width: 28, textAlign: "center", fontSize: 18, color: l.qty > 0 ? "var(--color-accent-700)" : "var(--color-neutral-400)" }}>{l.qty}</span>
                 <button className="btn btn-secondary btn-icon" style={{ }} onClick={() => bump(i, 1)}>＋</button>
               </div>
-            ))}
-          </div>
+                ))}
+              </div>
+            ));
+          })()}
           <div className="row" style={{ alignItems: "baseline", marginTop: "auto" }}>
             <span style={{ flex: 1, fontSize: 13, color: "var(--color-neutral-600)" }}>{isSample ? "Sample request — no charge" : "Order total — prices follow the quantity tiers"}</span>
             <span className="hnum fs-figure">{money(total)}</span>

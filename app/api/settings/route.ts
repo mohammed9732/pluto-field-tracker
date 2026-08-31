@@ -78,7 +78,7 @@ export async function POST(req: Request) {
         // disappear, or that rep silently loses their whole catalogue.
         for (const old of db.settings.productLines ?? []) {
           if (cleaned.includes(old)) continue;
-          const usedBy = db.users.some((u) => u.active && u.productLine === old)
+          const usedBy = db.users.some((u) => u.active && (u.productLine === old || (u.productLines ?? []).includes(old)))
             || db.products.some((p) => p.active && p.line === old);
           if (usedBy) {
             return Response.json({ error: `"${old}" is still assigned to a user or product — move them first` }, { status: 400 });

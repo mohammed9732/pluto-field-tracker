@@ -11,7 +11,7 @@ export async function GET(req: Request) {
       return Response.json({
         doctors: doctorsFor(db, user).map((d) => ({ ...d, ceiling: ceilingStatus(db, d.id) })),
         cities: db.settings.cities,
-        scopedToCity: user.role === "rep" && user.city !== "all" ? user.city : null,
+        scopedToCity: (user.role === "rep" || user.role === "collector") && user.city !== "all" ? user.city : null,
         canAdd:
           user.role === "admin" ||
           (user.role === "supervisor" && db.settings.supervisorCanAddDoctors) ||

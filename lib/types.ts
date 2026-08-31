@@ -11,7 +11,10 @@ export interface User {
   baseSalary: number;
   dailyMin: number;
   active: boolean;
-  productLine?: string | null; // absent or null = sells everything
+  productLine?: string | null;   // legacy single line — migrated into productLines
+  /* The lines this person sells. A rep can carry one, several, or ALL —
+     empty/absent means all, so nobody loses products when lines appear. */
+  productLines?: string[] | null;
   lang?: "en" | "ar";          // absent = follow the company default
   /* Payment collection. Some medical reps never touch money — a dedicated
      collector does the round instead — so collection features switch off per

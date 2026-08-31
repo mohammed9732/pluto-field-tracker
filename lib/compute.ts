@@ -223,11 +223,12 @@ export function availableStock(db: DB, productId: number, loc: string, excludeOr
  * owner will create lines long after the products exist, and anything not yet
  * tagged must keep working rather than silently vanish from the order screen.
  */
-export function productsFor(db: DB, user: { role: string; productLine?: string | null }) {
+export function productsFor(db: DB, user: { role: string; productLine?: string | null; productLines?: string[] | null }) {
   const active = db.products.filter((p) => p.active);
-  const line = (user.productLine ?? "").trim();
-  if (!line) return active;
-  return active.filter((p) => !p.line || p.line === line);
+  // One line, several lines, or all of them — the owner assigns per person.
+  const lines = (user.productLines ?? (user.productLine ? [user.productLine] : [])).filter(Boolean);
+  if (!lines.length) return active;
+  return active.filter((p) => !p.line || lines.includes(p.line));
 }
 
 /* Where a customer stands against their monthly ceiling.

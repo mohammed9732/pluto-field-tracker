@@ -60,7 +60,7 @@ export default function Manage() {
                   <td>{u.city === "all" ? "All" : (data.cities ?? []).find((c: any) => c.id === u.city)?.name ?? u.city}</td>
                   <td className="ta-r">{u.baseSalary ? money(u.baseSalary) : "—"}</td>
                   <td className="ta-r">{u.dailyMin ? `${u.dailyMin} visits` : "—"}</td>
-                  <td className="small muted">{u.productLine || "all"}</td>
+                  <td className="small muted">{(u.productLines ?? (u.productLine ? [u.productLine] : [])).join(", ") || "all"}</td>
                   <td className="ta-r">
                     <span className={`tag ${u.active ? "tag-accent" : "tag-neutral"}`}>{u.active ? "Active" : "Off"}</span>
                     {canEdit ? <button className="btn btn-ghost fs-caption" onClick={() => setEditUser({ ...u, baseSalary: groupDigits(String(u.baseSalary ?? "")) })}>{tx("manage.edit", "Edit")}</button> : null}
@@ -92,15 +92,29 @@ export default function Manage() {
               </div>
               <div className="field m0"><label>{tx("manage.baseSalary", "Base salary")}</label><input className="input" inputMode="numeric" value={editUser.baseSalary} onChange={(e) => setEditUser({ ...editUser, baseSalary: groupDigits(e.target.value) })} /></div>
               <div className="field m0"><label>{tx("manage.dailyMin", "Daily min")}</label><input className="input" inputMode="numeric" value={editUser.dailyMin} onChange={(e) => setEditUser({ ...editUser, dailyMin: e.target.value.replace(/[^0-9]/g, "") })} /></div>
-              <div className="field m0">
-                <label>{tx("manage.productLine", "Product line")}</label>
-                {/* Left blank the person sells everything, which is how every
-                    existing user is set up and must stay. */}
-                <select className="input" value={editUser.productLine ?? ""}
-                  onChange={(e) => setEditUser({ ...editUser, productLine: e.target.value })}>
-                  <option value="">{tx("manage.allProducts", "All products")}</option>
-                  {(data.productLines ?? []).map((l: string) => <option key={l} value={l}>{l}</option>)}
-                </select>
+              <div className="field m0" style={{ gridColumn: "1 / -1" }}>
+                <label>{tx("manage.productLine", "Product lines")}</label>
+                {/* Tick as many as they carry. NOTHING ticked = sells every
+                    line — how every existing user is set up and must stay. */}
+                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", padding: "6px 0 2px" }}>
+                  {(data.productLines ?? []).map((l: string) => {
+                    const sel: string[] = editUser.productLines ?? (editUser.productLine ? [editUser.productLine] : []);
+                    const on = sel.includes(l);
+                    return (
+                      <label key={l} className="radio fs-small" style={{ cursor: "pointer" }}>
+                        <input type="checkbox" checked={on} onChange={(e) => {
+                          const next = e.target.checked ? [...sel, l] : sel.filter((x) => x !== l);
+                          setEditUser({ ...editUser, productLines: next, productLine: null });
+                        }} />
+                        <span className="dot" />{l}
+                      </label>
+                    );
+                  })}
+                  {(data.productLines ?? []).length === 0 ? (
+                    <span className="small muted">{tx("manage.noLinesYet", "No lines defined — add them in the control panel.")}</span>
+                  ) : null}
+                </div>
+                <div className="small muted">{tx("manage.linesHint", "Nothing ticked = sells ALL lines.")}</div>
               </div>
             </div>
             <div className="two-col gap-3">

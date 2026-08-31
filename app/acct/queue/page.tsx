@@ -17,12 +17,19 @@ export default function AcctQueue() {
   const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [pdfFor, setPdfFor] = useState<number | null>(null);
+  const [recent, setRecent] = useState<any[]>([]);
   const [pdfNames, setPdfNames] = useState<Record<number, { id: string; name: string }>>({});
   const [warnings, setWarnings] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(() => {
     api<{ orders: any[] }>("/api/orders?scope=queue").then((r) => setOrders(r.orders)).catch(() => {});
+    // The undo shelf: what was invoiced in the last 24 hours and not yet
+    // delivered can come back to the queue if it was a mistake.
+    api<{ orders: any[] }>("/api/orders?scope=all").then((r) => setRecent(
+      (r.orders ?? []).filter((o: any) => o.status === "invoiced" && !o.deliveredAt
+        && o.invoicedAt && Date.now() - new Date(o.invoicedAt).getTime() < 24 * 3600 * 1000)
+    )).catch(() => {});
     api("/api/stock").then((r: any) => { setStock(r.stock); setLocations(r.locations ?? []); }).catch(() => {});
     api("/api/payments").then((r: any) => setPayments(r.payments.filter((p: any) => p.isToday))).catch(() => {});
   }, []);
@@ -169,6 +176,31 @@ export default function AcctQueue() {
           </div>
         );
       })}
+      {/* The undo shelf. What was invoiced in the last 24 hours and not yet
+          delivered can come back to the queue if it was a mistake — the
+          stock returns to the warehouse and the change goes on the record. */}
+      {recent.length ? (
+        <div className="card" style={{ gap: 6 }}>
+          <h6 className="m0">{tx("queue.invoicedRecently", "Invoiced in the last 24 hours — undo if it was a mistake")}</h6>
+          {recent.map((o: any) => (
+            <div key={o.id} className="listrow" style={{ alignItems: "center", gap: 10 }}>
+              <div className="f1min">
+                <div className="fs-small w-500">#{o.id} · {o.doctor?.name ?? "?"}</div>
+                <div className="small muted">{o.createdByName} · {(o.invoicedAt ?? "").slice(11, 16)}</div>
+              </div>
+              <span className="hnum fs-small w-700">{money0(o.total)}</span>
+              <button className="btn btn-ghost" style={{ fontSize: 12, color: "var(--c-coral-deep)" }}
+                onClick={async () => {
+                  if (!window.confirm(tx("queue.undoConfirm", "Undo this invoice? Stock goes back to the warehouse and the order returns to the queue."))) return;
+                  try { await api("/api/orders", { json: { action: "uninvoice", id: o.id } }); }
+                  catch (e: any) { alert(e?.message || "Could not undo it"); }
+                  load();
+                }}>↩ {tx("queue.undo", "Undo")}</button>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
       {/* One line, not a second copy of the payments list — the full list
           with filters and totals lives on Money in. This page is for
           invoicing; the line is just the end-of-day glance. */}
