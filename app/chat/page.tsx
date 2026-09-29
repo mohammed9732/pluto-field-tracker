@@ -65,6 +65,27 @@ function ChatInner() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
+  /* Tap ANYWHERE outside the compose row → the keyboard slides away.
+   *
+   * The installed iOS app does not dismiss the keyboard on its own, and the
+   * earlier fix only covered taps on the message list — a tap on the header,
+   * the channel chips, or the empty space around them left the keyboard
+   * standing and the owner "unable to escape from chat". This listens at the
+   * document level for the whole time the chat is open. The compose row is
+   * the one exception (marked data-compose): tapping send, the mic, or the
+   * attach buttons must NOT close the keyboard mid-conversation. */
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => {
+      const el = document.activeElement;
+      if (!(el instanceof HTMLElement) || (el.tagName !== "INPUT" && el.tagName !== "TEXTAREA")) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (el === t || el.contains(t) || t.closest("[data-compose]"))) return;
+      el.blur();
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
+  }, []);
+
   if (!me) return <Spinner />;
 
   async function send() {
@@ -210,15 +231,10 @@ function ChatInner() {
           </select>
         ) : null}
       </div>
-      {/* Tapping the conversation dismisses the keyboard. In the home-screen
-          app iOS does not reliably do this on its own, so a rep who finished
-          typing was stuck behind the keypad with no way to put it away. */}
+      {/* Keyboard dismissal is handled page-wide by the document-level
+          pointerdown listener above — any tap outside the compose row. */}
       <div
         style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12, overflowY: "auto" }}
-        onPointerDown={() => {
-          const el = document.activeElement;
-          if (el instanceof HTMLElement && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) el.blur();
-        }}
       >
         {messages.map((m) => (
           <div key={m.id} style={{ display: "flex", flexDirection: "column", gap: 3, alignItems: m.mine ? "flex-end" : "flex-start" }}
@@ -315,7 +331,7 @@ function ChatInner() {
           <button onClick={() => setReplyTo(null)} style={{ border: "none", background: "none", cursor: "pointer", fontSize: 14 }}>✕</button>
         </div>
       ) : null}
-      <div className="row" style={{ gap: 7 }}>
+      <div className="row" data-compose style={{ gap: 7 }}>
         <input ref={imgRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAndSend(f, "image", f.name); e.target.value = ""; }} />
         <input ref={fileRef} type="file" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAndSend(f, "file", f.name); e.target.value = ""; }} />
         <button className="btn btn-secondary btn-icon" style={{ flex: "none", }} onClick={() => imgRef.current?.click()} aria-label={tx("chat.sendImagePh", "Send image")}>
