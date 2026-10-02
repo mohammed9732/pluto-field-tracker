@@ -100,6 +100,7 @@ export default function ControlPanel() {
   const [demoBusy, setDemoBusy] = useState(false);
   const [demoMsg, setDemoMsg] = useState("");
   const [groupErr, setGroupErr] = useState("");
+  const [holidayDraft, setHolidayDraft] = useState("");
 
   const load = useCallback(() => {
     api("/api/settings").then((r: any) => setSettings(r.settings)).catch(() => {});
@@ -541,6 +542,25 @@ export default function ControlPanel() {
             </div>
           </div>
         ) : null}
+
+        <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>{tx("settings.holidays", "Public holidays")}</h6>
+        <div className="small muted">{tx("settings.holidaysHint", "Days marked here are never flagged as missed check-in days — Eid, national days, company closures.")}</div>
+        <div className="row gap-2">
+          <input type="date" className="input" style={{ maxWidth: 200 }} value={holidayDraft} onChange={(e) => setHolidayDraft(e.target.value)} />
+          <button className="btn btn-secondary" style={{ padding: "8px 16px", flex: "none" }} disabled={!holidayDraft}
+            onClick={() => { patch({ holidays: [...(settings.holidays ?? []), holidayDraft] }); setHolidayDraft(""); }}>
+            {tx("settings.addHoliday", "Add")}
+          </button>
+        </div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {(settings.holidays ?? []).map((d: string) => (
+            <span key={d} className="tag tag-neutral hnum">{d}
+              <button onClick={() => patch({ holidays: (settings.holidays ?? []).filter((x: string) => x !== d) })}
+                style={{ border: "none", background: "none", cursor: "pointer", marginInlineStart: 6, color: "var(--c-coral-deep)" }}>×</button>
+            </span>
+          ))}
+          {(settings.holidays ?? []).length === 0 ? <span className="small muted">{tx("settings.noHolidaysYet", "None yet.")}</span> : null}
+        </div>
 
         <h6 style={{ margin: "8px 0 0", color: "var(--color-neutral-600)" }}>{tx("settings.announcements", "Announcements")}</h6>
         <div className="row gap-2">

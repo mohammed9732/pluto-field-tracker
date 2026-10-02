@@ -7,7 +7,16 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Screen, useMe, Spinner, Meter } from "@/components/Shell";
 import { Icon, paths } from "@/components/Icons";
-import { api, dmy, money0, weekdayShort } from "@/lib/fmt";
+import { api, dmy, money0, monthName, weekdayShort } from "@/lib/fmt";
+
+// One month forward or back, "2026-09" style.
+const shiftPeriod = (p: string, d: number) => {
+  let [y, m] = p.split("-").map(Number);
+  m += d;
+  if (m === 0) { m = 12; y--; }
+  if (m === 13) { m = 1; y++; }
+  return `${y}-${String(m).padStart(2, "0")}`;
+};
 import { MoneyLine } from "@/components/Charts";
 
 const monthLbl = (p: string) => new Date(p + "-15T12:00:00").toLocaleDateString("en", { month: "short" });
@@ -18,10 +27,12 @@ export default function AdminDashboard() {
   const me = useMe();
   const router = useRouter();
   const [data, setData] = useState<any>(null);
-  const [line, setLine] = useState(""); // "" = all brands
+  const [line, setLine] = useState("");     // "" = all brands
+  const [period, setPeriod] = useState(""); // "" = current month
   useEffect(() => {
-    api(`/api/dashboard${line ? `?line=${encodeURIComponent(line)}` : ""}`).then(setData).catch(() => {});
-  }, [line]);
+    const qs = [line ? `line=${encodeURIComponent(line)}` : "", period ? `period=${period}` : ""].filter(Boolean).join("&");
+    api(`/api/dashboard${qs ? `?${qs}` : ""}`).then(setData).catch(() => {});
+  }, [line, period]);
   if (!me || !data) return <Spinner />;
   const k = data.kpis;
 
@@ -69,6 +80,17 @@ export default function AdminDashboard() {
           </button>
         </div>
 
+        {/* Month arrows: the sales figures, matrix and heat answer for ANY
+            month, not only the current one. Today-cards stay live-today. */}
+        <div className="row" style={{ gap: 8, alignItems: "center" }}>
+          <button className="btn btn-secondary btn-icon" onClick={() => setPeriod(shiftPeriod(data.period, -1))}>‹</button>
+          <span className="fs-small w-700">{monthName(data.period)}</span>
+          <button className="btn btn-secondary btn-icon" disabled={!period}
+            onClick={() => setPeriod((p) => { const n = shiftPeriod(p || data.period, 1); return n >= new Date().toISOString().slice(0, 7) ? "" : n; })}>›</button>
+          {period ? (
+            <button className="btn btn-ghost fs-caption" onClick={() => setPeriod("")}>{tx("owner.backToNow", "Current month")}</button>
+          ) : null}
+        </div>
         {/* Brand chips: every sales figure below follows the selection. */}
         {(data.productLines ?? []).length ? (
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>

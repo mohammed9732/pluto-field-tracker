@@ -51,9 +51,21 @@ export async function POST(req: Request) {
       const changes: string[] = [];
       if (amount !== p.amount) changes.push(`amount ${p.amount.toLocaleString()} → ${amount.toLocaleString()}`);
       if (method !== p.method) changes.push(`method ${p.method} → ${method}`);
+      // Wrong customer picked in the field. Allowed unless the payment
+      // closed a scheduled collection — that link would silently lie.
+      const newDoctorId = b.doctorId != null ? Number(b.doctorId) : p.doctorId;
+      if (newDoctorId !== p.doctorId) {
+        const nd = db.doctors.find((d) => d.id === newDoctorId);
+        if (!nd) return Response.json({ error: "Pick a valid customer" }, { status: 400 });
+        if (db.collections.some((c) => c.paymentId === p.id)) {
+          return Response.json({ error: "This payment closed a scheduled collection — sort the schedule out first, then the customer" }, { status: 400 });
+        }
+        changes.push(`customer ${db.doctors.find((d) => d.id === p.doctorId)?.name ?? "?"} → ${nd.name}`);
+      }
       if (!changes.length) return Response.json({ ok: true, unchanged: true });
       p.amount = amount;
       p.method = method;
+      p.doctorId = newDoctorId;
       const linked = db.collections.find((c) => c.paymentId === p.id);
       if (linked) {
         linked.collectedAmount = amount;

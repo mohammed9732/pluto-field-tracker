@@ -276,6 +276,8 @@ export function flagMissedDays(db: DB, seq: () => number, period: string) {
   for (const u of db.users.filter((x) => x.active && (x.role === "rep" || x.role === "supervisor" || x.role === "collector"))) {
     for (const d of workDaysInMonth(period)) {
       if (d >= today || d < cutoffStr) continue;
+      // Eid is not absence: a day the owner marked as a holiday never flags.
+      if (db.settings.holidays?.includes(d)) continue;
       if (onApprovedLeave(db, u.id, d)) continue;
       if (db.checkins.some((c) => c.userId === u.id && c.type === "in" && c.ts.startsWith(d))) continue;
       if (db.deductions.some((x) => x.userId === u.id && x.date === d)) continue;

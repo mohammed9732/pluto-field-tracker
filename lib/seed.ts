@@ -91,6 +91,7 @@ export function buildSeed(): DB {
       task: true, collection: true, custom: true,
     },
     docLibraryForField: false,
+    holidays: [],
     erpProductAliases: {},
     erpWarehouseMap: {},
     leaveShortNoticeDays: 2,

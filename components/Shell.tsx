@@ -24,11 +24,13 @@ export function useMe(): Me | null | undefined {
   const [me, setMe] = useState<Me | null | undefined>(undefined);
   const router = useRouter();
   useEffect(() => {
-    api<{ user: Me | null; terms?: any; companyName?: string; hasLogo?: boolean; lang?: any; defaultLang?: any }>("/api/auth/me")
+    api<{ user: Me | null; terms?: any; companyName?: string; currency?: string; hasLogo?: boolean; lang?: any; defaultLang?: any }>("/api/auth/me")
       .then((r) => {
         setTerms(r.terms);
         setLang(resolveLang(r.lang, r.defaultLang));
         setBrand({ companyName: r.companyName, hasLogo: r.hasLogo });
+        // Mirror the company's currency label for money() — see lib/fmt.
+        try { if (r.currency) localStorage.setItem("pluto.currency", String(r.currency)); } catch {}
         setMe(r.user);
         if (!r.user) router.replace("/login");
       })

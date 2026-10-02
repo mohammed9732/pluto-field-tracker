@@ -591,6 +591,9 @@ export interface Settings {
      accountant and owner; this switch opens it to supervisors and reps —
      reps scoped to their own customers. */
   docLibraryForField: boolean;
+  /* Public holidays (ISO dates). A day listed here is never flagged as a
+     missed check-in day — Eid, national days, company closures. */
+  holidays?: string[];
 
   /* ERP import memory. The accounting system's inventory export names
      products and warehouses its own way (and in Arabic); these maps remember

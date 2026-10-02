@@ -25,6 +25,23 @@ function channelsFor(user: User, db: DB) {
     const pair = [user.id, u.id].sort((a, b) => a - b);
     chans.push({ id: `dm-${pair[0]}-${pair[1]}`, label: u.name, kind: "dm", phone: u.phone });
   }
+  /* A conversation that EXISTS is always readable and answerable. Management
+   * can DM anyone, but under the "management" policy a rep's channel list
+   * excluded the owner — so the owner's message arrived as a notification
+   * that led to "No access to that channel". Any DM channel that already
+   * holds messages involving this person is theirs, whatever the policy. */
+  const have = new Set(chans.map((c) => c.id));
+  const seen = new Set<string>();
+  for (const m of db.messages) {
+    if (!m.channel.startsWith("dm-") || have.has(m.channel) || seen.has(m.channel)) continue;
+    seen.add(m.channel);
+    const ids = m.channel.split("-").slice(1).map(Number);
+    if (!ids.includes(user.id)) continue;
+    const other = db.users.find((u) => u.id === ids.find((x) => x !== user.id));
+    if (!other || !other.active) continue;
+    have.add(m.channel);
+    chans.push({ id: m.channel, label: other.name, kind: "dm", phone: other.phone });
+  }
   return chans;
 }
 

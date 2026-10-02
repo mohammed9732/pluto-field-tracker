@@ -4,6 +4,13 @@ import { getLang } from "./i18n";
  * that is what people here read on invoices — but the currency itself is a
  * word, and words get translated. */
 function currency(): string {
+  /* The control panel's currency label, mirrored at sign-in. While it says
+   * IQD (the default) the translated forms stay — د.ع in Arabic — because a
+   * custom label is a deliberate choice and IQD is just the starting point. */
+  try {
+    const c = (typeof localStorage !== "undefined" ? localStorage.getItem("pluto.currency") : null)?.trim();
+    if (c && c.toUpperCase() !== "IQD") return c;
+  } catch {}
   return getLang() === "ar" ? "د.ع" : "IQD";
 }
 

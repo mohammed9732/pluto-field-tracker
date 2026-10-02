@@ -19,6 +19,7 @@ export async function GET() {
     lang: user.lang ?? null,
     defaultLang: s.defaultLang ?? "en",
     companyName: s.companyName,
+    currency: s.currency || "IQD",
     hasLogo: !!s.logoId,
   });
 }

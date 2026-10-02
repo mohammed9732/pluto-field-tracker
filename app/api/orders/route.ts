@@ -134,7 +134,8 @@ export async function POST(req: Request) {
        * the seller's city minus what other not-yet-invoiced orders already
        * claim, so two orders cannot race for the same boxes. Applies to reps
        * AND supervisors — the block protects the warehouse, not the rank. */
-      if (!isSample) {
+      {
+        // Samples included — a free box still leaves the same shelf.
         const loc = sellerLocation(db, user.id);
         for (const it of items) {
           const a = availableStock(db, it.productId, loc);
@@ -415,7 +416,7 @@ export async function POST(req: Request) {
           return { productId: product.id, qty, price: order.isSample ? 0 : priceForQty(product, qty) };
         });
       if (!items.length) return Response.json({ error: "Add at least one product" }, { status: 400 });
-      if (!order.isSample) {
+      {
         const loc2 = sellerLocation(db, user.id);
         for (const it of items) {
           const a = availableStock(db, it.productId, loc2, order.id);

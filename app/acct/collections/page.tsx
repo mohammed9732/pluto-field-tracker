@@ -341,6 +341,10 @@ export default function MoneyIn() {
                 <option value="transfer">{tx("acct.transfer", "Transfer")}</option>
               </select>
             </div>
+            <select className="input" value={editPay.doctorId ?? ""}
+              onChange={(e) => setEditPay({ ...editPay, doctorId: Number(e.target.value) })}>
+              {doctors.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
             <input className="input" placeholder={tx("acct.correctionReason", "Why is it corrected? Required — goes on the record")}
               value={editPay.reason} onChange={(e) => setEditPay({ ...editPay, reason: e.target.value })} />
             {editErr ? <div className="tag tag-hot self-start">{editErr}</div> : null}
@@ -348,7 +352,7 @@ export default function MoneyIn() {
               <button className="btn btn-primary" style={{ padding: 9 }} onClick={async () => {
                 setEditErr("");
                 try {
-                  await api("/api/payments", { json: { action: "edit", id: editPay.id, amount: ungroup(editPay.amount), method: editPay.method, reason: editPay.reason } });
+                  await api("/api/payments", { json: { action: "edit", id: editPay.id, doctorId: editPay.doctorId, amount: ungroup(editPay.amount), method: editPay.method, reason: editPay.reason } });
                   setEditPay(null);
                   load();
                 } catch (e: any) { setEditErr(e?.message || "Could not save"); }
@@ -404,7 +408,7 @@ export default function MoneyIn() {
                         here, next to the number, with a mandatory reason. */}
                     <td className="ta-r">
                       <button className="btn btn-ghost" style={{ fontSize: 12, padding: "2px 8px" }}
-                        onClick={() => { setEditErr(""); setEditPay({ id: c.id, ref: c.ref, amount: groupDigits(String(c.amount)), method: c.method, reason: "" }); }}>
+                        onClick={() => { setEditErr(""); setEditPay({ id: c.id, ref: c.ref, doctorId: c.doctorId, amount: groupDigits(String(c.amount)), method: c.method, reason: "" }); }}>
                         ✎ {tx("acct.fix", "Fix")}
                       </button>
                     </td>

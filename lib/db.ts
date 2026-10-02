@@ -102,6 +102,14 @@ function backupDaily() {
       fs.copyFileSync(DB_FILE, dest);
       const old = fs.readdirSync(backupDir).filter((f) => f.startsWith("db-")).sort();
       while (old.length > 14) fs.unlinkSync(path.join(backupDir, old.shift()!));
+      /* The copy that survives the server itself. Local backups die with
+       * the disk; once R2 is configured, every day's first save also ships
+       * the snapshot off-box — fire-and-forget, a failed upload must never
+       * block the actual save. Keys are dated, so R2 keeps a full history. */
+      const raw = fs.readFileSync(DB_FILE);
+      import("./storage").then(({ r2Configured, putFile }) => {
+        if (r2Configured()) putFile(`backup-db-${day}.json`, raw, "application/json").catch(() => {});
+      }).catch(() => {});
     }
   } catch {}
 }

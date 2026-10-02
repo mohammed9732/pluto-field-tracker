@@ -52,6 +52,14 @@ export async function POST(req: Request) {
         db.settings.cities = cleaned;
         continue;
       }
+      if (k === "holidays") {
+        requireUser(["admin"]);
+        const list = Array.isArray(v) ? v : [];
+        db.settings.holidays = Array.from(new Set(
+          list.map((d: any) => String(d).slice(0, 10)).filter((d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+        )).sort();
+        continue;
+      }
       if (k === "pushTypes") {
         requireUser(["admin"]);
         const incoming = (v ?? {}) as Record<string, unknown>;

@@ -7,7 +7,8 @@ export async function GET(req: Request) {
     requireUser(["admin"]);
     const db = getDb();
     const today = todayStr();
-    const period = currentPeriod();
+    const wantedPeriod = new URL(req.url).searchParams.get("period") ?? "";
+    const period = /^\d{4}-\d{2}$/.test(wantedPeriod) ? wantedPeriod : currentPeriod();
     // Brand filter: every sales figure narrows to one line, item-level.
     const line = new URL(req.url).searchParams.get("line") || null;
     const inLine = (productId: number) => !line || db.products.find((p) => p.id === productId)?.line === line;
@@ -66,7 +67,11 @@ export async function GET(req: Request) {
       let value = 0;
       for (const o of monthOrders) {
         const creator = db.users.find((u) => u.id === o.createdBy);
-        const city = creator?.city && cities.includes(creator.city) ? creator.city : cities[0];
+        // A seller whose city is "all" (a supervisor) books the sale where
+        // the CUSTOMER is — not in whichever city happens to be listed first.
+        const docCity = db.doctors.find((d) => d.id === o.doctorId)?.city;
+        const city = creator?.city && cities.includes(creator.city) ? creator.city
+          : docCity && cities.includes(docCity) ? docCity : cities[0];
         for (const it of o.items) {
           if (it.productId !== p.id) continue;
           byCity[city] += it.qty;
