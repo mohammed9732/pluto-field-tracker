@@ -22,6 +22,12 @@ export async function GET(req: Request) {
     if (user.role === "rep") userId = user.id;
     const target = db.users.find((u) => u.id === userId);
     if (!target) return Response.json({ error: "User not found" }, { status: 404 });
+    // A supervisor may only open their own team's days.
+    if (user.role === "supervisor" && target.id !== user.id
+      && (target.role === "rep" || target.role === "collector")
+      && target.supervisorId && target.supervisorId !== user.id) {
+      return Response.json({ error: "That person reports to another supervisor" }, { status: 403 });
+    }
 
     const checkins = db.checkins.filter((c) => c.userId === userId && c.ts.startsWith(date)).sort((a, b) => a.ts.localeCompare(b.ts));
     const pings = db.pings.filter((p) => p.userId === userId && p.ts.startsWith(date)).sort((a, b) => a.ts.localeCompare(b.ts));

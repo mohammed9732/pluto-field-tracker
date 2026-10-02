@@ -15,6 +15,11 @@ export interface User {
   /* The lines this person sells. A rep can carry one, several, or ALL —
      empty/absent means all, so nobody loses products when lines appear. */
   productLines?: string[] | null;
+  /* Which supervisor this person reports to. Drives order-approval routing
+     and what a supervisor's own screens show. null/absent = unassigned:
+     visible to every supervisor and approvable by any, so nothing breaks
+     before the owner finishes assigning people. */
+  supervisorId?: number | null;
   lang?: "en" | "ar";          // absent = follow the company default
   /* Payment collection. Some medical reps never touch money — a dedicated
      collector does the round instead — so collection features switch off per

@@ -18,6 +18,8 @@ export default function Manage() {
   // Drag-and-drop product ordering: a local copy while dragging, saved on drop.
   const [prods, setProds] = useState<any[] | null>(null);
   const [drag, setDrag] = useState<number | null>(null);
+  // People filter: "" all, "city:<id>", "line:<name>".
+  const [uFilter, setUFilter] = useState("");
 
   const load = useCallback(() => {
     api("/api/admin").then(setData).catch(() => {});
@@ -49,15 +51,32 @@ export default function Manage() {
           <h6 style={{ margin: 0, color: "var(--color-neutral-600)", flex: 1 }}>{tx("manage.usersBaseSalariesVisible", "Users · base salaries visible to you and the accountant only")}</h6>
           {canEdit ? <button className="btn btn-primary" style={{ fontSize: 12, padding: "6px 12px" }} onClick={() => setEditUser({ name: "", phone: "", role: "rep", city: (data.cities ?? [])[0]?.id ?? "", baseSalary: "1,200,000", dailyMin: 5, password: "password" })}>＋ Add user</button> : null}
         </div>
+        {/* Slice the team by city or by brand — the owner's question is
+            usually "who works on Skin Master?", not "list everyone". */}
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {[{ id: "", name: tx("common.all", "All") },
+            ...(data.cities ?? []).map((c: any) => ({ id: `city:${c.id}`, name: c.name })),
+            ...(data.productLines ?? []).map((l: string) => ({ id: `line:${l}`, name: l })),
+          ].map((f: any) => (
+            <button key={f.id || "all"} className={`tag ${uFilter === f.id ? "tag-accent" : "tag-neutral"}`}
+              style={{ border: "none", cursor: "pointer" }} onClick={() => setUFilter(f.id)}>{f.name}</button>
+          ))}
+        </div>
         <div style={{ overflowX: "auto" }}>
           <table className="table" style={{ fontSize: 13, minWidth: 560 }}>
-            <thead><tr><th>{tx("manage.name", "Name")}</th><th>{tx("manage.role", "Role")}</th><th>{tx("manage.city", "City")}</th><th className="ta-r">{tx("manage.baseSalary", "Base salary")}</th><th className="ta-r">{tx("manage.dailyMin", "Daily min")}</th><th>{tx("manage.line", "Line")}</th><th></th></tr></thead>
+            <thead><tr><th>{tx("manage.name", "Name")}</th><th>{tx("manage.role", "Role")}</th><th>{tx("manage.city", "City")}</th><th>{tx("manage.reportsTo", "Reports to")}</th><th className="ta-r">{tx("manage.baseSalary", "Base salary")}</th><th className="ta-r">{tx("manage.dailyMin", "Daily min")}</th><th>{tx("manage.line", "Line")}</th><th></th></tr></thead>
             <tbody>
-              {data.users.map((u: any) => (
+              {data.users
+                .filter((u: any) => !uFilter ? true
+                  : uFilter.startsWith("city:") ? u.city === uFilter.slice(5)
+                  : ((u.productLines ?? (u.productLine ? [u.productLine] : [])).length === 0
+                    || (u.productLines ?? (u.productLine ? [u.productLine] : [])).includes(uFilter.slice(5))))
+                .map((u: any) => (
                 <tr key={u.id}>
                   <td style={{ fontWeight: 500 }}>{u.name}</td>
                   <td>{roleLabel(t, u.role)}</td>
                   <td>{u.city === "all" ? "All" : (data.cities ?? []).find((c: any) => c.id === u.city)?.name ?? u.city}</td>
+                  <td className="small muted">{u.supervisorId ? data.users.find((s: any) => s.id === u.supervisorId)?.name ?? "—" : (u.role === "rep" || u.role === "collector") ? tx("manage.anySup", "any") : "—"}</td>
                   <td className="ta-r">{u.baseSalary ? money(u.baseSalary) : "—"}</td>
                   <td className="ta-r">{u.dailyMin ? `${u.dailyMin} visits` : "—"}</td>
                   <td className="small muted">{(u.productLines ?? (u.productLine ? [u.productLine] : [])).join(", ") || "all"}</td>
@@ -90,6 +109,15 @@ export default function Manage() {
                   <option value="all">{tx("manage.allCities", "All cities")}</option>
                 </select>
               </div>
+              {(editUser.role === "rep" || editUser.role === "collector") ? (
+                <div className="field m0"><label>{tx("manage.reportsTo", "Reports to")}</label>
+                  <select className="input" value={editUser.supervisorId ?? ""}
+                    onChange={(e) => setEditUser({ ...editUser, supervisorId: e.target.value ? Number(e.target.value) : null })}>
+                    <option value="">{tx("manage.anySupervisor", "Any supervisor")}</option>
+                    {data.users.filter((s: any) => s.active && s.role === "supervisor").map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </div>
+              ) : null}
               <div className="field m0"><label>{tx("manage.baseSalary", "Base salary")}</label><input className="input" inputMode="numeric" value={editUser.baseSalary} onChange={(e) => setEditUser({ ...editUser, baseSalary: groupDigits(e.target.value) })} /></div>
               <div className="field m0"><label>{tx("manage.dailyMin", "Daily min")}</label><input className="input" inputMode="numeric" value={editUser.dailyMin} onChange={(e) => setEditUser({ ...editUser, dailyMin: e.target.value.replace(/[^0-9]/g, "") })} /></div>
               <div className="field m0" style={{ gridColumn: "1 / -1" }}>

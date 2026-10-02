@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { availableStock, ceilingStatus, cityName, closedError, doctorsFor, isClosed, logActivity, notify, nowIso, orderTotal, priceForQty, productsFor, recordChange, sellerLocation } from "@/lib/compute";
+import { availableStock, ceilingStatus, cityName, closedError, doctorsFor, isClosed, logActivity, notify, nowIso, orderTotal, priceForQty, productsFor, recordChange, sellerLocation, supervisorOf, teamOf } from "@/lib/compute";
 import { OrderItem } from "@/lib/types";
 
 function enrich(db: ReturnType<typeof getDb>, o: any) {
@@ -38,6 +38,11 @@ export async function GET(req: Request) {
     } else if (scope === "pending") {
       requireUser(["supervisor", "admin"]);
       orders = orders.filter((o) => o.status === "pending");
+      // A supervisor's approvals desk shows their OWN team's orders.
+      if (user.role === "supervisor") {
+        const mine = new Set(teamOf(db, user).map((u) => u.id));
+        orders = orders.filter((o) => mine.has(o.createdBy));
+      }
     } else if (scope === "queue") {
       requireUser(["accountant", "admin"]);
       orders = orders.filter((o) => o.status === "approved");
@@ -163,7 +168,12 @@ export async function POST(req: Request) {
         for (const a of db.users.filter((u) => u.active && (u.role === "accountant" || u.role === "admin")))
           notify(db, () => nextId(db), a.id, `Order from ${user.name} for ${docName} is ready to invoice.`, "/acct/queue", "orderNew");
       } else {
-        const approvers = db.users.filter((u) => u.active && (u.role === "supervisor" || u.role === "admin") && u.id !== user.id);
+        // Routed to the rep's OWN supervisor (plus the owner); a rep with no
+        // assigned supervisor still reaches every supervisor.
+        const sup = supervisorOf(db, user.id);
+        const approvers = db.users.filter((u) => u.active
+          && (u.role === "admin" || (u.role === "supervisor" && (!sup || u.id === sup.id)))
+          && u.id !== user.id);
         for (const a of approvers) notify(db, () => nextId(db), a.id, `New ${isSample ? "SAMPLE request" : "order"} from ${user.name} awaits approval.`, "/approvals", "orderNew");
       }
       saveDb();
@@ -185,6 +195,16 @@ export async function POST(req: Request) {
         );
       }
       if (order.status !== "pending") return Response.json({ error: "Order is not pending" }, { status: 400 });
+      /* Routed approvals: an assigned rep's orders belong to THEIR
+       * supervisor. The owner can always step in; an unassigned rep's
+       * orders stay approvable by any supervisor. */
+      if (user.role === "supervisor") {
+        const creator = db.users.find((u) => u.id === order.createdBy);
+        if (creator?.supervisorId && creator.supervisorId !== user.id) {
+          const supName = db.users.find((x) => x.id === creator.supervisorId)?.name ?? "another supervisor";
+          return Response.json({ error: `${creator.name} reports to ${supName} — this order is theirs to approve` }, { status: 403 });
+        }
+      }
       // Approving is what books revenue, so it must respect a closed month even
       // though the order itself was raised earlier.
       if (isClosed(db, order.createdAt)) {
@@ -241,7 +261,9 @@ export async function POST(req: Request) {
       order.rejectNote = note;
       recordChange(db, () => nextId(db), user.id, "order", order.id, "returned from invoicing", note);
       const doctorName = db.doctors.find((d) => d.id === order.doctorId)?.name ?? "?";
-      for (const s of db.users.filter((u) => u.active && (u.role === "supervisor" || u.role === "admin"))) {
+      const creatorSup = supervisorOf(db, order.createdBy);
+      for (const s of db.users.filter((u) => u.active
+        && (u.role === "admin" || (u.role === "supervisor" && (!creatorSup || u.id === creatorSup.id))))) {
         notify(db, () => nextId(db), s.id, `${user.name} returned the order for ${doctorName} from invoicing: ${note}`, "/approvals", "orderStatus");
       }
       notify(db, () => nextId(db), order.createdBy, `Order for ${doctorName} was returned before invoicing: ${note}`, "/orders", "orderStatus");

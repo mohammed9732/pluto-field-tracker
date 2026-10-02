@@ -150,7 +150,7 @@ export function orderTotal(o: Order): number {
 
 /* Month-by-month money for the dashboard charts: booked sales (approved +
  * invoiced, samples excluded) and cash actually collected, oldest first. */
-export function monthlySeries(db: DB, months = 12) {
+export function monthlySeries(db: DB, months = 12, line: string | null = null) {
   const periods: string[] = [];
   let [y, m] = currentPeriod().split("-").map(Number);
   for (let i = 0; i < months; i++) {
@@ -162,7 +162,7 @@ export function monthlySeries(db: DB, months = 12) {
     period,
     sales: db.orders
       .filter((o) => !o.isSample && (o.status === "approved" || o.status === "invoiced") && periodOf(o.createdAt) === period)
-      .reduce((s, o) => s + orderTotal(o), 0),
+      .reduce((s, o) => s + orderLineValue(db, o, line), 0),
     collected: db.payments.filter((p) => periodOf(p.ts) === period).reduce((s, p) => s + p.amount, 0),
   }));
 }
@@ -307,6 +307,32 @@ export function payrollFigures(db: DB, userId: number, period: string) {
     base: u.baseSalary, commission, incentiveDue, deducted,
     netPay: Math.max(0, u.baseSalary + commission + incentiveDue - deducted),
   };
+}
+
+/* The field staff a viewer is responsible for. Supervisors get THEIR
+ * people — plus anyone not yet assigned to anybody; everyone else (owner,
+ * accountant, later HR) gets the whole field team. */
+export function teamOf(db: DB, viewer: { id: number; role: string }) {
+  const field = db.users.filter((u) => u.active && (u.role === "rep" || u.role === "collector"));
+  if (viewer.role !== "supervisor") return field;
+  return field.filter((u) => !u.supervisorId || u.supervisorId === viewer.id);
+}
+
+export function supervisorOf(db: DB, userId: number) {
+  const u = db.users.find((x) => x.id === userId);
+  if (!u?.supervisorId) return null;
+  return db.users.find((x) => x.id === u.supervisorId && x.active && x.role === "supervisor") ?? null;
+}
+
+/* An order's value counted toward ONE brand line (null = all of it).
+ * Item-level on purpose: a rep carrying two lines can mix them in one
+ * order, and brand reporting must split that order, not mislabel it. */
+export function orderLineValue(db: DB, o: Order, line: string | null): number {
+  if (!line) return orderTotal(o);
+  return o.items.reduce((s, it) => {
+    const p = db.products.find((x) => x.id === it.productId);
+    return p?.line === line ? s + it.qty * it.price : s;
+  }, 0);
 }
 
 export function doctorsFor(db: DB, user: { role: string; city: string }) {

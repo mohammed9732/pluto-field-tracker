@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { collectionCommission, currentPeriod, monthlySeries, orderTotal, periodOf, todayStr } from "@/lib/compute";
+import { collectionCommission, currentPeriod, monthlySeries, orderLineValue, orderTotal, periodOf, todayStr } from "@/lib/compute";
 
 // Everything the accountant's money dashboard needs.
 export async function GET(req: Request) {
@@ -11,8 +11,9 @@ export async function GET(req: Request) {
     const period = url.searchParams.get("period") ?? currentPeriod();
     const today = todayStr();
 
+    const line = url.searchParams.get("line") || null;
     const monthOrders = db.orders.filter((o) => periodOf(o.createdAt) === period && !o.isSample && (o.status === "approved" || o.status === "invoiced"));
-    const salesMTD = monthOrders.reduce((s, o) => s + orderTotal(o), 0);
+    const salesMTD = monthOrders.reduce((s, o) => s + orderLineValue(db, o, line), 0);
     const monthPayments = db.payments.filter((p) => periodOf(p.ts) === period);
     const collectedMTD = monthPayments.reduce((s, p) => s + p.amount, 0);
     const queueCount = db.orders.filter((o) => o.status === "approved").length;
@@ -53,8 +54,9 @@ export async function GET(req: Request) {
     });
 
     return Response.json({
-      period, today,
-      monthly: monthlySeries(db, 12),
+      period, today, line,
+      productLines: db.settings.productLines ?? [],
+      monthly: monthlySeries(db, 12, line),
       kpis: { salesMTD, collectedMTD, queueCount, collectedToday: monthPayments.filter((p) => p.ts.startsWith(today)).reduce((s, p) => s + p.amount, 0) },
       collections, reconciliation, people,
     });

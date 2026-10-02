@@ -18,11 +18,39 @@ export default function AdminDashboard() {
   const me = useMe();
   const router = useRouter();
   const [data, setData] = useState<any>(null);
+  const [line, setLine] = useState(""); // "" = all brands
   useEffect(() => {
-    api("/api/dashboard").then(setData).catch(() => {});
-  }, []);
+    api(`/api/dashboard${line ? `?line=${encodeURIComponent(line)}` : ""}`).then(setData).catch(() => {});
+  }, [line]);
   if (!me || !data) return <Spinner />;
   const k = data.kpis;
+
+  /* Sales to Excel, one row per order ITEM with its brand — so the owner
+   * can pivot by brand, rep, or product without asking anyone. */
+  async function exportSales() {
+    const XLSX = await import("xlsx");
+    const [ords, tg] = await Promise.all([
+      api<{ orders: any[] }>("/api/orders?scope=all"),
+      api<any>("/api/targets"),
+    ]);
+    const lineOf: Record<number, string> = {};
+    for (const p of tg.products ?? []) lineOf[p.id] = p.line ?? "";
+    const rows: any[] = [];
+    for (const o of ords.orders.filter((x: any) => !x.isSample && (x.status === "approved" || x.status === "invoiced") && x.createdAt.slice(0, 7) === data.period)) {
+      for (const it of o.items) {
+        if (line && lineOf[it.productId] !== line) continue;
+        rows.push({
+          Date: o.createdAt.slice(0, 10), Order: o.id, Rep: o.createdByName,
+          Doctor: o.doctor?.name ?? "", Product: it.productName,
+          Brand: lineOf[it.productId] || "—", Qty: it.qty,
+          "Price IQD": it.price, "Value IQD": it.qty * it.price,
+        });
+      }
+    }
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), "Sales");
+    XLSX.writeFile(wb, `sales-${data.period}${line ? "-" + line : ""}.xlsx`);
+  }
 
   async function logout() {
     await api("/api/auth/logout", { json: {} });
@@ -41,6 +69,20 @@ export default function AdminDashboard() {
           </button>
         </div>
 
+        {/* Brand chips: every sales figure below follows the selection. */}
+        {(data.productLines ?? []).length ? (
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+            {["", ...(data.productLines ?? [])].map((l: string) => (
+              <button key={l || "all"} className={`tag ${line === l ? "tag-accent" : "tag-neutral"}`}
+                style={{ border: "none", cursor: "pointer" }} onClick={() => setLine(l)}>
+                {l || tx("owner.allBrands", "All brands")}
+              </button>
+            ))}
+            <button className="tag tag-neutral" style={{ border: "none", cursor: "pointer", marginInlineStart: "auto" }} onClick={exportSales}>
+              ⬇ {tx("owner.exportSales", "Sales to Excel")}
+            </button>
+          </div>
+        ) : null}
         <div className="kpi-grid">
           <div className="card" style={{ gap: 2, padding: 12 }}>
             <span className="card-kicker">{tx("owner.visitsToday", "Visits today")}</span>

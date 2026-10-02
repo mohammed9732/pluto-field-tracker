@@ -12,6 +12,14 @@ export async function GET(req: Request) {
     if (user.role === "rep" || user.role === "accountant") userId = user.id;
     const target = db.users.find((u) => u.id === userId);
     if (!target) return Response.json({ error: "User not found" }, { status: 404 });
+    if (user.role === "supervisor" && target.id !== user.id
+      && (target.role === "rep" || target.role === "collector")
+      && target.supervisorId && target.supervisorId !== user.id) {
+      return Response.json({ error: "That person reports to another supervisor" }, { status: 403 });
+    }
+    // Brand filter: targets and the leaderboard narrowed to one line.
+    const line = url.searchParams.get("line") || null;
+    const inLine = (productId: number) => !line || db.products.find((p) => p.id === productId)?.line === line;
     const period = url.searchParams.get("period") ?? currentPeriod();
     const today = todayStr();
     // Only count working days that have already happened.
@@ -61,7 +69,7 @@ export async function GET(req: Request) {
       .filter((p) => p.collectedBy === userId && periodOf(p.ts) === period)
       .reduce((s, p) => s + p.amount, 0);
 
-    const accrual = monthlyAccrual(db, userId, period);
+    const accrual = monthlyAccrual(db, userId, period).filter((r) => inLine(r.productId));
 
     // Supervisors work by city — show how many days he spent in each.
     let cityDays: { city: string; label: string; days: number }[] = [];
@@ -84,7 +92,7 @@ export async function GET(req: Request) {
     let leaderboard: any[] = [];
     if (db.settings.leaderboard) {
       leaderboard = db.users.filter((u) => u.active && u.role === "rep").map((u) => {
-        const acc = monthlyAccrual(db, u.id, period);
+        const acc = monthlyAccrual(db, u.id, period).filter((r) => inLine(r.productId));
         const avgPct = acc.length ? acc.reduce((s, r) => s + Math.min(120, r.achievementPct), 0) / acc.length : 0;
         const v = db.visits.filter((x) => x.userId === u.id && x.date.slice(0, 7) === period).length;
         const col = db.payments.filter((p) => p.collectedBy === u.id && periodOf(p.ts) === period).reduce((s, p) => s + p.amount, 0);

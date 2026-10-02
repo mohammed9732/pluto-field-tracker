@@ -2,12 +2,17 @@ import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
 import {
   cityName, notify, onApprovedLeave, orderTotal, periodOf, samplesGiven,
-  currentPeriod, todayStr, visitsOn, fieldTimeMinutes,
+  currentPeriod, teamOf, todayStr, visitsOn, fieldTimeMinutes,
 } from "@/lib/compute";
 
 // End-of-day summary for the owner and supervisor: one honest picture of the day.
-function buildSummary(db: ReturnType<typeof getDb>, date: string) {
-  const fieldUsers = db.users.filter((u) => u.active && (u.role === "rep" || u.role === "supervisor"));
+function buildSummary(db: ReturnType<typeof getDb>, date: string, viewer?: { id: number; role: string }) {
+  let fieldUsers = db.users.filter((u) => u.active && (u.role === "rep" || u.role === "supervisor"));
+  // A supervisor's day summary covers their own team and themselves.
+  if (viewer?.role === "supervisor") {
+    const mine = new Set(teamOf(db, viewer).map((u) => u.id));
+    fieldUsers = fieldUsers.filter((u) => mine.has(u.id) || u.id === viewer.id);
+  }
   const rows = fieldUsers.map((u) => {
     const vs = visitsOn(db, u.id, date);
     const ft = fieldTimeMinutes(db, u.id, date);
@@ -46,10 +51,10 @@ function buildSummary(db: ReturnType<typeof getDb>, date: string) {
 
 export async function GET(req: Request) {
   try {
-    requireUser(["admin", "supervisor"]);
+    const user = requireUser(["admin", "supervisor"]);
     const db = getDb();
     const date = new URL(req.url).searchParams.get("date") ?? todayStr();
-    return Response.json({ ...buildSummary(db, date), hour: db.settings.dailySummaryHour });
+    return Response.json({ ...buildSummary(db, date, user), hour: db.settings.dailySummaryHour });
   } catch (e) {
     return errResponse(e);
   }

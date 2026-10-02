@@ -69,6 +69,9 @@ export async function POST(req: Request) {
           productLines: Array.isArray(b.productLines)
             ? b.productLines.map(String).map((l: string) => l.trim()).filter(Boolean)
             : u.productLines,
+          supervisorId: b.supervisorId !== undefined
+            ? (db.users.some((x) => x.id === Number(b.supervisorId) && x.active && x.role === "supervisor") ? Number(b.supervisorId) : null)
+            : u.supervisorId,
           active: b.active != null ? !!b.active : u.active,
           canCollect: b.canCollect != null ? !!b.canCollect : u.canCollect,
         });
@@ -86,6 +89,7 @@ export async function POST(req: Request) {
           productLines: Array.isArray(b.productLines)
             ? b.productLines.map(String).map((l: string) => l.trim()).filter(Boolean)
             : null,
+          supervisorId: db.users.some((x) => x.id === Number(b.supervisorId) && x.active && x.role === "supervisor") ? Number(b.supervisorId) : null,
           active: true,
           canCollect: b.canCollect != null ? !!b.canCollect : true,
         });

@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { cityIds, cityName, notify, todayStr, weekStartOf } from "@/lib/compute";
+import { cityIds, cityName, notify, supervisorOf, teamOf, todayStr, weekStartOf } from "@/lib/compute";
 
 function nextWeekStart(): string {
   const cur = weekStartOf(todayStr());
@@ -23,7 +23,10 @@ export async function GET(req: Request) {
        * so COLLECTOR plans go to her. The owner sees everything. */
       requireUser(["supervisor", "accountant", "admin"]);
       const roleOf = (id: number) => db.users.find((u) => u.id === id)?.role;
-      if (user.role === "supervisor") plans = plans.filter((p) => roleOf(p.userId) !== "collector");
+      if (user.role === "supervisor") {
+        const mine = new Set(teamOf(db, user).map((u) => u.id));
+        plans = plans.filter((p) => roleOf(p.userId) !== "collector" && (mine.has(p.userId) || p.userId === user.id));
+      }
       if (user.role === "accountant") plans = plans.filter((p) => roleOf(p.userId) === "collector");
     }
     plans.sort((a, b) => b.weekStart.localeCompare(a.weekStart));
@@ -132,7 +135,10 @@ export async function POST(req: Request) {
       // Whoever decides on this plan should know it is waiting: the
       // accountant for a collector's plan, the supervisor for everyone else.
       const approverRole = user.role === "collector" ? "accountant" : "supervisor";
-      for (const a of db.users.filter((u) => u.active && (u.role === approverRole || u.role === "admin") && u.id !== user.id)) {
+      const mySup = supervisorOf(db, user.id);
+      for (const a of db.users.filter((u) => u.active
+        && (u.role === "admin" || (u.role === approverRole && (approverRole !== "supervisor" || !mySup || u.id === mySup.id)))
+        && u.id !== user.id)) {
         notify(db, () => nextId(db), a.id, `${user.name} submitted a weekly plan for approval.`,
           user.role === "collector" ? "/acct/collections" : "/approvals", "planStatus");
       }
@@ -149,6 +155,10 @@ export async function POST(req: Request) {
       }
       if (user.role === "accountant" && creator?.role !== "collector") {
         return Response.json({ error: "Rep plans are approved by the supervisor" }, { status: 403 });
+      }
+      if (user.role === "supervisor" && creator && creator.role !== "supervisor"
+        && creator.supervisorId && creator.supervisorId !== user.id) {
+        return Response.json({ error: `${creator.name} reports to another supervisor` }, { status: 403 });
       }
       plan.status = b.decision === "approve" ? "approved" : "returned";
       plan.note = b.note ? String(b.note) : null;

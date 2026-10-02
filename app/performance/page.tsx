@@ -11,18 +11,21 @@ export default function Performance() {
   const [team, setTeam] = useState<any[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
   const [data, setData] = useState<any>(null);
+  const [line, setLine] = useState(""); // "" = all brands
+  const [plines, setPlines] = useState<string[]>([]);
 
   useEffect(() => {
     if (me && (me.role === "supervisor" || me.role === "admin")) {
       api("/api/team").then((r: any) => setTeam(r.rows)).catch(() => {});
       setUserId((u) => u ?? me.id);
     } else if (me) setUserId(me.id);
+    if (me) api("/api/settings").then((r: any) => setPlines(r.settings?.productLines ?? [])).catch(() => {});
   }, [me]);
 
   const load = useCallback(() => {
     if (!userId) return;
-    api(`/api/performance?userId=${userId}`).then(setData).catch(() => {});
-  }, [userId]);
+    api(`/api/performance?userId=${userId}${line ? `&line=${encodeURIComponent(line)}` : ""}`).then(setData).catch(() => {});
+  }, [userId, line]);
   useEffect(load, [load]);
 
   if (!me || !data) return <Spinner />;
@@ -46,6 +49,16 @@ export default function Performance() {
               <input type="radio" name="perf" checked={userId === r.userId} onChange={() => setUserId(r.userId)} />
               {r.name.split(" ")[0]}
             </label>
+          ))}
+        </div>
+      ) : null}
+      {plines.length ? (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {["", ...plines].map((l) => (
+            <button key={l || "all"} className={`tag ${line === l ? "tag-accent" : "tag-neutral"}`}
+              style={{ border: "none", cursor: "pointer" }} onClick={() => setLine(l)}>
+              {l || tx("owner.allBrands", "All brands")}
+            </button>
           ))}
         </div>
       ) : null}

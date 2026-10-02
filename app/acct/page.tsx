@@ -19,11 +19,11 @@ export default function AcctDashboard() {
   const t = useTerms();
   const router = useRouter();
   const [data, setData] = useState<any>(null);
-  
+  const [line, setLine] = useState(""); // "" = all brands
 
   const load = useCallback(() => {
-    api("/api/acctdash").then(setData).catch(() => {});
-  }, []);
+    api(`/api/acctdash${line ? `?line=${encodeURIComponent(line)}` : ""}`).then(setData).catch(() => {});
+  }, [line]);
   useEffect(load, [load]);
 
   if (!me || !data) return <Spinner />;
@@ -43,9 +43,19 @@ export default function AcctDashboard() {
         </button>
       </div>
 
+      {(data.productLines ?? []).length ? (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {["", ...(data.productLines ?? [])].map((l: string) => (
+            <button key={l || "all"} className={`tag ${line === l ? "tag-accent" : "tag-neutral"}`}
+              style={{ border: "none", cursor: "pointer" }} onClick={() => setLine(l)}>
+              {l || tx("owner.allBrands", "All brands")}
+            </button>
+          ))}
+        </div>
+      ) : null}
       <div className="two-3">
         <div className="blueprint" style={{ padding: 12 }}>
-          <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--color-accent-700)" }}>{tx("acct.salesMtd", "Sales MTD")}</div>
+          <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--color-accent-700)" }}>{tx("acct.salesMtd", "Sales MTD")}{line ? ` · ${line}` : ""}</div>
           <div className="hnum fs-lead">{money0(k.salesMTD)}</div>
         </div>
         <div className="blueprint" style={{ padding: 12 }}>

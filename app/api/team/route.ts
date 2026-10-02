@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { cityName, currentPeriod, fieldTimeMinutes, monthlyAccrual, monthlySeries, onApprovedLeave, orderTotal, periodOf, todayStr, visitsOn, weekDates, weekStartOf } from "@/lib/compute";
+import { cityName, currentPeriod, fieldTimeMinutes, monthlyAccrual, monthlySeries, onApprovedLeave, orderTotal, periodOf, teamOf, todayStr, visitsOn, weekDates, weekStartOf } from "@/lib/compute";
 
 export async function GET() {
   try {
@@ -8,7 +8,11 @@ export async function GET() {
     const db = getDb();
     const today = todayStr();
     const week = weekDates(weekStartOf(today));
-    const reps = db.users.filter((u) => u.active && u.role === "rep");
+    /* A supervisor sees THEIR team (unassigned reps included, until the
+       owner assigns them); the owner sees everyone. */
+    const teamIds = new Set(teamOf(db, user).map((u) => u.id));
+    const reps = db.users.filter((u) => u.active && u.role === "rep"
+      && (user.role !== "supervisor" || teamIds.has(u.id)));
     const rows = reps.map((u) => {
       const ft = fieldTimeMinutes(db, u.id, today);
       const lastIn = db.checkins.filter((c) => c.userId === u.id && c.ts.startsWith(today) && c.type === "in").pop();
@@ -62,6 +66,7 @@ export async function GET() {
       // This month's booked sales per person — the supervisor's bar race.
       repSales: db.users
         .filter((u) => u.active && (u.role === "rep" || u.role === "supervisor"))
+        .filter((u) => user.role !== "supervisor" || teamIds.has(u.id) || u.id === user.id)
         .map((u) => ({
           label: u.name,
           value: db.orders

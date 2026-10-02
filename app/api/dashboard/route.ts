@@ -1,13 +1,16 @@
 import { getDb } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { cityIds, cityName, currentPeriod, fieldTimeMinutes, monthlyAccrual, monthlySeries, onApprovedLeave, orderTotal, periodOf, todayStr, visitsOn, weekDates, weekStartOf } from "@/lib/compute";
+import { cityIds, cityName, currentPeriod, fieldTimeMinutes, monthlyAccrual, monthlySeries, onApprovedLeave, orderLineValue, orderTotal, periodOf, todayStr, visitsOn, weekDates, weekStartOf } from "@/lib/compute";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     requireUser(["admin"]);
     const db = getDb();
     const today = todayStr();
     const period = currentPeriod();
+    // Brand filter: every sales figure narrows to one line, item-level.
+    const line = new URL(req.url).searchParams.get("line") || null;
+    const inLine = (productId: number) => !line || db.products.find((p) => p.id === productId)?.line === line;
     const fieldUsers = db.users.filter((u) => u.active && (u.role === "rep" || u.role === "supervisor"));
 
     let visitsToday = 0;
@@ -23,8 +26,8 @@ export async function GET() {
     }
 
     const monthOrders = db.orders.filter((o) => periodOf(o.createdAt) === period && !o.isSample && (o.status === "approved" || o.status === "invoiced"));
-    const salesValue = monthOrders.reduce((s, o) => s + orderTotal(o), 0);
-    const salesBoxes = monthOrders.reduce((s, o) => s + o.items.reduce((x, it) => x + it.qty, 0), 0);
+    const salesValue = monthOrders.reduce((s, o) => s + orderLineValue(db, o, line), 0);
+    const salesBoxes = monthOrders.reduce((s, o) => s + o.items.reduce((x, it) => x + (inLine(it.productId) ? it.qty : 0), 0), 0);
 
     const pending = db.orders.filter((o) => o.status === "pending");
     const pendingValue = pending.reduce((s, o) => s + orderTotal(o), 0);
@@ -57,7 +60,7 @@ export async function GET() {
 
     // Sales product × city (this month, boxes + value).
     const cities = cityIds(db);
-    const salesMatrix = db.products.filter((p) => p.active).map((p) => {
+    const salesMatrix = db.products.filter((p) => p.active && (!line || p.line === line)).map((p) => {
       const byCity: Record<string, number> = {};
       for (const c of cities) byCity[c] = 0;
       let value = 0;
@@ -81,6 +84,7 @@ export async function GET() {
       let n = 0;
       for (const u of users) {
         for (const r of monthlyAccrual(db, u.id, period)) {
+          if (!inLine(r.productId)) continue;
           pctSum += Math.min(150, r.achievementPct);
           n++;
         }
@@ -91,8 +95,9 @@ export async function GET() {
     const inField = fieldUsers.filter((u) => fieldTimeMinutes(db, u.id, today).checkedIn).length;
 
     return Response.json({
-      monthly: monthlySeries(db, 12),
-      today, period,
+      monthly: monthlySeries(db, 12, line),
+      today, period, line,
+      productLines: db.settings.productLines ?? [],
       kpis: {
         visitsToday, minToday, onLeaveCount, outOfLocationToday,
         salesValue, salesBoxes,
