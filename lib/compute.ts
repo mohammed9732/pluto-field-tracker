@@ -1,4 +1,4 @@
-import { ChangeLog, DB, Order, Product, User } from "./types";
+import { ChangeLog, DB, Order, Product, StockBatch, StockItem, User } from "./types";
 
 // Tier price: base unitPrice, overridden by the best tier the quantity reaches.
 export function priceForQty(product: Product, qty: number): number {
@@ -202,6 +202,63 @@ export function sellerLocation(db: DB, userId: number): string {
  * what other not-yet-invoiced orders (pending + approved) have already
  * claimed. Without the reservation, two reps could sell the same last boxes
  * and the second invoice would take the stock below zero. */
+/* ---- batch-level stock --------------------------------------------------
+ * StockItem.qty stays the single number everything else reads; batches[]
+ * is the detail under it. These helpers keep the two honest at the few
+ * places stock actually moves, and FEFO — first expiry, first out — is the
+ * house rule whenever nobody chose batches explicitly. */
+export function batchesOf(s: StockItem | undefined | null): StockBatch[] {
+  if (!s || s.qty <= 0) return [];
+  if (s.batches?.length) return s.batches;
+  return [{ batch: s.batch ?? null, expiry: s.expiry ?? null, qty: s.qty }];
+}
+
+export function normalizeBatches(s: StockItem) {
+  if (!s.batches) return;
+  s.batches = s.batches
+    .filter((b) => b.qty > 0)
+    .sort((a, b) => ((a.expiry ?? "9999-99-99") < (b.expiry ?? "9999-99-99") ? -1 : 1));
+  if (s.batches.length) {
+    // The legacy pair mirrors the soonest batch — what the expiry warning watches.
+    s.batch = s.batches[0].batch;
+    s.expiry = s.batches[0].expiry;
+  }
+}
+
+/* Take qty out: the chosen plan first, soonest expiry for the rest.
+ * Returns what was actually drawn, so a transfer can land the very same
+ * batches on the receiving side. */
+export function drawBatches(s: StockItem, qty: number, plan?: { batch: string | null; qty: number }[] | null): StockBatch[] {
+  s.qty -= qty;
+  if (!s.batches?.length) return [{ batch: s.batch ?? null, expiry: s.expiry ?? null, qty }];
+  const drawn: StockBatch[] = [];
+  let left = qty;
+  for (const p of plan ?? []) {
+    const row = s.batches.find((b) => (b.batch ?? "") === String(p.batch ?? ""));
+    if (!row) continue;
+    const take = Math.min(row.qty, p.qty, left);
+    if (take > 0) { row.qty -= take; left -= take; drawn.push({ batch: row.batch, expiry: row.expiry, qty: take }); }
+  }
+  for (const b of s.batches) {
+    if (left <= 0) break;
+    const take = Math.min(b.qty, left);
+    if (take > 0) { b.qty -= take; left -= take; drawn.push({ batch: b.batch, expiry: b.expiry, qty: take }); }
+  }
+  normalizeBatches(s);
+  return drawn;
+}
+
+export function addBatch(s: StockItem, qty: number, batch: string | null, expiry: string | null) {
+  if (!s.batches) {
+    s.batches = s.qty > 0 ? [{ batch: s.batch ?? null, expiry: s.expiry ?? null, qty: s.qty }] : [];
+  }
+  s.qty += qty;
+  const row = s.batches.find((b) => (b.batch ?? "") === (batch ?? "") && (b.expiry ?? "") === (expiry ?? ""));
+  if (row) row.qty += qty;
+  else s.batches.push({ batch, expiry, qty });
+  normalizeBatches(s);
+}
+
 export function availableStock(db: DB, productId: number, loc: string, excludeOrderId?: number) {
   const onHand = db.stock.find((s) => s.productId === productId && s.location === loc)?.qty ?? 0;
   const reserved = db.orders
@@ -345,11 +402,17 @@ export function doctorsFor(db: DB, user: { role: string; city: string }) {
 }
 
 // Achieved qty/value for user+product in a month, counting approved + invoiced.
+/* Whose sales an order counts to: the assigned rep when a supervisor
+ * raised it for one, otherwise whoever created it. */
+export function salesUserOf(o: Order): number {
+  return o.salesCreditTo ?? o.createdBy;
+}
+
 export function achieved(db: DB, userId: number, productId: number, period: string) {
   let qty = 0;
   let value = 0;
   for (const o of db.orders) {
-    if (o.createdBy !== userId) continue;
+    if (salesUserOf(o) !== userId) continue;
     if (o.isSample) continue; // free samples earn no target credit
     if (o.status !== "approved" && o.status !== "invoiced") continue;
     if (periodOf(o.createdAt) !== period) continue;
@@ -406,7 +469,7 @@ export function monthlyIncentiveTotal(db: DB, userId: number, period: string): n
 // Achieved sales value this month (approved + invoiced orders by this user).
 export function monthlySalesValue(db: DB, userId: number, period: string): number {
   return db.orders
-    .filter((o) => o.createdBy === userId && !o.isSample && (o.status === "approved" || o.status === "invoiced") && periodOf(o.createdAt) === period)
+    .filter((o) => salesUserOf(o) === userId && !o.isSample && (o.status === "approved" || o.status === "invoiced") && periodOf(o.createdAt) === period)
     .reduce((s, o) => s + orderTotal(o), 0);
 }
 

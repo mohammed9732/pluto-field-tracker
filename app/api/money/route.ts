@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { collectionCommission, currentPeriod, currentQuarter, dailyRate, flagMissedDays, monthlyIncentiveTotal, nowIso, onApprovedLeave, payrollFigures, periodOf, periodsInQuarter, quarterAccrual, quarterIncentivePaid, quarterOf, recordChange, todayStr, workDaysInMonth } from "@/lib/compute";
+import { collectionCommission, currentPeriod, currentQuarter, dailyRate, flagMissedDays, monthlyIncentiveTotal, notify, nowIso, onApprovedLeave, payrollFigures, periodOf, periodsInQuarter, quarterAccrual, quarterIncentivePaid, quarterOf, recordChange, todayStr, workDaysInMonth } from "@/lib/compute";
 import { nextId as seqNext } from "@/lib/db";
 
 
@@ -159,6 +159,25 @@ export async function POST(req: Request) {
       saveDb();
       return Response.json({ ok: true });
     }
+    /* A manual penalty — absence is not the only offence. The accountant
+     * names the person, the amount and the reason ("weekly report not
+     * sent"); it lands in the same decide-before-paying queue as the
+     * no-check-in flags, so one list still rules the month. */
+    if (b.action === "penalty") {
+      requireUser(["accountant", "admin"]);
+      const target = db.users.find((u) => u.id === Number(b.userId) && u.active);
+      if (!target) return Response.json({ error: "Pick a person" }, { status: 404 });
+      const amount = Math.round(Number(String(b.amount ?? "").replace(/,/g, "")) || 0);
+      if (!(amount > 0)) return Response.json({ error: "Enter the penalty amount" }, { status: 400 });
+      const reason = String(b.reason ?? "").trim();
+      if (!reason) return Response.json({ error: "Say what the penalty is for" }, { status: 400 });
+      db.deductions.push({ id: nextId(db), userId: target.id, date: todayStr(), amount, status: "flagged", decidedBy: null, reason });
+      notify(db, () => nextId(db), target.id,
+        `A penalty of ${amount.toLocaleString()} IQD was flagged by ${user.name}: ${reason}`, "/progress", "payment");
+      saveDb();
+      return Response.json({ ok: true });
+    }
+
     if (b.action === "deduction") {
       const d = db.deductions.find((x) => x.id === Number(b.id));
       if (!d) return Response.json({ error: "Not found" }, { status: 404 });

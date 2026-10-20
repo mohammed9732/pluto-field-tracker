@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { cityIds, cityName, currentPeriod, fieldTimeMinutes, monthlyAccrual, monthlySeries, onApprovedLeave, orderLineValue, orderTotal, periodOf, todayStr, visitsOn, weekDates, weekStartOf } from "@/lib/compute";
+import { cityIds, cityName, currentPeriod, fieldTimeMinutes, monthlyAccrual, monthlySeries, onApprovedLeave, orderLineValue, orderTotal, periodOf, salesUserOf, todayStr, visitsOn, weekDates, weekStartOf } from "@/lib/compute";
 
 export async function GET(req: Request) {
   try {
@@ -66,7 +66,7 @@ export async function GET(req: Request) {
       for (const c of cities) byCity[c] = 0;
       let value = 0;
       for (const o of monthOrders) {
-        const creator = db.users.find((u) => u.id === o.createdBy);
+        const creator = db.users.find((u) => u.id === salesUserOf(o));
         // A seller whose city is "all" (a supervisor) books the sale where
         // the CUSTOMER is — not in whichever city happens to be listed first.
         const docCity = db.doctors.find((d) => d.id === o.doctorId)?.city;

@@ -63,8 +63,14 @@ export default function DocsPage() {
               </label>
             ))}
           </div>
-          <input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} style={{ width: 150 }} />
-          <input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} style={{ width: 150 }} />
+          <label className="small muted" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            {tx("dlib.from", "From")}
+            <input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} style={{ width: 150 }} />
+          </label>
+          <label className="small muted" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            {tx("dlib.to", "To")}
+            <input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} style={{ width: 150 }} />
+          </label>
         </div>
         {data.archivedCount > 0 ? (
           <label className="radio fs-small" style={{ alignSelf: "flex-start" }}>

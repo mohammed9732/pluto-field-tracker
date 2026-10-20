@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { availableStock, ceilingStatus, cityName, closedError, doctorsFor, isClosed, logActivity, notify, nowIso, orderTotal, priceForQty, productsFor, recordChange, sellerLocation, supervisorOf, teamOf } from "@/lib/compute";
+import { addBatch, availableStock, ceilingStatus, cityName, closedError, doctorsFor, drawBatches, isClosed, logActivity, notify, nowIso, orderTotal, priceForQty, productsFor, recordChange, sellerLocation, supervisorOf, teamOf } from "@/lib/compute";
 import { OrderItem } from "@/lib/types";
 
 function enrich(db: ReturnType<typeof getDb>, o: any) {
@@ -10,6 +10,8 @@ function enrich(db: ReturnType<typeof getDb>, o: any) {
     isSample: !!o.isSample,
     doctor: db.doctors.find((d) => d.id === o.doctorId) ?? null,
     createdByName: db.users.find((u) => u.id === o.createdBy)?.name ?? "?",
+    creditToName: o.salesCreditTo ? db.users.find((u) => u.id === o.salesCreditTo)?.name ?? null : null,
+    invoicedByName: o.invoicedBy ? db.users.find((u) => u.id === o.invoicedBy)?.name ?? null : null,
     createdByCity: db.users.find((u) => u.id === o.createdBy)?.city ?? "erbil",
     approvedByName: o.approvedBy ? db.users.find((u) => u.id === o.approvedBy)?.name ?? "?" : null,
     deliveredByName: o.deliveredBy ? db.users.find((u) => u.id === o.deliveredBy)?.name ?? "?" : null,
@@ -34,7 +36,8 @@ export async function GET(req: Request) {
       const visible = new Set(doctorsFor(db, user).map((d) => d.id));
       orders = orders.filter((o) => o.status === "invoiced" && visible.has(o.doctorId));
     } else if (scope === "mine" || user.role === "rep") {
-      orders = orders.filter((o) => o.createdBy === user.id);
+      // Orders a supervisor assigned to this rep belong on their list too.
+      orders = orders.filter((o) => o.createdBy === user.id || o.salesCreditTo === user.id);
     } else if (scope === "pending") {
       requireUser(["supervisor", "admin"]);
       orders = orders.filter((o) => o.status === "pending");
@@ -126,8 +129,22 @@ export async function POST(req: Request) {
           const price = isSample
             ? 0
             : db.settings.repPriceEdit && it.price != null && Number(it.price) > 0 ? Number(it.price) : tierPrice;
-          return { productId: product.id, qty, price };
+          /* Per-batch picks from the sheet. The split must add up to the
+           * quantity exactly — a plan that lies is refused, not repaired. */
+          const rawPlan = Array.isArray(it.batchPlan)
+            ? it.batchPlan
+                .map((p: any) => ({ batch: p.batch != null ? String(p.batch) : null, qty: Math.max(0, Math.round(Number(p.qty) || 0)) }))
+                .filter((p: any) => p.qty > 0)
+            : null;
+          return { productId: product.id, qty, price, batchPlan: rawPlan?.length ? rawPlan : null };
         });
+      for (const it of items) {
+        if (!it.batchPlan) continue;
+        if (it.batchPlan.reduce((s2, p2) => s2 + p2.qty, 0) !== it.qty) {
+          const pname = db.products.find((pp) => pp.id === it.productId)?.name ?? "?";
+          return Response.json({ error: `Batch split for ${pname} does not add up — reopen the product and check the quantities` }, { status: 400 });
+        }
+      }
       if (!items.length) return Response.json({ error: "Add at least one product" }, { status: 400 });
       if (!b.doctorId) return Response.json({ error: "Pick a doctor" }, { status: 400 });
       /* No selling what the warehouse cannot deliver. Available = on hand in
@@ -153,8 +170,21 @@ export async function POST(req: Request) {
        * move his own orders at all. Reps still need supervisor approval, and
        * sample requests still go through approval whoever raises them. */
       const auto = user.role === "supervisor" && !isSample;
+      /* Optional: a supervisor hands the sale (and the delivery) to a rep.
+       * The rep must really be able to serve this customer — active, a rep,
+       * and in the doctor's city. */
+      let salesCreditTo: number | null = null;
+      if (b.assignTo && (user.role === "supervisor" || user.role === "admin")) {
+        const rep = db.users.find((u) => u.id === Number(b.assignTo) && u.active && u.role === "rep");
+        const docCity = db.doctors.find((d) => d.id === Number(b.doctorId))?.city;
+        if (!rep) return Response.json({ error: "Pick a valid rep to assign the order to" }, { status: 400 });
+        if (rep.city !== "all" && docCity && rep.city !== docCity) {
+          return Response.json({ error: `${rep.name} works in another city than this customer` }, { status: 400 });
+        }
+        salesCreditTo = rep.id;
+      }
       const order = {
-        id: nextId(db), doctorId: Number(b.doctorId), createdBy: user.id, createdAt: nowIso(),
+        id: nextId(db), doctorId: Number(b.doctorId), createdBy: user.id, createdAt: nowIso(), salesCreditTo,
         status: auto ? ("approved" as const) : ("pending" as const), isSample, items,
         clientRef: b.clientRef ? String(b.clientRef) : null,
         approvedBy: auto ? user.id : null, approvedAt: auto ? nowIso() : null, rejectNote: null,
@@ -164,6 +194,11 @@ export async function POST(req: Request) {
         return Response.json({ error: closedError(db) }, { status: 400 });
       }
       db.orders.push(order);
+      if (salesCreditTo) {
+        notify(db, () => nextId(db), salesCreditTo,
+          `${user.name} assigned you an order for ${db.doctors.find((d) => d.id === order.doctorId)?.name ?? "?"} — it counts to your sales and your delivery round.`,
+          "/orders", "orderNew");
+      }
       if (auto) {
         const docName = db.doctors.find((d) => d.id === order.doctorId)?.name ?? "?";
         for (const a of db.users.filter((u) => u.active && (u.role === "accountant" || u.role === "admin")))
@@ -293,7 +328,9 @@ export async function POST(req: Request) {
       }
       for (const it of order.items) {
         const s = db.stock.find((x) => x.productId === it.productId && x.location === loc)!;
-        s.qty -= it.qty;
+        // The sheet's batch picks when there are any; nearest expiry first
+        // for everything else — stock leaves in the order it would spoil.
+        drawBatches(s, it.qty, it.batchPlan ?? null);
         s.updatedAt = nowIso();
         s.updatedBy = user.id;
       }
@@ -352,7 +389,12 @@ export async function POST(req: Request) {
           s = { productId: it.productId, location: loc, qty: 0, batch: null, expiry: null, updatedAt: nowIso(), updatedBy: user.id };
           db.stock.push(s);
         }
-        s.qty += it.qty;
+        // Un-invoice: the goods come back as the batches they left as.
+        if (it.batchPlan?.length) {
+          for (const pl of it.batchPlan) addBatch(s, pl.qty, pl.batch ?? null, null);
+        } else {
+          addBatch(s, it.qty, s.batch ?? null, s.expiry ?? null);
+        }
         s.updatedAt = nowIso();
         s.updatedBy = user.id;
       }

@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { cityIds, cityName, hqCityId, logActivity, notify, nowIso, stockCityIds, todayStr, weekStartOf } from "@/lib/compute";
+import { addBatch, cityIds, cityName, drawBatches, hqCityId, logActivity, normalizeBatches, notify, nowIso, stockCityIds, todayStr, weekStartOf } from "@/lib/compute";
 import { StockLocation } from "@/lib/types";
 
 // Locations = the cities, nothing else. Every city is an equal warehouse.
@@ -131,6 +131,7 @@ export async function POST(req: Request) {
           db.stock.push(s);
         }
         s.qty = qty;
+        s.batches = undefined; // a hand count knows totals, not the split
         s.batch = r.batch ? String(r.batch) : s.batch;
         // Same check the manual entry gets. A column formatted as Text in
         // Excel arrives as "31/12/26" or "Dec 2026", and storing that unread
@@ -170,7 +171,7 @@ export async function POST(req: Request) {
       const whMap = db.settings.erpWarehouseMap ?? {};
       const locs = locations(db);
       const errors: string[] = [];
-      const grouped = new Map<string, { qty: number; batch: string | null; expiry: string | null }>();
+      const grouped = new Map<string, { qty: number; rows: { batch: string | null; expiry: string | null; qty: number }[] }>();
       const linked = new Set<number>();
       const usedLocs = new Set<string>();
       const unknownNames = new Set<string>();
@@ -195,16 +196,14 @@ export async function POST(req: Request) {
         const qty = Math.max(0, Math.round(Number(r.qty) || 0));
         const expiry = typeof r.expiry === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.expiry) ? r.expiry : null;
         const key = product.id + "|" + loc;
-        const g = grouped.get(key) ?? { qty: 0, batch: null, expiry: null };
+        const g = grouped.get(key) ?? { qty: 0, rows: [] as { batch: string | null; expiry: string | null; qty: number }[] };
         g.qty += qty;
-        // Several batches per warehouse: keep the one expiring SOONEST —
-        // that is the batch the expiry warning has to watch.
-        if (expiry && (!g.expiry || expiry < g.expiry)) {
-          g.expiry = expiry;
-          g.batch = String(r.batch ?? "").trim() || null;
-        } else if (!g.batch && r.batch) {
-          g.batch = String(r.batch).trim() || null;
-        }
+        // Every batch is kept with its own expiry — the order sheet can
+        // split across them, and FEFO needs the full list, not the soonest.
+        const bname = String(r.batch ?? "").trim() || null;
+        const row = g.rows.find((x) => (x.batch ?? "") === (bname ?? "") && (x.expiry ?? "") === (expiry ?? ""));
+        if (row) row.qty += qty;
+        else g.rows.push({ batch: bname, expiry, qty });
         grouped.set(key, g);
       }
       let applied = 0;
@@ -217,7 +216,9 @@ export async function POST(req: Request) {
             db.stock.push(s);
           }
           s.qty = g?.qty ?? 0;
-          if (g) { s.batch = g.batch ?? s.batch; s.expiry = g.expiry ?? s.expiry; }
+          // Matched products get batch & expiry automatically, per batch.
+          s.batches = g ? g.rows.map((x) => ({ ...x })) : [];
+          normalizeBatches(s);
           s.updatedAt = nowIso();
           s.updatedBy = user.id;
           applied++;
@@ -351,8 +352,9 @@ export async function POST(req: Request) {
           dst = { productId: product.id, location: req.toCity as StockLocation, qty: 0, batch: src.batch, expiry: src.expiry, updatedAt: nowIso(), updatedBy: user.id };
           db.stock.push(dst);
         }
-        src.qty -= req.qty;
-        dst.qty += req.qty;
+        // Move real batches, nearest expiry first, and land the same
+        // batches on the receiving side.
+        for (const mv of drawBatches(src, req.qty)) addBatch(dst, mv.qty, mv.batch, mv.expiry);
         src.updatedAt = dst.updatedAt = nowIso();
         src.updatedBy = dst.updatedBy = user.id;
         db.stockTransfers.push({
@@ -386,8 +388,7 @@ export async function POST(req: Request) {
         dst = { productId: product.id, location: to, qty: 0, batch: src.batch, expiry: src.expiry, updatedAt: nowIso(), updatedBy: user.id };
         db.stock.push(dst);
       }
-      src.qty -= qty;
-      dst.qty += qty;
+      for (const mv of drawBatches(src, qty)) addBatch(dst, mv.qty, mv.batch, mv.expiry);
       src.updatedAt = dst.updatedAt = nowIso();
       src.updatedBy = dst.updatedBy = user.id;
       db.stockTransfers.push({ id: nextId(db), productId: product.id, qty, from, to, by: user.id, ts: nowIso(), note: String(b.note ?? "") });
@@ -433,6 +434,7 @@ export async function POST(req: Request) {
             db.stock.push(s);
           }
           s.qty = r.counted;
+          s.batches = undefined; // counted by hand — the split is unknown
           s.updatedAt = nowIso();
           s.updatedBy = user.id;
         }

@@ -1,6 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { availableStock, cityName, currentPeriod, currentQuarter, monthlyAccrual, productsFor, quarterAccrual, sellerLocation } from "@/lib/compute";
+import { availableStock, batchesOf, cityName, currentPeriod, currentQuarter, monthlyAccrual, productsFor, quarterAccrual, sellerLocation, teamOf } from "@/lib/compute";
 
 export async function GET(req: Request) {
   try {
@@ -23,10 +23,31 @@ export async function GET(req: Request) {
     // at this number so an order that would bounce is never even built.
     const loc = sellerLocation(db, user.id);
     const stockLeft: Record<number, number> = {};
-    for (const p of productsFor(db, user)) stockLeft[p.id] = Math.max(0, availableStock(db, p.id, loc).available);
+    /* Per-batch availability for the order sheet. Reserved quantities (other
+     * people's pending orders) are assumed to take the soonest batches —
+     * the same FEFO rule invoicing applies — so what is shown as free per
+     * batch is what would actually still be there. */
+    const stockBatches: Record<number, { batch: string | null; expiry: string | null; qty: number }[]> = {};
+    for (const p of productsFor(db, user)) {
+      const a = availableStock(db, p.id, loc);
+      stockLeft[p.id] = Math.max(0, a.available);
+      const srow = db.stock.find((x) => x.productId === p.id && x.location === loc);
+      let reserve = Math.max(0, a.onHand - Math.max(0, a.available));
+      const rows = batchesOf(srow).map((b) => ({ ...b }));
+      for (const b of rows) {
+        const take = Math.min(b.qty, reserve);
+        b.qty -= take;
+        reserve -= take;
+      }
+      stockBatches[p.id] = rows.filter((b) => b.qty > 0);
+    }
     return Response.json({
+      // Who a supervisor can hand an order's sale+delivery to.
+      assignableReps: user.role === "supervisor" || user.role === "admin"
+        ? teamOf(db, user).filter((u) => u.role === "rep").map((u) => ({ id: u.id, name: u.name, city: u.city }))
+        : [],
       targets, accrual, quarter: { name: currentQuarter(), ...quarter },
-      products: productsFor(db, subject), stockLeft, stockCity: cityName(db, loc),
+      products: productsFor(db, subject), stockLeft, stockBatches, stockCity: cityName(db, loc),
     });
   } catch (e) {
     return errResponse(e);

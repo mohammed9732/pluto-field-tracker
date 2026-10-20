@@ -129,6 +129,11 @@ function OrdersInner() {
                   </div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
+                  {o.salesCreditTo === me.id && o.createdBy !== me.id ? (
+                    <span className="tag tag-chat" style={{ fontSize: 10.5 }}>
+                      {tx("orders.assignedBy", "From {name}").replace("{name}", o.createdByName ?? "")}
+                    </span>
+                  ) : null}
                   {o.isSample
                     ? <span className="tag" style={{ background: "var(--c-violet-soft)", color: "var(--c-violet-deep)" }}>FREE SAMPLE</span>
                     : <span className="hnum" style={{ fontSize: 16 }}>{money(o.total)}</span>}

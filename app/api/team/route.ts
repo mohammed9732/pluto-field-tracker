@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import { cityName, currentPeriod, fieldTimeMinutes, monthlyAccrual, monthlySeries, onApprovedLeave, orderTotal, periodOf, teamOf, todayStr, visitsOn, weekDates, weekStartOf } from "@/lib/compute";
+import { cityName, currentPeriod, fieldTimeMinutes, monthlyAccrual, monthlySeries, onApprovedLeave, orderTotal, periodOf, salesUserOf, teamOf, todayStr, visitsOn, weekDates, weekStartOf } from "@/lib/compute";
 
 export async function GET() {
   try {
@@ -67,12 +67,16 @@ export async function GET() {
       repSales: db.users
         .filter((u) => u.active && (u.role === "rep" || u.role === "supervisor"))
         .filter((u) => user.role !== "supervisor" || teamIds.has(u.id) || u.id === user.id)
-        .map((u) => ({
-          label: u.name,
-          value: db.orders
-            .filter((o) => o.createdBy === u.id && !o.isSample && (o.status === "approved" || o.status === "invoiced") && periodOf(o.createdAt) === nowPeriod)
-            .reduce((s, o) => s + orderTotal(o), 0),
-        }))
+        .map((u) => {
+          const booked = (o: any) => !o.isSample && (o.status === "approved" || o.status === "invoiced") && periodOf(o.createdAt) === nowPeriod;
+          // Credit-aware: an order a supervisor raised FOR a rep counts to
+          // the rep; the supervisor's hand still shows as "assisted".
+          const value = db.orders.filter((o) => salesUserOf(o) === u.id && booked(o)).reduce((s, o) => s + orderTotal(o), 0);
+          const assisted = u.role === "supervisor"
+            ? db.orders.filter((o) => o.createdBy === u.id && o.salesCreditTo && booked(o)).reduce((s, o) => s + orderTotal(o), 0)
+            : 0;
+          return { label: assisted > 0 ? `${u.name} ⤷` : u.name, value, assisted };
+        })
         .filter((r) => r.value > 0)
         .sort((a, b) => b.value - a.value),
     });

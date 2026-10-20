@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useT } from "@/lib/i18n";
 import { Screen, useMe, Spinner } from "@/components/Shell";
-import { api, dmy, money, monthName } from "@/lib/fmt";
+import { api, dmy, groupDigits, money, monthName, ungroup } from "@/lib/fmt";
 
 /* Pay people — everything the company pays its employees, on one page.
  *
@@ -17,6 +17,26 @@ import { api, dmy, money, monthName } from "@/lib/fmt";
  * comparable when the columns line up, and the footer answers the question
  * the cards never could — how much cash to withdraw this month.
  */
+/* A section that folds away. Closed, it still answers "how much is
+ * waiting in here?" — the badge carries the count, per the owner's ask:
+ * tidy when shut, never silent. */
+function Fold({ title, badge, accent, defaultOpen, children }: {
+  title: string; badge?: number; accent?: boolean; defaultOpen?: boolean; children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(!!defaultOpen);
+  return (
+    <div className="card" style={{ gap: open ? 10 : 0, borderColor: accent ? "var(--c-amber)" : undefined }}>
+      <button onClick={() => setOpen((o) => !o)}
+        style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "start", font: "inherit", width: "100%" }}>
+        <h6 className="m0 f1" style={{ color: accent ? "var(--c-amber-deep)" : undefined }}>{title}</h6>
+        {!open && badge ? <span className="tag tag-warn hnum">{badge}</span> : null}
+        <span style={{ color: "var(--color-neutral-500)", fontSize: 14 }}>{open ? "▾" : "▸"}</span>
+      </button>
+      {open ? children : null}
+    </div>
+  );
+}
+
 export default function PayPeople() {
   const tx = useT();
   const me = useMe();
@@ -24,6 +44,9 @@ export default function PayPeople() {
   const [payouts, setPayouts] = useState<any>(null);
   // Per-person tiered collection plans being edited: userId -> draft fields.
   const [planDraft, setPlanDraft] = useState<Record<number, { target: string; below: string; above: string }>>({});
+  // Manual penalty being written: null = closed.
+  const [pen, setPen] = useState<{ userId: string; amount: string; reason: string } | null>(null);
+  const [penErr, setPenErr] = useState("");
 
   const load = useCallback(() => {
     api("/api/money?view=payroll").then(setData).catch(() => {});
@@ -53,6 +76,8 @@ export default function PayPeople() {
   // People with something to decide before their pay is final.
   const attention = rows.filter((r) =>
     (r.deductions ?? []).some((d: any) => d.status === "flagged") || r.spendingsDue > 0);
+  const decideCount = rows.reduce((s, r) =>
+    s + (r.deductions ?? []).filter((d: any) => d.status === "flagged").length + (r.spendingsDue > 0 ? 1 : 0), 0);
 
   return (
     <Screen me={me}>
@@ -148,9 +173,41 @@ export default function PayPeople() {
       </div>
 
       {/* ---- things to decide before pay is final ---------------------- */}
-      {attention.length ? (
-        <div className="card" style={{ gap: 10, borderColor: "var(--c-amber)" }}>
-          <h6 className="m0" style={{ color: "var(--c-amber-deep)" }}>{tx("payroll.decideFirst", "Decide these before paying")}</h6>
+      <Fold title={tx("payroll.decideFirst", "Decide these before paying")} badge={decideCount} accent defaultOpen={decideCount > 0}>
+          {pen ? (
+            <div className="stack-2" style={{ padding: 10, background: "var(--c-amber-soft)", borderRadius: 12 }}>
+              <div className="row gap-2">
+                <select className="input f1" value={pen.userId} onChange={(e) => setPen({ ...pen, userId: e.target.value })}>
+                  <option value="">{tx("payroll.whoPenalty", "Who…")}</option>
+                  {rows.map((r) => <option key={r.userId} value={r.userId}>{r.name}</option>)}
+                </select>
+                <input className="input hnum" style={{ width: 130 }} inputMode="numeric" placeholder={tx("common.amount", "Amount")}
+                  value={pen.amount} onChange={(e) => setPen({ ...pen, amount: groupDigits(e.target.value) })} />
+              </div>
+              <input className="input" placeholder={tx("payroll.penaltyReasonPh", "What is it for? e.g. weekly report not sent")}
+                value={pen.reason} onChange={(e) => setPen({ ...pen, reason: e.target.value })} />
+              {penErr ? <div className="tag tag-hot self-start">{penErr}</div> : null}
+              <div className="two">
+                <button className="btn btn-primary" style={{ padding: 8 }} disabled={!pen.userId || !pen.amount || !pen.reason.trim()}
+                  onClick={async () => {
+                    setPenErr("");
+                    try {
+                      await api("/api/money", { json: { action: "penalty", userId: Number(pen.userId), amount: ungroup(pen.amount), reason: pen.reason } });
+                      setPen(null);
+                      load();
+                    } catch (e: any) { setPenErr(e?.message || "Could not add it"); }
+                  }}>{tx("payroll.addPenalty", "Add penalty")}</button>
+                <button className="btn btn-secondary" style={{ padding: 8 }} onClick={() => setPen(null)}>{tx("docs.cancel", "Cancel")}</button>
+              </div>
+            </div>
+          ) : (
+            <button className="btn btn-ghost fs-caption self-start" onClick={() => { setPenErr(""); setPen({ userId: "", amount: "", reason: "" }); }}>
+              ＋ {tx("payroll.addPenalty", "Add penalty")}
+            </button>
+          )}
+          {attention.length === 0 ? (
+            <div className="small muted">{tx("payroll.nothingToDecide", "Nothing waiting — every flag is decided.")}</div>
+          ) : null}
           {attention.map((r) => {
             const flagged = (r.deductions ?? []).filter((d: any) => d.status === "flagged");
             return (
@@ -159,7 +216,7 @@ export default function PayPeople() {
                 {flagged.map((d: any) => (
                   <div key={d.id} className="row" style={{ gap: 6, fontSize: 12 }}>
                     <span style={{ flex: 1, color: "var(--c-amber-deep)" }}>
-                      {tx("payroll.noCheckin", "No check-in")} {dmy(d.date)} — {money(d.amount)}
+                      {d.reason ? d.reason : tx("payroll.noCheckin", "No check-in")} {dmy(d.date)} — {money(d.amount)}
                     </span>
                     <button className="btn" style={{ fontSize: 12, padding: "3px 10px", background: "var(--c-amber)", border: "none", color: "#fff" }}
                       onClick={async () => { await api("/api/money", { json: { action: "deduction", id: d.id, decision: "confirm" } }); load(); }}>{tx("payroll.deduct", "Deduct")}</button>
@@ -179,12 +236,10 @@ export default function PayPeople() {
               </div>
             );
           })}
-        </div>
-      ) : null}
+      </Fold>
 
       {/* ---- the collection incentive: target + two rates, per person -- */}
-      <div className="card" style={{ gap: 8 }}>
-        <h6 className="m0">{tx("payroll.collPlan", "Collection incentive — target & rates")}</h6>
+      <Fold title={tx("payroll.collPlan", "Collection incentive — target & rates")}>
         <div className="small muted">
           {tx("payroll.collPlanSub", "Below the monthly target they earn the lower % on what they collected; at or above it, the higher % on all of it. Blank = the company-wide rate.")}
         </div>
@@ -236,7 +291,7 @@ export default function PayPeople() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Fold>
 
       {/* ---- quarterly incentives (was its own Payouts page) ----------- */}
       {payouts ? (

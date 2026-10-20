@@ -1,9 +1,6 @@
 import { getDb, saveDb, nextId } from "@/lib/db";
 import { requireUser, errResponse } from "@/lib/auth";
-import {
-  cityName, notify, onApprovedLeave, orderTotal, periodOf, samplesGiven,
-  currentPeriod, teamOf, todayStr, visitsOn, fieldTimeMinutes,
-} from "@/lib/compute";
+import { cityName, currentPeriod, fieldTimeMinutes, notify, onApprovedLeave, orderTotal, periodOf, salesUserOf, samplesGiven, teamOf, todayStr, visitsOn } from "@/lib/compute";
 
 // End-of-day summary for the owner and supervisor: one honest picture of the day.
 function buildSummary(db: ReturnType<typeof getDb>, date: string, viewer?: { id: number; role: string }) {
@@ -17,7 +14,7 @@ function buildSummary(db: ReturnType<typeof getDb>, date: string, viewer?: { id:
     const vs = visitsOn(db, u.id, date);
     const ft = fieldTimeMinutes(db, u.id, date);
     const onLeave = onApprovedLeave(db, u.id, date);
-    const dayOrders = db.orders.filter((o) => o.createdBy === u.id && o.createdAt.startsWith(date) && !o.isSample);
+    const dayOrders = db.orders.filter((o) => salesUserOf(o) === u.id && o.createdAt.startsWith(date) && !o.isSample);
     const daySamples = db.orders.filter((o) => o.createdBy === u.id && o.createdAt.startsWith(date) && o.isSample);
     const collected = db.payments.filter((p) => p.collectedBy === u.id && p.ts.startsWith(date)).reduce((s, p) => s + p.amount, 0);
     return {

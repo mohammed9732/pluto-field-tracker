@@ -158,6 +158,9 @@ export interface OrderItem {
   productId: number;
   qty: number;
   price: number; // snapshot, may be edited by rep and adjusted at approval
+  /* Set when the rep split the quantity across batches on the order
+     sheet; invoicing honours it. Absent = nearest expiry goes first. */
+  batchPlan?: { batch: string | null; qty: number }[] | null;
 }
 
 export type OrderStatus = "pending" | "approved" | "rejected" | "invoiced";
@@ -173,6 +176,10 @@ export interface Order {
   status: OrderStatus;
   isSample: boolean; // free samples: stock still moves, but no value and no target credit
   items: OrderItem[];
+  /* Set when a supervisor raised the order FOR a rep: the sale counts to
+     the rep's figures and the delivery lands on their round, while
+     createdBy keeps who actually typed it. Optional by design. */
+  salesCreditTo?: number | null;
   approvedBy: number | null;
   approvedAt: string | null;
   rejectNote: string | null;
@@ -238,12 +245,22 @@ export interface PayrollPaid {
 
 export type StockLocation = string; // a city id — every city is an equal warehouse (the old separate "main" was merged into head office)
 
-export interface StockItem {
-  productId: number;
-  location: StockLocation; // main = Erbil warehouse; city stock is held by the rep
-  qty: number;
+export interface StockBatch {
   batch: string | null;
   expiry: string | null; // YYYY-MM-DD
+  qty: number;
+}
+
+export interface StockItem {
+  productId: number;
+  location: StockLocation;
+  qty: number;
+  batch: string | null;   // mirrors batches[0] — the batch expiring soonest
+  expiry: string | null;  // YYYY-MM-DD, likewise the soonest
+  /* The detail UNDER qty: one row per batch, sorted soonest-expiry-first,
+     summing to qty whenever present. Absent on stock that has only ever
+     been counted by hand — then batch/expiry above are the whole story. */
+  batches?: StockBatch[];
   updatedAt: string;
   updatedBy: number;
 }
@@ -463,6 +480,9 @@ export interface Deduction {
   amount: number; // daily rate at flag time
   status: "flagged" | "confirmed" | "waived";
   decidedBy: number | null;
+  /* Absent for auto no-check-in flags; set when the accountant adds a
+     manual penalty ("weekly report not sent"). */
+  reason?: string | null;
 }
 
 export interface Activity {

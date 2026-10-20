@@ -17,14 +17,20 @@ export default function Approvals() {
   const [leaves, setLeaves] = useState<any[]>([]);
   const [prices, setPrices] = useState<Record<string, string>>({});
   const [loaded, setLoaded] = useState(false);
+  const [decided, setDecided] = useState<any[]>([]);
+  const [showDecided, setShowDecided] = useState(false);
+  const [info, setInfo] = useState<number | null>(null); // expanded order id
 
   const load = useCallback(() => {
     Promise.all([
       api("/api/orders?scope=pending"),
       api("/api/plans?scope=all"),
       api("/api/leaves?scope=approvals"),
-    ]).then(([o, p, l]: any[]) => {
+      api("/api/orders?scope=all"),
+    ]).then(([o, p, l, all]: any[]) => {
       setOrders(o.orders);
+      // The paper trail: everyone's decided orders, newest first.
+      setDecided((all.orders ?? []).filter((x: any) => x.status !== "pending").slice(0, 40));
       setPlans(p.plans);
       setLeaves(l.leaves);
       setLoaded(true);
@@ -134,6 +140,50 @@ export default function Approvals() {
               </div>
             </div>
           ))}
+          {/* The paper trail: everyone's approved / rejected / invoiced
+              orders, each expandable to the full who-and-when. */}
+          <div className="card" style={{ gap: showDecided ? 8 : 0 }}>
+            <button onClick={() => setShowDecided((o) => !o)}
+              style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "start", font: "inherit", width: "100%" }}>
+              <h6 className="m0 f1">{tx("appr.decidedOrders", "Decided orders — everyone")}</h6>
+              <span className="tag tag-neutral hnum">{decided.length}</span>
+              <span style={{ color: "var(--color-neutral-500)", fontSize: 14 }}>{showDecided ? "▾" : "▸"}</span>
+            </button>
+            {showDecided ? decided.map((o: any) => (
+              <div key={o.id} className="stack-1" style={{ paddingBottom: 6, borderBottom: "1px solid var(--color-divider)" }}>
+                <div className="row" style={{ alignItems: "center", gap: 8 }}>
+                  <div className="f1min">
+                    <div className="fs-small w-500">#{o.id} · {o.doctor?.name ?? "?"}</div>
+                    <div className="small muted">{o.createdByName} · {dmy(o.createdAt)}</div>
+                  </div>
+                  {o.isSample ? <span className="tag" style={{ background: "var(--c-violet-soft)", color: "var(--c-violet-deep)" }}>S</span>
+                    : <span className="hnum fs-small w-700">{money(o.total)}</span>}
+                  <span className={`tag ${o.status === "rejected" ? "tag-hot" : o.status === "invoiced" ? "tag-chat" : "tag-ok"}`}>
+                    {o.status === "rejected" ? tx("appr.rejected", "Rejected") : o.status === "invoiced" ? tx("appr.invoiced", "Invoiced") : tx("appr.approved", "Approved")}
+                  </span>
+                  <button className="btn btn-ghost" style={{ fontSize: 12, padding: "2px 8px" }}
+                    onClick={() => setInfo(info === o.id ? null : o.id)}>ⓘ</button>
+                </div>
+                {info === o.id ? (
+                  <div className="small muted stack-1" style={{ padding: "4px 10px", background: "var(--color-neutral-200)", borderRadius: 10 }}>
+                    <div>{tx("appr.requestedBy", "Requested by")} <b>{o.createdByName}</b> · {dmy(o.createdAt)} {hm(o.createdAt)}</div>
+                    {o.creditToName ? <div>{tx("appr.assignedTo", "Sale assigned to")} <b>{o.creditToName}</b></div> : null}
+                    {o.approvedAt ? (
+                      <div>
+                        {o.status === "rejected" ? tx("appr.rejectedBy", "Rejected by") : tx("appr.approvedBy2", "Approved by")}{" "}
+                        <b>{o.approvedByName ?? "?"}</b> · {dmy(o.approvedAt)} {hm(o.approvedAt)}
+                      </div>
+                    ) : null}
+                    {o.rejectNote ? <div style={{ color: "var(--c-coral-deep)" }}>{tx("appr.why", "Why")}: {o.rejectNote}</div> : null}
+                    {o.invoicedAt ? <div>{tx("appr.invoicedOn", "Invoiced")} · {dmy(o.invoicedAt)} {hm(o.invoicedAt)}{o.invoicedByName ? ` · ${o.invoicedByName}` : ""}</div> : null}
+                    {o.deliveredAt ? <div>{tx("appr.deliveredOn", "Delivered")} · {dmy(o.deliveredAt)} {hm(o.deliveredAt)} · {o.deliveredByName ?? ""}</div> : null}
+                    <div>{o.items.map((it: any) => `${it.qty} × ${it.productName}`).join(" · ")}</div>
+                  </div>
+                ) : null}
+              </div>
+            )) : null}
+          </div>
+
           <div className="hint mt-auto">
             You or the owner approve; approved orders go to the accountant for invoicing. Every price edit is snapshotted.
           </div>

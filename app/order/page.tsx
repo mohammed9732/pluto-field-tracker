@@ -6,9 +6,10 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Screen, useMe, Spinner, PageHead } from "@/components/Shell";
 import { DoctorPicker, DoctorCard, Doc } from "@/components/DoctorPicker";
-import { api, money } from "@/lib/fmt";
+import { api, dmy, money } from "@/lib/fmt";
 
-interface Line { productId: number; name: string; unit: string; listPrice: number; tiers: { minQty: number; price: number }[]; price: string; qty: number; line: string | null; left: number }
+interface Batch { batch: string | null; expiry: string | null; qty: number }
+interface Line { productId: number; name: string; unit: string; listPrice: number; tiers: { minQty: number; price: number }[]; price: string; qty: number; line: string | null; left: number; batches: Batch[]; open: boolean; alloc: number[] | null }
 
 /* One light shade per product line, assigned by order of appearance so the
  * sections keep their colors as the admin re-drags products. Identity never
@@ -33,6 +34,8 @@ function NewOrderInner() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [canEditPrice, setCanEditPrice] = useState(false);
+  const [assignTo, setAssignTo] = useState("");
+  const [reps, setReps] = useState<{ id: number; name: string; city: string }[]>([]);
   const [sampleCfg, setSampleCfg] = useState({ enabled: false, reps: true, sups: true });
   const [isSample, setIsSample] = useState(false);
   // Hold-to-add: a held +/- fires ×10 steps so 50 boxes is one press, not 50.
@@ -55,6 +58,7 @@ function NewOrderInner() {
         productId: p.id, name: p.name, unit: p.unit, listPrice: p.unitPrice,
         tiers: p.tiers ?? [], price: "", qty: 0, line: p.line ?? null,
         left: (r as any).stockLeft?.[p.id] ?? 9999,
+        batches: (r as any).stockBatches?.[p.id] ?? [], open: false, alloc: null,
       }));
       if (docId && reorder) {
         try {
@@ -65,6 +69,7 @@ function NewOrderInner() {
         } catch {}
       }
       setLines(lines);
+      setReps((r as any).assignableReps ?? []);
     }).catch(() => {});
     if (docId) {
       api<{ doctors: Doc[] }>("/api/doctors").then((r) => {
@@ -89,13 +94,42 @@ function NewOrderInner() {
 
   function bump(i: number, delta: number) {
     // Never past what the warehouse can deliver — the + stops at the cap.
-    setLines((ls) => ls.map((l, j) => (j === i ? { ...l, qty: Math.min(l.left, Math.max(0, l.qty + delta)) } : l)));
+    setLines((ls) => ls.map((l, j) => (j === i && !l.alloc ? { ...l, qty: Math.min(l.left, Math.max(0, l.qty + delta)) } : l)));
+  }
+  // Per-batch picker: each batch has its own cap; the total follows the sum.
+  function bumpBatch(i: number, bi: number, delta: number) {
+    setLines((ls) => ls.map((l, j) => {
+      if (j !== i || !l.alloc) return l;
+      const alloc = [...l.alloc];
+      alloc[bi] = Math.min(l.batches[bi]?.qty ?? 0, Math.max(0, (alloc[bi] ?? 0) + delta));
+      return { ...l, alloc, qty: alloc.reduce((s, x) => s + x, 0) };
+    }));
+  }
+  function toggleBatches(i: number) {
+    setLines((ls) => ls.map((l, j) => {
+      if (j !== i) return l;
+      if (l.open) return { ...l, open: false };
+      // First open: the current quantity splits nearest-expiry-first, the
+      // same way the warehouse would ship it.
+      let left = l.qty;
+      const alloc = l.alloc ?? l.batches.map((b) => { const t = Math.min(b.qty, left); left -= t; return t; });
+      return { ...l, open: true, alloc };
+    }));
+  }
+  function autoBatches(i: number) {
+    setLines((ls) => ls.map((l, j) => (j === i ? { ...l, open: false, alloc: null } : l)));
+  }
+  function holdStart(step: (mult: number) => void) {
+    step(1);
+    holdTimer.current = setTimeout(() => {
+      holdRepeat.current = setInterval(() => step(10), 250);
+    }, 450);
   }
   function pressStart(i: number, delta: number) {
-    bump(i, delta);
-    holdTimer.current = setTimeout(() => {
-      holdRepeat.current = setInterval(() => bump(i, delta * 10), 250);
-    }, 450);
+    holdStart((m) => bump(i, delta * m));
+  }
+  function pressStartB(i: number, bi: number, delta: number) {
+    holdStart((m) => bumpBatch(i, bi, delta * m));
   }
   function pressEnd() {
     if (holdTimer.current) clearTimeout(holdTimer.current);
@@ -112,9 +146,13 @@ function NewOrderInner() {
     try {
       const body = {
         action: "create", doctorId: doctor.id, isSample, clientRef: newRef(),
+        assignTo: assignTo ? Number(assignTo) : null,
         items: lines.filter((l) => l.qty > 0).map((l) => ({
           productId: l.productId, qty: l.qty,
           price: l.price.trim() !== "" ? parseFloat(l.price.replace(/,/g, "")) : null,
+          batchPlan: l.alloc
+            ? l.batches.map((bt, bi) => ({ batch: bt.batch, qty: l.alloc![bi] ?? 0 })).filter((pp) => pp.qty > 0)
+            : null,
         })),
       };
       try {
@@ -139,6 +177,19 @@ function NewOrderInner() {
       ) : (
         <>
           <DoctorCard doctor={doctor} onChange={() => setDoctor(null)} />
+          {/* Optional: the supervisor hands this sale and its delivery to a
+              rep in the customer's city — it counts to the rep's figures. */}
+          {me.role !== "rep" && reps.length ? (
+            <div className="field m0">
+              <label>{tx("neworder.assignTo", "Assign sale & delivery to (optional)")}</label>
+              <select className="input" value={assignTo} onChange={(e) => setAssignTo(e.target.value)}>
+                <option value="">{tx("neworder.noAssign", "— keep it mine —")}</option>
+                {reps.filter((r) => r.city === "all" || r.city === (doctor as any).city).map((r) => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+            </div>
+          ) : null}
           {ceilingRed ? (
             <div className="card" style={{ borderColor: "var(--c-coral)", gap: 4 }}>
               <div className="fs-small w-500" style={{ color: "var(--c-coral-deep)" }}>
@@ -189,7 +240,8 @@ function NewOrderInner() {
                   </div>
                 ) : null}
                 {sec.items.map(({ l, i }) => (
-              <div key={l.productId} className="listrow" style={{ padding: "10px 0", opacity: l.left <= 0 ? 0.45 : 1 }}>
+              <div key={l.productId}>
+              <div className="listrow" style={{ padding: "10px 0", opacity: l.left <= 0 ? 0.45 : 1 }}>
                 <div className="f1min">
                   <div className="fs-small w-500">{l.name}
                     {l.left <= 0 ? (
@@ -217,19 +269,62 @@ function NewOrderInner() {
                     )}
                     <span>IQD / {l.unit}{l.tiers.length ? ` · ${l.tiers.map((t) => `${t.minQty}+ ${t.price.toLocaleString()}`).join(" · ")}` : ""}</span>
                   </div>
+                  {/* More than one batch on the shelf: the sheet shows the
+                      sum, and this opens the per-batch picker. */}
+                  {l.batches.length > 1 ? (
+                    <button onClick={() => toggleBatches(i)}
+                      style={{ border: "none", background: "none", padding: 0, cursor: "pointer", font: "inherit", textAlign: "start" }}>
+                      <span className="small" style={{ color: "var(--c-violet-deep)", fontWeight: 600 }}>
+                        🏷 {tx("neworder.nBatches", "{n} batches").replace("{n}", String(l.batches.length))}
+                        {l.alloc ? ` · ${tx("neworder.customSplit", "your split")}` : ""} {l.open ? "▾" : "▸"}
+                      </span>
+                    </button>
+                  ) : null}
                 </div>
-                <button className="btn btn-secondary btn-icon" disabled={l.left <= 0 || l.qty <= 0}
+                <button className="btn btn-secondary btn-icon" disabled={l.left <= 0 || l.qty <= 0 || !!l.alloc}
                   onPointerDown={() => l.left > 0 && l.qty > 0 && pressStart(i, -1)}
                   onPointerUp={pressEnd} onPointerLeave={pressEnd} onPointerCancel={pressEnd}
                   onContextMenu={(e) => e.preventDefault()}>−</button>
                 <span className="hnum" style={{ width: 28, textAlign: "center", fontSize: 18, color: l.qty > 0 ? "var(--color-accent-700)" : "var(--color-neutral-400)" }}>{l.qty}</span>
                 {/* At the cap the + turns red and goes dead — the warehouse
                     has nothing more to promise. Hold either button for ×10. */}
-                <button className="btn btn-secondary btn-icon" disabled={l.left <= 0 || l.qty >= l.left}
-                  style={l.qty >= l.left && l.left > 0 ? { borderColor: "var(--c-coral)", color: "var(--c-coral-deep)", background: "var(--c-coral-soft)" } : {}}
+                <button className="btn btn-secondary btn-icon" disabled={l.left <= 0 || l.qty >= l.left || !!l.alloc}
+                  style={l.qty >= l.left && l.left > 0 && !l.alloc ? { borderColor: "var(--c-coral)", color: "var(--c-coral-deep)", background: "var(--c-coral-soft)" } : {}}
                   onPointerDown={() => l.qty < l.left && pressStart(i, 1)}
                   onPointerUp={pressEnd} onPointerLeave={pressEnd} onPointerCancel={pressEnd}
                   onContextMenu={(e) => e.preventDefault()}>＋</button>
+              </div>
+              {/* The per-batch picker: one sub-row per batch with its own
+                  cap, totals feeding the main quantity. "Auto" goes back to
+                  nearest-expiry-first and hands the +/- buttons back. */}
+              {l.open ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "0 0 10px", marginTop: -4 }}>
+                  {l.batches.map((bt, bi) => (
+                    <div key={bi} className="row" style={{ gap: 8, fontSize: 12.5, paddingInlineStart: 12 }}>
+                      <span className="f1min">
+                        <b className="hnum">{bt.batch ?? tx("neworder.noBatch", "no batch no.")}</b>
+                        {bt.expiry ? <span className="muted"> · {tx("neworder.exp", "exp")} <span className="hnum">{dmy(bt.expiry)}</span></span> : null}
+                        <span className="muted hnum"> · {tx("neworder.left", "{n} left").replace("{n}", String(bt.qty))}</span>
+                      </span>
+                      <button className="btn btn-secondary btn-icon" style={{ width: 30, height: 30, fontSize: 14 }}
+                        disabled={(l.alloc?.[bi] ?? 0) <= 0}
+                        onPointerDown={() => (l.alloc?.[bi] ?? 0) > 0 && pressStartB(i, bi, -1)}
+                        onPointerUp={pressEnd} onPointerLeave={pressEnd} onPointerCancel={pressEnd}
+                        onContextMenu={(e) => e.preventDefault()}>−</button>
+                      <span className="hnum" style={{ width: 24, textAlign: "center", fontSize: 14, color: (l.alloc?.[bi] ?? 0) > 0 ? "var(--color-accent-700)" : "var(--color-neutral-400)" }}>{l.alloc?.[bi] ?? 0}</span>
+                      <button className="btn btn-secondary btn-icon" style={{ width: 30, height: 30, fontSize: 14,
+                          ...((l.alloc?.[bi] ?? 0) >= bt.qty ? { borderColor: "var(--c-coral)", color: "var(--c-coral-deep)", background: "var(--c-coral-soft)" } : {}) }}
+                        disabled={(l.alloc?.[bi] ?? 0) >= bt.qty}
+                        onPointerDown={() => (l.alloc?.[bi] ?? 0) < bt.qty && pressStartB(i, bi, 1)}
+                        onPointerUp={pressEnd} onPointerLeave={pressEnd} onPointerCancel={pressEnd}
+                        onContextMenu={(e) => e.preventDefault()}>＋</button>
+                    </div>
+                  ))}
+                  <button className="btn btn-ghost fs-caption self-start" style={{ marginInlineStart: 12 }} onClick={() => autoBatches(i)}>
+                    ↺ {tx("neworder.autoFefo", "Auto — nearest expiry first")}
+                  </button>
+                </div>
+              ) : null}
               </div>
                 ))}
               </div>
